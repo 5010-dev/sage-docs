@@ -67,10 +67,12 @@
 
 | 컴포넌트 | 기술 스택 |
 |----------|-----------|
-| **메인 앱** | Next.js 15 + React 19 + Tailwind CSS 4 |
-| **Sites** | Vite + React + TypeScript |
-| **Backend** | Next.js API Routes + Drizzle ORM |
-| **AI** | Claude 3.5 Sonnet + Haiku (Vercel AI SDK) |
+| **백엔드** | Django 5.1+ + Django REST Framework |
+| **프론트엔드** | Vite 6 + React 19 + TypeScript (완전 분리 SPA) |
+| **ORM** | Django ORM (PostgreSQL) |
+| **인증** | Django-Allauth (Google OAuth) |
+| **AI** | Claude 3.5 Sonnet + Haiku (Anthropic Python SDK) |
+| **스트리밍** | Django Channels (SSE) |
 | **Database** | PostgreSQL (RDS) + Redis (ElastiCache) |
 | **Infrastructure** | ECS Fargate + S3/CloudFront + Lambda |
 
@@ -259,6 +261,7 @@
 
 _"자네, 시장이 공포에 질렸을 때가 바로 기회일세."_ - 월렛 버핏
 
-**Built with**: 🤖 Claude 3.5 Sonnet & Haiku • ⚡ Next.js 15 • 🎨 Tailwind CSS 4
+**Built with**: 🤖 Claude 3.5 Sonnet & Haiku • 🐍 Django 5.1+ + DRF • ⚡ Vite 6 + React 19 • 🎨 Tailwind CSS 4
+**Architecture**: 🏗️ Hexagonal (Ports & Adapters) • 🔄 Complete Backend/Frontend Separation
 **Target**: 🎯 8주 MVP 완성 • 📈 2026년 MAU 10K+
-**Version**: 2.6 (2025년 12월 17일)
+**Version**: 3.0 (2025년 12월 17일) - Django Migration

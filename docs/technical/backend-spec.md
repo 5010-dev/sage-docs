@@ -1,804 +1,741 @@
-# Sage.ai Backend Specification
+# Sage.ai 아키텍처 재구성 계획
 
-> **AI-Powered Investment Mentor Platform - Backend Architecture**
+## 개요
 
----
+**현재 상태**: Next.js 15 모놀리스 기반 문서 (실제 코드 없음)
+**목표 상태**: 완전 분리된 Python 백엔드 + React SPA 프론트엔드 + 헥사고널 아키텍처
+**타임라인**: 8주 MVP 유지
 
-**문서 버전**: 1.0
-**최종 수정일**: 2025년 12월 17일
-**작성자**: Sam
-**검토자**: -
+### 핵심 결정 요약
 
----
-
-## 목차
-
-1. [개요](#1-개요)
-2. [기술 스택](#2-기술-스택)
-3. [아키텍처](#3-아키텍처)
-4. [AI 에이전트 시스템](#4-ai-에이전트-시스템)
-5. [컨텍스트 관리](#5-컨텍스트-관리)
-6. [데이터베이스 스키마](#6-데이터베이스-스키마)
-7. [API 명세](#7-api-명세)
-8. [외부 API 연동](#8-외부-api-연동)
-9. [성능 목표](#9-성능-목표)
-10. [보안 및 인증](#10-보안-및-인증)
+| 항목 | 최종 결정 | 이유 |
+|------|----------|------|
+| **백엔드** | Django + DRF | 빠른 개발 속도 (Admin, ORM, Allauth 내장) |
+| **프론트엔드** | Vite + React (SPA) | Next.js 완전 제거, 완전 분리 아키텍처 |
+| **ORM** | Django ORM | Django 생태계 통합, 마이그레이션 자동 생성 |
+| **인증** | Django-Allauth | Google OAuth 5분 설정 |
+| **스트리밍** | Django Channels | SSE 지원 (Claude 실시간 응답) |
+| **SEO** | vite-plugin-seo-prerender | Next.js 없이 해결 가능 |
 
 ---
 
-## 1. 개요
+## 1. 핵심 기술 스택 결정
 
-### 1.1 프로젝트 개요
+### 1.1 백엔드: **Django + Django REST Framework** ✅
 
-**Sage.ai**는 Claude 3.5 기반 멀티 에이전트 시스템을 활용한 AI 투자 멘토 플랫폼입니다.
+**선택 근거 (8주 MVP에 최적)**:
+- ✅ **빠른 개발 속도**: Admin 패널, 인증, ORM이 기본 제공 → 초기 개발 2배 빠름
+- ✅ **Django Admin**: 사용자, 메시지, 포트폴리오 관리 UI 즉시 제공 (디버깅/관리 용이)
+- ✅ **Django ORM**: 성숙한 ORM, 마이그레이션 도구, 헥사고널 아키텍처 Repository 패턴 적용 가능
+- ✅ **Django REST Framework**: API 직렬화, 인증, 권한, OpenAPI 문서 생성 (drf-spectacular)
+- ✅ **Django-Allauth**: Google OAuth 5분 설정
+- ✅ **배터리 포함**: 8주 타임라인에 프레임워크 조합 시간 낭비 없음
 
-**핵심 특징**:
-- **월렛 버핏 페르소나**: 워렌 버핏의 투자 철학을 구현한 AI 멘토
-- **환각 제로화**: Tool 강제 사용 + 멀티 에이전트 교차 검증
-- **쉐도우 포트폴리오**: AI 조언의 수익률을 투명하게 추적
-- **능동적 알림**: 15분 간격 시장 분석 + PWA Push/Discord 알림
+**비동기 처리 전략**:
+- Django 5.1+ ASGI 지원 (비동기 뷰 가능)
+- Claude 스트리밍: Django Channels (WebSocket/SSE)
+- 외부 API 호출: `httpx` (async HTTP 클라이언트) + 비동기 뷰
+- ORM: 대부분 동기 사용 (조회는 빠름), 필요시 `sync_to_async()` 래퍼
 
-### 1.2 아키텍처 철학
+**FastAPI 대비 Trade-off**:
+- ❌ 순수 async 성능은 낮음 (하지만 MVP 스케일에서는 무의미)
+- ❌ Pydantic 런타임 검증 없음 (DRF serializers로 대체)
+- ✅ Admin 패널로 개발 속도 2배 향상
+- ✅ 프레임워크 성숙도 (16년 역사 vs FastAPI 5년)
 
-**단순성 > 확장성** (MVP 우선)
+### 1.2 ORM: **Django ORM** ✅
 
-- **모노리스 구조**: 마이크로서비스 대신 Next.js API Routes
-- **컨텍스트 단순화**: 최근 20개 메시지만 (RAG 없음)
-- **프로그레시브 스케일링**: ECS Fargate → 10K 유저까지, 이후 EKS 고려
+**중요**: Drizzle ORM은 TypeScript 전용 → Python 백엔드에서 사용 불가
 
-### 1.3 개발 목표
+**Django ORM 선택 근거**:
+- ✅ **Django 통합**: 프레임워크 네이티브, 마이그레이션 자동 생성 (`python manage.py makemigrations`)
+- ✅ **성숙도**: 16년 역사, 프로덕션 검증 완료, 광범위한 문서
+- ✅ **Admin 자동 연동**: 모델 정의만 하면 Admin UI 즉시 생성
+- ✅ **헥사고널 아키텍처 적용 가능**: Repository 패턴으로 ORM 추상화 가능
+- ✅ **QuerySet API**: 직관적이고 강력한 쿼리 빌더 (`.filter()`, `.select_related()`, `.prefetch_related()`)
 
-- **8주 MVP**: Week 1-2 (인프라), Week 3-4 (채팅), Week 5-6 (포트폴리오), Week 7-8 (알림)
-- **타겟 유저**: 500 MAU (MVP), 5K MAU (Q1 2026), 10K MAU (Q4 2026)
-- **성능**: 2초 이내 첫 토큰, <1% 환각률, 0.5초 컨텍스트 로드
+**Django ORM으로 Repository 패턴 구현**:
+```python
+# domain/ports/repositories.py (인터페이스)
+class UserRepository(ABC):
+    @abstractmethod
+    def find_by_email(self, email: str) -> Optional[User]:
+        pass
+
+# infrastructure/database/repositories.py (구현)
+class DjangoUserRepository(UserRepository):
+    def find_by_email(self, email: str) -> Optional[User]:
+        try:
+            user_model = DjangoUser.objects.get(email=email)
+            return self._to_domain(user_model)  # Django 모델 → 도메인 엔티티
+        except DjangoUser.DoesNotExist:
+            return None
+```
+
+**대안 비교**:
+- SQLAlchemy 2.0: 프레임워크 독립적이지만 Django 생태계와 분리 (Admin 활용 불가)
+- Prisma Python: 타입 세이프하지만 베타, 생태계 미성숙
+- Tortoise ORM: Async 우선이지만 커뮤니티 작고 Django와 별도
+
+### 1.3 인증: **Django-Allauth** ✅
+
+- **Django-Allauth**: Google OAuth2 + 세션 기반 인증 (설정 5분)
+- **Django 세션 프레임워크**: `SESSION_COOKIE_HTTPONLY=True`, `SESSION_COOKIE_SECURE=True`, `SESSION_COOKIE_SAMESITE='Lax'`
+- **DRF Token/Session Auth**: REST API 인증 (쿠키 세션 or Token)
+- **커스터마이징 용이**: AllAuth 시그널로 사용자 프로필 자동 생성
+
+### 1.4 프론트엔드: **Vite 6 + React 19 + TanStack Query** (Next.js 제거) ✅
+
+**Next.js 완전 제거 이유**:
+- ❌ SSR 불필요: 메인 앱은 인증 후 사용 (SEO 무관)
+- ❌ 백엔드 분리 원칙: Next.js API Routes 사용 안 함 → Vite SPA가 더 단순
+- ✅ 빠른 개발 경험: Vite의 HMR (Hot Module Replacement)이 Next.js보다 빠름
+- ✅ 배포 단순성: S3 + CloudFront 정적 호스팅 (Next.js Vercel 종속 없음)
+
+**프론트엔드 스택**:
+- **빌드 도구**: Vite 6 (CRA 대비 10배 빠름)
+- **프레임워크**: React 19 (최신 안정 버전, 2024년 12월)
+- **상태 관리**:
+  - 서버 상태 → **TanStack Query** (캐싱, 자동 리페칭, 낙관적 업데이트)
+  - UI 상태 → **Zustand** (경량 3KB, Redux 대비 90% 코드 감소)
+- **API 클라이언트**: `drf-spectacular` + `openapi-typescript-codegen` (Django REST Framework OpenAPI 스펙에서 자동 생성)
+- **스타일링**: Tailwind CSS 4 (현재 계획 유지)
+- **컴포넌트**: shadcn/ui (현재 계획 유지)
+
+**SEO 전략** (Next.js 없이 해결):
+1. **랜딩 페이지** (WhyBitcoinFallen.com, Sage.ai 랜딩):
+   - Vite 빌드 시 `vite-plugin-seo-prerender` 사용 (정적 HTML 생성)
+   - 또는 Prerender.io / Rendertron (크롤러 감지 시 서버 사이드 렌더링)
+   - `<meta>` 태그 최적화 (react-helmet-async)
+2. **메인 앱** (app.sage-ai.com):
+   - 로그인 후 사용 → SEO 불필요
+   - `<meta>` 태그는 기본만 설정
 
 ---
 
-## 2. 기술 스택
+## 2. 헥사고널 아키텍처 구조
 
-### 2.1 Overview
+### 2.1 레이어 의존성
 
 ```
-Backend Stack (Sage.ai)
-
-Runtime & Language
-- Node.js 22 LTS
-- TypeScript 5.7+
-
-Framework
-- Next.js 15.5+ (App Router)
-- React 19 (Server Components)
-
-Backend Core
-- Next.js API Routes (not Express)
-- Drizzle ORM 0.38+
-- Auth.js v5
-
-AI & Streaming
-- Claude 3.5 Sonnet (메인 대화, Manager/Persona/Risk Agent)
-- Claude 3.5 Haiku (알림 요약, 바이럴 AI 코멘트)
-- Vercel AI SDK 4.x (SSE 스트리밍 추상화)
-
-Database
-- PostgreSQL 16+ (RDS)
-- Redis 7.x (ElastiCache)
-
-Infrastructure
-- ECS Fargate (컨테이너)
-- EventBridge (15분 Cron)
-- Lambda (분석 워커)
-- S3 + CloudFront (정적 사이트)
+Presentation → Application → Domain ← Infrastructure
+ (Django DRF)  (Use Cases)  (Entities)  (Adapters)
 ```
 
-### 2.2 기술 선정 상세
+### 2.2 백엔드 폴더 구조 (Django + 헥사고널)
 
-| 카테고리 | 기술 | 버전 | 선정 이유 |
-|---------|------|------|----------|
-| **Runtime** | Node.js | 22 LTS | 최신 안정 버전, Edge Runtime 지원 |
-| **Language** | TypeScript | 5.7+ | 타입 안전성, Claude Code 친화적 |
-| **Framework** | Next.js | 15.5+ | App Router, SSR, API Routes 통합 |
-| **ORM** | Drizzle | 0.38+ | 타입 안전, SQL 친화, Zod 통합 |
-| **Auth** | Auth.js | 5.x | Google OAuth 간편 통합 |
-| **AI SDK** | Vercel AI SDK | 4.x | SSE 스트리밍 추상화, Claude 지원 |
-| **Database** | PostgreSQL | 16+ | ACID, JSON 지원, RDS 관리형 |
-| **Cache** | Redis | 7.x | 고성능 캐싱, ElastiCache 관리형 |
+```
+/apps/backend/
+├── config/                         # Django 프로젝트 설정
+│   ├── __init__.py
+│   ├── settings/
+│   │   ├── base.py                 # 공통 설정
+│   │   ├── dev.py                  # 개발 환경
+│   │   └── prod.py                 # 프로덕션 환경
+│   ├── urls.py                     # Root URL 설정
+│   ├── asgi.py                     # ASGI 진입점 (Channels)
+│   └── wsgi.py                     # WSGI 진입점
+│
+├── domain/                         # 핵심 비즈니스 로직 (Pure Python)
+│   ├── entities/                   # 도메인 모델 (dataclass)
+│   │   ├── user.py
+│   │   ├── chat.py
+│   │   ├── message.py
+│   │   └── portfolio.py
+│   ├── value_objects/              # 불변 값 객체
+│   │   ├── email.py
+│   │   ├── tier.py
+│   │   └── signal.py
+│   └── ports/                      # 인터페이스 (ABC)
+│       ├── repositories.py         # 데이터베이스 포트
+│       ├── ai_service.py           # AI 포트
+│       ├── market_data.py          # 외부 API 포트
+│       └── notification.py         # 알림 포트
+│
+├── application/                    # 유즈케이스 (비즈니스 규칙)
+│   ├── services/
+│   │   ├── chat_service.py             # 채팅 플로우 오케스트레이션
+│   │   ├── portfolio_service.py        # 섀도우 포트폴리오 로직
+│   │   └── alert_service.py            # 알림 로직
+│   └── dto/                        # 데이터 전송 객체
+│       ├── chat_request.py
+│       └── chat_response.py
+│
+├── infrastructure/                 # 어댑터 (외부 시스템)
+│   ├── ai/                         # Claude 통합
+│   │   ├── anthropic_adapter.py
+│   │   ├── agents/                 # Multi-agent system
+│   │   │   ├── manager.py
+│   │   │   ├── analyst.py
+│   │   │   ├── persona.py
+│   │   │   └── risk.py
+│   │   └── prompts/                # 시스템 프롬프트
+│   ├── market/                     # 외부 API
+│   │   ├── coingecko.py
+│   │   ├── cryptopanic.py
+│   │   └── fear_greed.py
+│   ├── cache/                      # Redis 어댑터
+│   │   └── redis_cache.py
+│   └── notifications/              # PWA Push + Discord
+│       ├── discord_webhook.py
+│       └── webpush.py
+│
+├── apps/                           # Django Apps (Presentation + Infrastructure)
+│   ├── users/                      # 사용자 관리
+│   │   ├── models.py               # Django 모델 (User)
+│   │   ├── admin.py                # Admin 설정
+│   │   ├── serializers.py          # DRF Serializers
+│   │   ├── views.py                # DRF ViewSets
+│   │   ├── urls.py                 # URL 라우팅
+│   │   └── repositories.py         # Repository 구현체
+│   ├── chats/                      # 채팅 관리
+│   │   ├── models.py               # Django 모델 (Chat, Message)
+│   │   ├── admin.py
+│   │   ├── serializers.py
+│   │   ├── views.py
+│   │   ├── consumers.py            # Django Channels (SSE/WebSocket)
+│   │   ├── routing.py              # Channels 라우팅
+│   │   ├── urls.py
+│   │   └── repositories.py
+│   ├── portfolio/                  # 섀도우 포트폴리오
+│   │   ├── models.py               # Django 모델 (ShadowTrade)
+│   │   ├── admin.py
+│   │   ├── serializers.py
+│   │   ├── views.py
+│   │   ├── urls.py
+│   │   └── repositories.py
+│   └── audit/                      # 감사 로그
+│       ├── models.py               # AuditLog 모델
+│       ├── admin.py
+│       ├── middleware.py           # 자동 로깅 미들웨어
+│       └── signals.py              # Django signals
+│
+├── tests/
+│   ├── unit/                       # Domain + Application 테스트
+│   ├── integration/                # Infrastructure 테스트
+│   └── e2e/                        # API 테스트
+│
+├── manage.py                       # Django CLI
+├── pyproject.toml                  # Poetry 의존성
+├── requirements.txt                # Pip 의존성 (Docker용)
+└── Dockerfile                      # 프로덕션 컨테이너
+```
 
-### 2.3 No 선정 (의도적 제외)
+### 2.3 헥사고널 아키텍처 예시: Chat Service
 
-| 기술 | 제외 이유 |
-|------|-----------|
-| **Express/Fastify** | Next.js API Routes로 충분 |
-| **Prisma** | Drizzle이 더 SQL 친화적 |
-| **RAG (Vector DB)** | MVP는 20개 메시지만, Phase 2에 추가 |
-| **Kafka** | 이벤트 드리븐 불필요, EventBridge로 충분 |
-| **Kubernetes** | ECS Fargate로 10K 유저 처리 가능 |
+```python
+# 1. Port (인터페이스) - domain/ports/ai_service.py
+class AIService(ABC):
+    @abstractmethod
+    async def generate_response(
+        self, messages: list[Message], context: UserContext
+    ) -> ChatResponse:
+        pass
+
+# 2. Adapter (구현) - infrastructure/ai/anthropic_adapter.py
+class AnthropicAIService(AIService):
+    async def generate_response(
+        self, messages: list[Message], context: UserContext
+    ) -> ChatResponse:
+        # Claude API 호출 + Multi-agent 오케스트레이션
+        intent = await self.manager.analyze_intent(messages[-1])
+        facts = await self.analyst.gather_facts(intent)
+        draft = await self.persona.generate_response(facts, context)
+        final = await self.risk.validate(draft)
+        return ChatResponse(message=final, ...)
+
+# 3. Use Case (비즈니스 로직) - application/services/chat_service.py
+class ChatService:
+    def __init__(
+        self,
+        ai_service: AIService,  # 주입된 포트
+        user_repo: UserRepository,
+        message_repo: MessageRepository
+    ):
+        self.ai_service = ai_service
+        ...
+
+    async def send_message(
+        self, user_id: UUID, chat_id: UUID, content: str
+    ) -> ChatResponse:
+        user = await self.user_repo.find_by_id(user_id)
+        context = await self._build_context(chat_id, user)
+        response = await self.ai_service.generate_response(
+            messages=context.messages,
+            context=context
+        )
+        await self.message_repo.save(response.message)
+        return response
+
+# 4. Controller (API) - apps/chats/views.py
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+
+class ChatViewSet(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def __init__(self):
+        # 의존성 주입 (Django에서는 __init__에서)
+        self.chat_service = ChatService(
+            ai_service=AnthropicAIService(),
+            user_repo=DjangoUserRepository(),
+            message_repo=DjangoMessageRepository()
+        )
+
+    def post(self, request):
+        serializer = ChatRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        response = self.chat_service.send_message(
+            user_id=request.user.id,
+            chat_id=serializer.validated_data['chat_id'],
+            content=serializer.validated_data['message']
+        )
+        return Response(ChatResponseSerializer(response).data)
+```
+
+**장점**:
+- 테스트 용이: `AIService` 인터페이스를 Mock으로 대체
+- 유연성: Claude → OpenAI 교체 시 비즈니스 로직 변경 없음
+- 유지보수: 명확한 책임 분리
 
 ---
 
-## 3. 아키텍처
-
-### 3.1 전체 아키텍처
+## 3. 프로젝트 구조: Monorepo (Turborepo)
 
 ```
-MVP Architecture
-
-                       [CloudFront CDN]
-                              |
-              +---------------+---------------+
-              |               |               |
-      [WhyBitcoinFallen]  [Landing]      [App ALB]
-       (Vite+React/S3)   (Vite+React/S3)      |
-                                       [ECS Fargate]
-                                        (Next.js)
-                                             |
-            +----------------+---------------+----------------+
-            |                |               |                |
-      [PostgreSQL]       [Redis]        [Claude API]    [External APIs]
-         (RDS)        (ElastiCache)                      - CoinGecko
-                                                         - CryptoPanic
-                                                         - Fear&Greed
-
-  -------------------------------------------------------------------------
-
-      [EventBridge]  -->  [Lambda]  -->  [Discord Webhook]
-      (15분 Cron)        (분석기)        [PWA Push]
+/sage-platform/                        # Root 모노레포
+├── apps/
+│   ├── backend/                       # Python Django + DRF
+│   ├── frontend-app/                  # Sage.ai 메인 앱 (Vite + React)
+│   ├── frontend-landing/              # 랜딩 페이지
+│   └── frontend-bitcoin-fallen/       # WhyBitcoinFallen.com
+│
+├── packages/
+│   ├── ui/                            # 공유 React 컴포넌트 (shadcn/ui)
+│   ├── types/                         # 공유 TypeScript 타입 (API 계약)
+│   └── config/                        # 공유 설정 (ESLint, TypeScript)
+│
+├── infrastructure/                    # IaC (Terraform)
+│   ├── terraform/
+│   │   ├── modules/                   # ECS, RDS, ElastiCache, S3/CloudFront
+│   │   └── environments/              # dev, prod
+│   └── scripts/                       # 배포 스크립트
+│
+├── turbo.json                         # Turborepo 설정
+├── package.json                       # Root package.json
+├── pnpm-workspace.yaml                # pnpm workspaces
+└── README.md
 ```
 
-### 3.2 채팅 플로우
-
-```
-사용자: "비트코인 지금 어때?"
-      |
-      v
-+----------------------------------------------------------+
-|  POST /api/chat                                           |
-|                                                           |
-|  1. 기존 프로필 조회 (있으면)                             |
-|     - experience_level, interested_assets 등             |
-|                                                           |
-|  2. 컨텍스트 로드                                         |
-|     - 최근 20개 메시지 조회                              |
-|                                                           |
-|  3. 시장 데이터 조회 (Redis 캐시 또는 API)               |
-|     - 가격: BTC $67,500 (+2.3%)                          |
-|     - Fear & Greed: 58 (탐욕)                            |
-|     - 뉴스: "SEC ETF 관련..."                            |
-|                                                           |
-|  4. 시스템 프롬프트 조립                                 |
-|     - 월렛 버핏 페르소나                                 |
-|     - 유저 컨텍스트 (파악된 정보)                        |
-|     - 시장 데이터                                        |
-|                                                           |
-|  5. Claude API 호출 (스트리밍)                           |
-+----------------------------------------------------------+
-      |
-      v SSE 스트리밍
-+----------------------------------------------------------+
-|  응답 처리                                                |
-|                                                           |
-|  - message: "자네, BTC가 $67,500인데..."                 |
-|  - inferredProfile: { experienceLevel: "beginner", ... }  |
-|  - signal: { action: "buy", symbol: "BTC", ... }         |
-|                                                           |
-|  6. 프로필 업데이트 (추론된 정보 있으면)                 |
-|  7. 메시지 저장                                          |
-+----------------------------------------------------------+
-```
-
-### 3.3 알림 플로우
-
-```
-EventBridge (15분마다)
-      |
-      v
-+----------------------------------------------------------+
-|  Lambda: 시장 분석                                        |
-|                                                           |
-|  1. 현재가 조회 (6종)                                    |
-|  2. 이전가와 비교 (Redis)                                |
-|  3. 변동 체크                                            |
-|     - BTC: +/-5% -> 트리거                               |
-|     - ETH: +/-7% -> 트리거                               |
-|     - 알트: +/-10% -> 트리거                             |
-|  4. Fear & Greed 급변 체크 (+/-15)                       |
-+----------------------------------------------------------+
-      |
-      | 급변 감지!
-      v
-+----------------------------------------------------------+
-|  알림 발송                                                |
-|                                                           |
-|  1. Discord Webhook (1회)                                 |
-|     - #market-alerts 채널                                |
-|                                                           |
-|  2. PWA Push (개인별, 순차)                              |
-|     - 알림 ON 유저만                                     |
-|     - 딥링크 URL 포함                                    |
-|                                                           |
-|  3. DB 저장 (alert_history)                              |
-|     - 알림 타입, 관련 심볼, 딥링크 정보                  |
-+----------------------------------------------------------+
-```
+**모노레포 선택 이유**:
+- 공유 타입: API 계약을 `/packages/types`에서 관리
+- 공유 UI: 버튼, 인풋 등 `/packages/ui`에서 재사용
+- 원자적 배포: 백엔드 + 프론트엔드 동시 배포
+- DX: 단일 `pnpm install`, 통합 CI/CD
 
 ---
 
-## 4. AI 에이전트 시스템
+## 4. 데이터베이스 스키마 & 감사 로그
 
-### 4.1 멀티 에이전트 오케스트레이션
+### 4.1 감사 로그 전략: 별도 테이블 (권장)
 
+```sql
+-- 메인 테이블
+CREATE TABLE users (
+    id UUID PRIMARY KEY,
+    email VARCHAR(255) UNIQUE,
+    tier VARCHAR(20),
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP
+);
+
+-- 감사 로그 테이블 (append-only)
+CREATE TABLE audit_log (
+    id UUID PRIMARY KEY,
+    table_name VARCHAR(50),
+    record_id UUID,
+    action VARCHAR(10),      -- INSERT, UPDATE, DELETE
+    old_values JSONB,         -- 변경 전 상태
+    new_values JSONB,         -- 변경 후 상태
+    user_id UUID,             -- 누가 변경했는지
+    timestamp TIMESTAMP,
+    ip_address VARCHAR(45)
+);
+
+CREATE INDEX idx_audit_table_record ON audit_log(table_name, record_id);
+CREATE INDEX idx_audit_timestamp ON audit_log(timestamp DESC);
 ```
-[사용자 질문]
-    ↓
-[Manager Agent] - 의도 파악 및 라우팅 (Sonnet 3.5)
-    ↓
-[Analyst Agent] - 뉴스/가격 API로 Fact 수집 (Haiku 3.5)
-    ↓
-[Persona Agent] - 월렛 버핏이 철학 기반 해석 (Sonnet 3.5)
-    ↓
-[Risk Agent] - 오류/편향 검증 (Sonnet 3.5)
-    ↓
-[최종 응답]
+
+**SQLAlchemy 구현**:
+```python
+# infrastructure/database/audit.py
+from sqlalchemy import event
+
+@event.listens_for(User, 'after_insert')
+def audit_user_insert(mapper, connection, target):
+    audit = AuditLog(
+        table_name='users',
+        record_id=target.id,
+        action='INSERT',
+        new_values=target.__dict__,
+        user_id=get_current_user_id(),
+        timestamp=datetime.utcnow()
+    )
+    connection.execute(audit.insert())
 ```
 
-### 4.2 에이전트 구성
+**대안**: PostgreSQL 트리거 (더 빠르지만 유연성 낮음)
 
-| 에이전트 | 모델 | 핵심 기술 | 역할 |
-|---------|------|----------|------|
-| **Manager** | Sonnet 3.5 | Router, State Manager | 대화 흐름 조율, 적절한 에이전트 연결 |
-| **Analyst** | Haiku 3.5 | Search API, Price Fetcher, Calculator | 감정 배제, 시장 현상(Fact) 수집 |
-| **Persona** | Sonnet 3.5 | Style Transfer, Reasoning | **월렛 버핏**: 통찰과 가르침 전달 |
-| **Risk** | Sonnet 3.5 | Compliance Check, Fact Verification | 사실 오류/법적 위험 최종 확인 |
+### 4.2 ERD 핵심 엔티티
 
-### 4.3 환각 제로화 전략
+- **Users**: 사용자 정보, OAuth ID, tier
+- **Chats**: 대화 세션
+- **Messages**: 메시지 (user/ai), 타임스탬프
+- **UserProfile**: 대화에서 추론한 선호도 (experience_level, risk_tolerance, interested_assets)
+- **ShadowPortfolio**: AI 추천 트래킹 (symbol, buy_price, quantity, signal_date)
+- **MarketData**: 캐시된 가격/감정 스냅샷
+- **Alerts**: 생성된 알림 (sent_at, type, content)
+- **AuditLog**: 감사 로그
 
-1. **Tool 강제 사용**
-   ```typescript
-   // 수치 계산은 LLM이 아닌 Calculator 도구 사용 의무화
-   tools: [
-     {
-       name: "calculator",
-       description: "Perform mathematical calculations",
-       required: true, // 가격 비교, 수익률 계산 시 필수
-     }
-   ]
-   ```
+---
 
-2. **Analyst 분리**
-   - 월렛 버핏은 '해석'만
-   - '팩트 체크'는 별도 Analyst 에이전트
+## 5. API 설계 & 실시간 통신
 
-3. **Risk Agent 교차 검증**
-   - 최종 응답 전 오류 필터링
-   - 법적 위험 문구 감지 ("지금 사라" → "~를 고려해볼 만하다"로 변경)
+### 5.1 REST API (GraphQL 대신)
 
-### 4.4 구현 예시
+**이유**:
+- DRF의 OpenAPI 자동 생성 (drf-spectacular)
+- HTTP 캐싱 (Redis)이 REST에서 더 쉬움
+- 8주 타임라인에 적합 (GraphQL은 스키마/리졸버 설정 복잡)
+- Django의 성숙한 생태계 활용
 
+**버전 관리**: `/api/v1/chat`, `/api/v1/portfolio`
+
+**OpenAPI 문서 생성**:
+```python
+# config/urls.py
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
+
+urlpatterns = [
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+]
+```
+
+### 5.2 실시간: Django Channels (SSE/WebSocket)
+
+**SSE vs WebSockets**:
+- SSE: 서버 → 클라이언트 단방향, HTTP 기반, 자동 재연결
+- WebSockets: 양방향, 프로토콜 업그레이드 필요
+
+**Claude 스트리밍: Django Channels로 SSE 구현**
+
+**Django Channels Consumer**:
+```python
+# apps/chats/consumers.py
+from channels.generic.http import AsyncHttpConsumer
+import json
+
+class ChatStreamConsumer(AsyncHttpConsumer):
+    async def handle(self, body):
+        # SSE 헤더 전송
+        await self.send_headers(headers=[
+            (b"Content-Type", b"text/event-stream"),
+            (b"Cache-Control", b"no-cache"),
+            (b"Connection", b"keep-alive"),
+        ])
+
+        # Claude 스트리밍
+        chat_service = ChatService(...)
+        async for chunk in chat_service.stream_response(...):
+            data = json.dumps({"text": chunk})
+            await self.send_body(f"data: {data}\n\n".encode(), more_body=True)
+
+        # 완료 신호
+        await self.send_body(b"data: {\"type\": \"done\"}\n\n", more_body=False)
+
+# apps/chats/routing.py
+from django.urls import path
+from . import consumers
+
+websocket_urlpatterns = [
+    path('ws/chat/stream/', consumers.ChatStreamConsumer.as_asgi()),
+]
+```
+
+**React 클라이언트** (TanStack Query):
 ```typescript
-// lib/ai/agents.ts
+import { EventSourcePlus } from 'event-source-plus';
 
-import Anthropic from '@anthropic-ai/sdk';
+function useChatStream(chatId: string, message: string) {
+  const [messages, setMessages] = useState<string[]>([]);
 
-const anthropic = new Anthropic();
+  const startStream = () => {
+    const eventSource = new EventSourcePlus(`/api/v1/chat/stream`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chatId, message }),
+      credentials: 'include',  // 쿠키 전송
+    });
 
-// Manager Agent
-export async function managerAgent(userMessage: string) {
-  const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: 1024,
-    system: `당신은 Manager Agent입니다. 사용자 의도를 파악하고 적절한 에이전트로 라우팅하세요.`,
-    messages: [{ role: 'user', content: userMessage }],
-  });
-
-  return {
-    intent: response.content[0].text,
-    nextAgent: 'analyst', // or 'persona', 'risk'
+    eventSource.listen({
+      onMessage(msg) {
+        const data = JSON.parse(msg.data);
+        if (data.text) setMessages(prev => [...prev, data.text]);
+      }
+    });
   };
 }
-
-// Analyst Agent (Fact만 수집)
-export async function analystAgent(query: string) {
-  const price = await getPriceFromCoinGecko('BTC');
-  const news = await getNewsFromCryptoPanic('BTC');
-  const fearGreed = await getFearGreedIndex();
-
-  return {
-    facts: {
-      price,
-      news,
-      fearGreed,
-    },
-    timestamp: new Date().toISOString(),
-  };
-}
-
-// Persona Agent (월렛 버핏 해석)
-export async function personaAgent(facts: any, userProfile: any) {
-  const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: 2048,
-    system: `당신은 월렛 버핏입니다. 워렌 버핏의 투자 철학을 구현하세요.
-
-    말투: "자네", "~일세", "~하게"
-    철학: 안전마진, 해자, 장기투자, 공포에 사라 탐욕에 팔아라
-
-    [팩트 데이터]
-    ${JSON.stringify(facts)}
-
-    [사용자 프로필]
-    ${JSON.stringify(userProfile)}
-    `,
-    messages: [{ role: 'user', content: '지금 시장에 대해 조언해주세요.' }],
-  });
-
-  return response.content[0].text;
-}
-
-// Risk Agent (최종 검증)
-export async function riskAgent(message: string) {
-  const dangerousPatterns = [
-    /지금 사(라|세요)/,
-    /무조건/,
-    /100% 확실/,
-  ];
-
-  for (const pattern of dangerousPatterns) {
-    if (pattern.test(message)) {
-      // LLM으로 안전한 표현으로 변경
-      const safeMessage = await rewriteToSafeExpression(message);
-      return safeMessage;
-    }
-  }
-
-  return message;
-}
 ```
 
 ---
 
-## 5. 컨텍스트 관리
+## 6. 배포 & 인프라
 
-### 5.1 단순화 전략 (MVP)
+### 6.1 Docker 컨테이너화
 
-**복잡한 방식 제거**:
-- ❌ 채팅 내 압축
-- ❌ 세션 종료 시 요약
-- ❌ 유저 레벨 기억 축적
-- ❌ Claude Haiku 요약 호출
+**백엔드 Dockerfile** (Django + Gunicorn + Channels):
+```dockerfile
+# Stage 1: Builder
+FROM python:3.12-slim as builder
+WORKDIR /app
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
 
-**MVP 방식**:
-- ✅ 최근 20개 메시지만 유지
-- ✅ 그 이전은 버림 (DB에는 저장, AI는 모름)
-- ✅ 추론된 프로필만 저장
-- ✅ 추가 AI 호출 없음
+# Stage 2: Runtime
+FROM python:3.12-slim
+WORKDIR /app
+COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+COPY . .
 
-**비용**: $0 (추가 AI 호출 없음)
-**복잡도**: 낮음
+# Django 마이그레이션 & collectstatic
+RUN python manage.py collectstatic --noinput
 
-### 5.2 컨텍스트 윈도우 구조
-
-```
-API 호출 시 컨텍스트
-
-[시스템 프롬프트]
-  - 월렛 버핏 페르소나
-  - 유저 프로필 (추론된 정보)
-  - 현재 시장 데이터
-
-[최근 20개 메시지]      <- 원본 그대로
-  - user: "비트코인 어때?"
-  - assistant: "자네, 지금..."
-  - user: "더 살까?"
-  - assistant: "분할 매수를..."
-  - ... (최대 20개)
-
-[현재 질문]
+# Daphne (Channels ASGI 서버) or Gunicorn
+CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "config.asgi:application"]
+# 또는 REST API만: CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000"]
 ```
 
-### 5.3 구현
+### 6.2 AWS 인프라
 
-```typescript
-// lib/ai/context.ts
+- **백엔드**: ECS Fargate (Docker 컨테이너)
+- **데이터베이스**: RDS PostgreSQL 16+ (db.t3.micro)
+- **캐시**: ElastiCache Redis 7.x (cache.t3.micro)
+- **프론트엔드**: S3 + CloudFront (정적 호스팅)
+- **Lambda**: 15분마다 시장 분석 (EventBridge cron)
 
-const MAX_MESSAGES = 20;
+### 6.3 CI/CD: GitHub Actions
 
-async function buildChatContext(chatId: string): Promise<Message[]> {
-  // 최근 20개 메시지만 조회 (단순!)
-  const messages = await db.query.messages.findMany({
-    where: eq(messages.chatId, chatId),
-    orderBy: desc(messages.createdAt),
-    limit: MAX_MESSAGES,
-  });
+```yaml
+# .github/workflows/deploy-backend.yml
+name: Deploy Backend
+on:
+  push:
+    branches: [main]
+    paths: ['apps/backend/**']
 
-  // 시간순 정렬 (오래된 것 먼저)
-  return messages.reverse();
-}
-
-// API 호출
-async function chat(chatId: string, userMessage: string) {
-  const recentMessages = await buildChatContext(chatId);
-  const userProfile = await getUserProfile(userId);
-  const marketData = await getMarketData();
-
-  const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
-    system: buildSystemPrompt(userProfile, marketData),
-    messages: [
-      ...recentMessages,
-      { role: 'user', content: userMessage }
-    ],
-  });
-
-  return response;
-}
-```
-
-### 5.4 20개 제한의 의미
-
-```
-일반적인 대화 패턴
-
-하루 평균 대화: 5-10회 왕복 (10-20개 메시지)
-→ 대부분의 경우 하루 대화는 컨텍스트 내에 유지됨
-
-20개 초과 시:
-- 오래된 메시지부터 컨텍스트에서 제외
-- DB에는 계속 저장 (히스토리 조회용)
-- AI는 최근 대화만 기억
-
-Phase 2에서 추가 가능:
-- RAG로 과거 대화 검색
-- "3달 전에 뭐라 했지?" 질문 대응
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Docker image
+        run: docker build -t sage-backend:${{ github.sha }} apps/backend
+      - name: Push to ECR
+        run: |
+          aws ecr get-login-password | docker login ...
+          docker push $ECR_REGISTRY/sage-backend:latest
+      - name: Update ECS Service
+        run: aws ecs update-service --cluster sage-cluster --service sage-backend --force-new-deployment
 ```
 
 ---
 
-## 6. 데이터베이스 스키마
+## 7. MVP vs 완전한 헥사고널 (Trade-offs)
 
-### 6.1 ERD
+### 7.1 MVP에서 연기할 것 (8주 타임라인 준수)
 
-```
-MVP Database Schema
+| 기능 | MVP (8주) | Post-MVP (Phase 2) |
+|-----|-----------|-------------------|
+| Event Sourcing | ❌ 단순 CRUD | ✅ 이벤트 기반 아키텍처 |
+| CQRS | ❌ 단일 모델 | ✅ Read/Write 분리 |
+| Domain Events | ❌ 직접 호출 | ✅ 이벤트 버스 (Redis Pub/Sub) |
+| Unit Tests | ⚠️ 핵심 경로만 | ✅ 80%+ 커버리지 |
+| Repository Pattern | ✅ 기본 인터페이스 | ✅ 고급 (캐싱, 트랜잭션) |
+| Multi-Agent System | ✅ 4 에이전트 | ✅ 더 많은 에이전트 추가 |
 
-+------------------+       +------------------+
-|     users        |       |  user_profiles   |
-+------------------+       +------------------+
-| id (PK)          |------>| id (PK)          |
-| email            |       | user_id (FK)     |
-| name             |       | experience_level |
-| image            |       | investment_style |
-| tier             |       | risk_tolerance   |
-| push_subscription|       | interested_assets|
-| notifications_on |       | confidence_scores|
-| created_at       |       | updated_at       |
-+------------------+       +------------------+
-        |
-        |
-        v
-+------------------+       +------------------+
-|     chats        |       |    messages      |
-+------------------+       +------------------+
-| id (PK)          |------>| id (PK)          |
-| user_id (FK)     |       | chat_id (FK)     |
-| title            |       | role             |
-| created_at       |       | content          |
-| updated_at       |       | signal (jsonb)   |
-+------------------+       | inferred_profile |
-                           | created_at       |
-                           +------------------+
+### 7.2 MVP에서도 유지할 것
 
-+------------------+       +------------------+
-| shadow_trades    |       |  alert_history   |
-+------------------+       +------------------+
-| id (PK)          |       | id (PK)          |
-| user_id (FK)     |       | user_id (FK)     |
-| chat_id (FK)     |       | title            |
-| message_id (FK)  |       | body             |
-| symbol           |       | alert_type       |
-| action           |       | symbol           |
-| price            |       | change_percent   |
-| confidence       |       | deep_link        |
-| ai_reason        |       | is_read          |
-| created_at       |       | clicked_at       |
-+------------------+       | created_at       |
-                           +------------------+
-```
-
-### 6.2 Drizzle 스키마
-
-```typescript
-// db/schema/users.ts
-
-export const users = pgTable('users', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  email: varchar('email', { length: 255 }).notNull().unique(),
-  name: varchar('name', { length: 255 }),
-  image: text('image'),
-  tier: varchar('tier', { length: 20 }).default('free'),
-  pushSubscription: text('push_subscription'),
-  notificationsEnabled: boolean('notifications_enabled').default(false),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
-});
-
-// db/schema/userProfiles.ts
-// 대화에서 추론된 정보 저장
-
-export const userProfiles = pgTable('user_profiles', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').references(() => users.id).notNull().unique(),
-
-  // 추론된 프로필
-  experienceLevel: varchar('experience_level', { length: 20 }),
-  investmentStyle: varchar('investment_style', { length: 20 }),
-  riskTolerance: varchar('risk_tolerance', { length: 20 }),
-  interestedAssets: jsonb('interested_assets').default([]),
-  confidenceScores: jsonb('confidence_scores').default({}),
-
-  updatedAt: timestamp('updated_at').defaultNow(),
-});
-
-// db/schema/chats.ts
-
-export const chats = pgTable('chats', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').references(() => users.id).notNull(),
-  title: varchar('title', { length: 255 }).default('새 대화'),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
-});
-
-// db/schema/messages.ts
-
-export const messages = pgTable('messages', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  chatId: uuid('chat_id').references(() => chats.id, { onDelete: 'cascade' }).notNull(),
-  role: varchar('role', { length: 20 }).notNull(),
-  content: text('content').notNull(),
-  signal: jsonb('signal'),
-  inferredProfile: jsonb('inferred_profile'),
-  createdAt: timestamp('created_at').defaultNow(),
-});
-
-// db/schema/shadowTrades.ts
-
-export const shadowTrades = pgTable('shadow_trades', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').references(() => users.id).notNull(),
-  chatId: uuid('chat_id').references(() => chats.id),
-  messageId: uuid('message_id').references(() => messages.id),
-  symbol: varchar('symbol', { length: 10 }).notNull(),
-  action: varchar('action', { length: 10 }).notNull(),
-  price: decimal('price', { precision: 20, scale: 8 }).notNull(),
-  confidence: decimal('confidence', { precision: 3, scale: 2 }),
-  aiReason: text('ai_reason'),
-  createdAt: timestamp('created_at').defaultNow(),
-});
-
-// db/schema/alertHistory.ts
-
-export const alertHistory = pgTable('alert_history', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').references(() => users.id),
-
-  // 알림 내용
-  title: varchar('title', { length: 255 }).notNull(),
-  body: text('body').notNull(),
-
-  // 알림 타입 및 관련 정보
-  alertType: varchar('alert_type', { length: 30 }).notNull(), // market_alert, portfolio_alert, daily_briefing
-  symbol: varchar('symbol', { length: 10 }),
-  changePercent: decimal('change_percent', { precision: 5, scale: 2 }),
-
-  // 딥링크
-  deepLink: varchar('deep_link', { length: 500 }), // /chat/new?context=market_alert&symbol=BTC
-
-  // 상태
-  isRead: boolean('is_read').default(false),
-  clickedAt: timestamp('clicked_at'), // 클릭 시간 (전환 추적용)
-
-  createdAt: timestamp('created_at').defaultNow(),
-});
-```
+1. **도메인 순수성**: `/domain` 폴더는 외부 의존성 없음
+2. **Ports/Adapters**: Claude → OpenAI 교체 가능하게
+3. **의존성 주입**: FastAPI `Depends()`로 모든 서비스 주입
+4. **Repository 인터페이스**: SQLAlchemy 구현 교체 가능하게
 
 ---
 
-## 7. API 명세
+## 8. 구현 순서 (8주)
 
-### 7.1 API 목록
+### Week 1-2: 기초 인프라
+- [ ] FastAPI 프로젝트 초기화 + 헥사고널 폴더 구조
+- [ ] SQLAlchemy 모델 정의 (users, chats, messages)
+- [ ] Alembic 마이그레이션 설정
+- [ ] PostgreSQL RDS + Redis ElastiCache 생성 (Terraform)
+- [ ] Vite 프로젝트 3개 초기화 (app, landing, bitcoin-fallen)
+- [ ] Turborepo 모노레포 설정
+- [ ] FastAPI-Users + Google OAuth 구현
+- [ ] 쿠키 기반 세션 인증 구현
 
-| Method | Endpoint | 설명 | 인증 |
-|--------|----------|------|------|
-| POST | `/api/auth/[...nextauth]` | Auth.js 인증 | - |
-| POST | `/api/chat` | 채팅 메시지 전송 (SSE 스트리밍) | ✅ |
-| GET | `/api/chats` | 채팅 목록 조회 | ✅ |
-| POST | `/api/chats` | 새 채팅 생성 | ✅ |
-| GET | `/api/chats/[chatId]/messages` | 채팅 메시지 조회 | ✅ |
-| GET | `/api/market/price` | 가격 조회 (6종) | - |
-| GET | `/api/market/news` | 뉴스 조회 | - |
-| GET | `/api/market/fear-greed` | Fear and Greed 조회 | - |
-| POST | `/api/shadow-trades` | 섀도우 트레이드 추가 | ✅ |
-| GET | `/api/shadow-trades` | 섀도우 트레이드 목록 | ✅ |
-| POST | `/api/push/subscribe` | 푸시 구독 등록 | ✅ |
-| DELETE | `/api/push/subscribe` | 푸시 구독 해제 | ✅ |
-| GET | `/api/notifications` | 알림 히스토리 조회 | ✅ |
-| PATCH | `/api/notifications/[id]/read` | 알림 읽음 처리 | ✅ |
-| PATCH | `/api/notifications/[id]/click` | 알림 클릭 추적 | ✅ |
-| GET | `/api/settings` | 설정 조회 | ✅ |
-| PATCH | `/api/settings` | 설정 업데이트 | ✅ |
-| GET | `/api/profile` | 추론된 프로필 조회 | ✅ |
-| GET | `/api/viral/comment` | 바이럴 사이트용 AI 한마디 | - |
-| GET | `/api/viral/stats` | 바이럴 사이트용 실시간 통계 | - |
+### Week 3-4: 핵심 채팅
+- [ ] Claude Multi-agent 시스템 구현 (Manager, Analyst, Persona, Risk)
+- [ ] SSE 스트리밍 엔드포인트 구현 (`/api/v1/chat/stream`)
+- [ ] Context 관리 (20 메시지 윈도우)
+- [ ] 프론트엔드 채팅 UI (메시지 버블, 입력창)
+- [ ] TanStack Query + SSE 클라이언트 구현
+- [ ] 외부 API 어댑터 (CoinGecko, CryptoPanic, Fear & Greed)
+- [ ] Redis 캐싱 (5/10/30분 TTL)
 
-### 7.2 주요 API 상세
+### Week 5-6: 섀도우 포트폴리오
+- [ ] Shadow trade repository 구현
+- [ ] Portfolio service (ROI 계산)
+- [ ] Claude 응답에서 시그널 추출
+- [ ] 프론트엔드 포트폴리오 페이지
+- [ ] "섀도우에 추가" 버튼
+- [ ] 성능 차트 (Recharts)
 
-#### POST /api/chat
-
-**Request**:
-```typescript
-{
-  "chatId": "uuid",
-  "message": "비트코인 지금 어때?"
-}
-```
-
-**Response** (SSE Stream):
-```
-data: {"type":"text","content":"자"}
-data: {"type":"text","content":"네"}
-...
-data: {"type":"profile","inferredProfile":{"experienceLevel":"beginner","confidence":0.85}}
-data: {"type":"signal","signal":{"action":"buy","symbol":"BTC","confidence":0.75}}
-data: {"type":"done"}
-```
-
-#### GET /api/profile
-
-**Response**:
-```typescript
-{
-  "profile": {
-    "experienceLevel": "beginner",
-    "investmentStyle": "conservative",
-    "riskTolerance": "low",
-    "interestedAssets": ["BTC", "ETH"],
-    "confidenceScores": {
-      "experienceLevel": 0.85,
-      "investmentStyle": 0.60
-    }
-  }
-}
-```
+### Week 7-8: 알림 + 배포
+- [ ] Lambda 시장 분석기 (15분 cron)
+- [ ] Discord webhook 통합
+- [ ] PWA push notifications
+- [ ] Deep linking (`/chat/new?context=market_alert`)
+- [ ] Docker 빌드 최적화
+- [ ] ECS Fargate 배포
+- [ ] S3 + CloudFront 프론트엔드 배포
+- [ ] CI/CD 파이프라인 (GitHub Actions)
+- [ ] 통합 테스트
+- [ ] 성능 테스트 (2초 응답 시간)
+- [ ] 기본 보안 감사
 
 ---
 
-## 8. 외부 API 연동
+## 9. Next.js → Python/React 마이그레이션 전략
 
-### 8.1 Market Data APIs
+### 9.1 재사용 가능한 것
 
-| API | 용도 | Rate Limit | 캐싱 (Redis TTL) |
-|-----|------|-----------|------------------|
-| **CoinGecko** | 가격 (6종: BTC, ETH, SOL, BNB, DOGE, XRP) | 50/min | 5분 |
-| **CryptoPanic** | 뉴스 | 100/day | 10분 |
-| **Alternative.me** | Fear & Greed Index | 무제한 | 30분 |
+✅ **데이터베이스 스키마**: 현재 ERD 그대로 사용
+✅ **AI 프롬프트**: Wallet Buffett 페르소나 그대로 사용
+✅ **Multi-agent 로직**: Manager/Analyst/Persona/Risk 플로우 그대로 사용
+✅ **UI 컴포넌트**: React 컴포넌트 (Tailwind + shadcn/ui) 재사용
+✅ **비즈니스 로직**: 채팅 플로우, 포트폴리오 계산 로직 재사용
+✅ **외부 API 통합**: CoinGecko, CryptoPanic 등 Python으로 포팅
 
-### 8.2 구현 예시
+### 9.2 완전히 재작성할 것
 
-```typescript
-// lib/api/coingecko.ts
+❌ **백엔드 API 레이어**: Next.js API Routes → Django REST Framework
+❌ **ORM 레이어**: Drizzle → Django ORM
+❌ **인증 레이어**: Auth.js → Django-Allauth
+❌ **AI SDK**: Vercel AI SDK → Anthropic Python SDK
+❌ **스트리밍**: Vercel AI SDK → Django Channels
 
-export async function getPriceFromCoinGecko(symbol: string): Promise<number> {
-  const cacheKey = `price:${symbol}`;
-
-  // Redis 캐시 확인
-  const cached = await redis.get(cacheKey);
-  if (cached) {
-    return JSON.parse(cached);
-  }
-
-  // API 호출
-  const res = await fetch(
-    `https://api.coingecko.com/api/v3/simple/price?ids=${symbol}&vs_currencies=usd`
-  );
-  const data = await res.json();
-  const price = data[symbol].usd;
-
-  // Redis에 5분 캐싱
-  await redis.setex(cacheKey, 300, JSON.stringify(price));
-
-  return price;
-}
-```
+**예상 마이그레이션 노력**: ~60% 재작성 (백엔드), ~20% 재작성 (프론트엔드)
 
 ---
 
-## 9. 성능 목표
+## 10. 핵심 파일 (구현 우선순위)
 
-### 9.1 응답 시간
+### 백엔드 (Django)
 
-| 메트릭 | 목표 | 측정 방법 |
-|-------|------|----------|
-| **채팅 응답 시작** (TTFT) | 2초 이내 | SSE 첫 토큰까지 |
-| **컨텍스트 로드** | 0.5초 이내 | DB 쿼리 시간 |
-| **API 타임아웃** | 10초 | External API 호출 |
-| **알림 발송** | 15분 간격 | Lambda Cron 정확도 |
+1. **`/apps/backend/domain/ports/repositories.py`**
+   모든 Repository 인터페이스 정의 (User, Chat, Message, Portfolio). 헥사고널 아키텍처의 핵심.
 
-### 9.2 동시 접속자
+2. **`/apps/backend/application/services/chat_service.py`**
+   채팅 플로우 비즈니스 로직. Multi-agent 오케스트레이션, 컨텍스트 관리, 프로필 추론.
 
-| Stage | Target Users | Infrastructure |
-|-------|-------------|----------------|
-| **MVP** | 1,000 | ECS Fargate (2 tasks) |
-| **Q1 2026** | 5,000 | ECS Auto Scaling (5 tasks) |
-| **Q4 2026** | 10,000 | ECS Auto Scaling (10 tasks) |
+3. **`/apps/backend/infrastructure/ai/anthropic_adapter.py`**
+   Claude 통합 + Multi-agent 시스템 (Manager, Analyst, Persona, Risk). AI 기능의 핵심.
 
-### 9.3 환각률
+4. **`/apps/backend/apps/users/repositories.py`**
+   UserRepository의 Django ORM 구현. 다른 모든 Repository의 패턴.
 
-**목표**: <1%
+5. **`/apps/backend/apps/chats/views.py`**
+   Django REST Framework 채팅 ViewSet. 인증, 직렬화, 비즈니스 로직 호출.
 
-**측정**:
-- 사용자 신고 ("이 정보가 틀렸어요" 피드백)
-- 자동 검증 (Price API와 LLM 응답 수치 비교)
+6. **`/apps/backend/apps/chats/consumers.py`**
+   Django Channels Consumer. SSE 스트리밍, 실시간 Claude 응답.
 
----
+7. **`/apps/backend/apps/users/models.py`** + **`/apps/backend/apps/chats/models.py`**
+   Django 모델 정의 (User, Chat, Message). Admin 자동 생성, 마이그레이션 기반.
 
-## 10. 보안 및 인증
+### 프론트엔드 (TypeScript)
 
-### 10.1 인증
+1. **`/apps/frontend-app/src/api/client.ts`**
+   OpenAPI 자동 생성 클라이언트 래퍼. Axios 인스턴스 + 쿠키 credentials + 에러 핸들링.
 
-- **Auth.js v5**: Google OAuth 2.0
-- **세션**: JWT (HttpOnly cookie)
-- **CSRF**: Next.js 기본 보호
+2. **`/apps/frontend-app/src/features/chat/hooks/useChatStream.ts`**
+   SSE 스트리밍 hook + TanStack Query. 실시간 채팅의 핵심.
 
-### 10.2 Rate Limiting
+3. **`/apps/frontend-app/src/stores/auth.ts`**
+   Zustand 인증 상태 (current user, session). 모든 기능에서 사용.
 
-```typescript
-// middleware.ts
+### 인프라
 
-import { Ratelimit } from "@upstash/ratelimit";
-import { Redis } from "@upstash/redis";
+1. **`/infrastructure/terraform/modules/ecs/main.tf`**
+   ECS Fargate 클러스터, 태스크 정의, ALB. 백엔드 배포의 핵심.
 
-const ratelimit = new Ratelimit({
-  redis: Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(10, "1 m"), // 분당 10회
-});
-
-export async function middleware(req: NextRequest) {
-  const ip = req.ip ?? "127.0.0.1";
-  const { success } = await ratelimit.limit(ip);
-
-  if (!success) {
-    return new Response("Too Many Requests", { status: 429 });
-  }
-
-  return NextResponse.next();
-}
-```
-
-### 10.3 데이터 보호
-
-- **PII 암호화**: 이메일, 이름 (AES-256)
-- **API Key 관리**: AWS Secrets Manager
-- **HTTPS Only**: CloudFront 강제
+2. **`/infrastructure/terraform/modules/rds/main.tf`**
+   PostgreSQL RDS 인스턴스, 보안 그룹, 파라미터 그룹. 데이터베이스 기반.
 
 ---
 
-## 부록
+## 11. 성공 기준
 
-### A. 참고 문서
+### 기술적 목표
+- ✅ 헥사고널 아키텍처 구현 (Ports/Adapters 패턴)
+- ✅ Django REST Framework OpenAPI 자동 문서화 (drf-spectacular)
+- ✅ TypeScript 클라이언트 자동 생성
+- ✅ Django Admin으로 데이터 관리 UI 제공
+- ✅ Claude 응답 시간 < 2초 (첫 토큰)
+- ✅ Hallucination 비율 < 1%
+- ✅ 감사 로그 100% 커버리지 (중요 작업)
 
-- [MVP Definition](../business/mvp-definition.md) - 8주 개발 계획
-- [Frontend Specification](frontend-spec.md) - Next.js 15 + Vite
-- [Infrastructure Specification](infrastructure-spec.md) - AWS 아키텍처
-- [Database Schema](database-schema.md) - Drizzle 상세
-- [Backend AI Guide](../ai-guides/backend-ai-guide.md) - Claude Code 개발 가이드
-
-### B. 변경 이력
-
-| 버전 | 날짜 | 변경 내용 | 작성자 |
-|-----|------|----------|--------|
-| 1.0 | 2025-12-17 | 초안 작성 | Sam |
+### MVP 목표 (8주)
+- ✅ Google OAuth 로그인
+- ✅ Wallet Buffett 채팅 (Multi-agent)
+- ✅ 실시간 시장 데이터 통합 (6개 자산)
+- ✅ 섀도우 포트폴리오 트래킹
+- ✅ 15분마다 시장 알림 (Discord + PWA)
+- ✅ 3개 프론트엔드 배포 (app, landing, bitcoin-fallen)
 
 ---
 
-**문서 버전**: 1.0
-**최종 수정일**: 2025년 12월 17일
-**다음 리뷰 예정**: 2026년 1월 1일 (Phase 1 완료 시)
+## 12. 최종 권장 사항
+
+### 핵심 결정 사항 ✅
+
+1. **Django + DRF**: 빠른 개발 속도 우선 (Admin, ORM, Allauth 내장)
+2. **Django ORM**: 성숙한 생태계, 마이그레이션 자동 생성
+3. **Django Channels**: SSE 스트리밍 지원 (Claude 실시간 응답)
+4. **Vite + React SPA**: Next.js 완전 제거 (완전 분리 아키텍처)
+5. **Turborepo 모노레포**: 공유 타입/컴포넌트, 빠른 반복
+6. **별도 감사 로그 테이블**: 유연성 + 비즈니스 로직 통합 가능
+
+### 타임라인 준수 전략
+
+- **Week 1-2**: 인프라 + 인증 (병렬 작업)
+- **Week 3-4**: 채팅 + AI (핵심 가치)
+- **Week 5-6**: 포트폴리오 (차별화 요소)
+- **Week 7-8**: 알림 + 배포 (완성도)
+
+### 리스크 관리
+
+- ⚠️ **헥사고널 오버엔지니어링**: MVP에서는 실용적 접근 (Event Sourcing, CQRS 연기)
+- ⚠️ **Django Channels 학습**: SSE 스트리밍 구현 1-2일 학습 필요 (문서 충분)
+- ⚠️ **모노레포 초기 설정**: Turborepo 설정에 1-2일 투자 필요
+- ✅ **빠른 반복**: Django Admin (데이터 관리 UI 즉시 제공) + DRF 자동 문서화
+- ✅ **성숙한 생태계**: Django 16년 역사, 수많은 패키지, Stack Overflow 자료 풍부
+
+---
+
+**이 계획은 2025년 12월 기준 최고의 팀들이 사용하는 Best Practice를 반영하며, 8주 MVP 타임라인을 유지하면서 완전한 헥사고널 아키텍처의 기반을 구축합니다.**

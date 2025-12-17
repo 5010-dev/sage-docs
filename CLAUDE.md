@@ -26,40 +26,48 @@ This is a **documentation-only repository** with markdown files organized by pur
 
 ## Key Architecture Decisions
 
-The project follows an **AI-Native development approach** with these core principles:
+The project follows an **AI-Native development approach** with **Hexagonal Architecture** (Ports & Adapters):
 
-### Backend Architecture
+### Backend Architecture (Django + DRF)
 
-- **Framework**: Next.js 15 API Routes (not microservices - monolithic for MVP)
-- **ORM**: Drizzle ORM for type-safe PostgreSQL access
+- **Framework**: Django 5.1+ + Django REST Framework (완전 분리 아키텍처)
+- **ORM**: Django ORM with PostgreSQL
+- **Architecture Pattern**: Hexagonal (Domain/Application/Infrastructure/Presentation layers)
 - **AI System**: Multi-agent orchestration with Claude 3.5 Sonnet/Haiku
   - **Manager Agent**: Sonnet 3.5 - Routes user intent
   - **Analyst Agent**: Haiku 3.5 - Fetches facts (price, news, sentiment)
   - **Persona Agent**: Sonnet 3.5 - Warren Buffett philosophy interpretation
   - **Risk Agent**: Sonnet 3.5 - Cross-validation, hallucination prevention
 - **Context Management**: Simple 20-message window (no RAG for MVP)
-- **Auth**: Auth.js v5 with Google OAuth
+- **Auth**: Django-Allauth with Google OAuth
+- **Streaming**: Django Channels for SSE (Server-Sent Events)
+- **Admin**: Django Admin for rapid data management (MVP accelerator)
 - **Performance targets**: 2 seconds to first token (streaming), 0.5s context load
 
-### Frontend Architecture
+### Frontend Architecture (Complete Separation)
 
-- **Main App**: Next.js 15 App Router + React 19 + Tailwind CSS 4
-- **Sites**: Vite + React + TypeScript (WhyBitcoinFallen.com, Sage.ai landing)
-- **State Management**: Zustand (lightweight, simple)
-- **Streaming**: Vercel AI SDK for SSE chat streaming
+- **Build Tool**: Vite 6 (all 3 frontend apps)
+- **Framework**: React 19 + TypeScript
+- **Apps**: Main App + Landing + WhyBitcoinFallen (모두 SPA)
+- **State Management**:
+  - Server State: TanStack Query (caching, real-time sync)
+  - UI State: Zustand (lightweight, simple)
+- **API Client**: Auto-generated from Django OpenAPI (drf-spectacular)
+- **Streaming**: EventSource (SSE) for Claude chat
 - **PWA**: Service Worker for push notifications + deep linking
 - **Performance targets**: <2s page load, 60 FPS UI
 
 ### Infrastructure Architecture
 
-- **Environment strategy**: dev + prod (no staging - same as ORE)
+- **Environment strategy**: dev + prod (no staging)
 - **Branch mapping**: dev branch → dev environment, main → prod
-- **Compute**: ECS Fargate (not Kubernetes - simpler for MVP)
+- **Backend**: ECS Fargate + Daphne (ASGI server for Django Channels)
+- **Frontend**: S3 + CloudFront (static hosting for 3 SPAs)
 - **Database**: PostgreSQL RDS (db.t3.micro for MVP)
 - **Cache**: Redis ElastiCache (cache.t3.micro for MVP)
-- **Storage**: S3 + CloudFront for static sites
 - **Serverless**: Lambda for market analysis (15-minute cron)
 - **Progressive scaling**: ECS → 10K users, then consider EKS if needed
+- **CI/CD**: GitHub Actions (separate pipelines for backend/frontend)
 
 ### Hallucination Prevention System
 
@@ -72,7 +80,53 @@ The project follows an **AI-Native development approach** with these core princi
 
 ## Common Development Commands
 
-This is a documentation repository with no build system. Common operations:
+### Backend (Django)
+
+```bash
+# Development server
+python manage.py runserver
+
+# Database migrations
+python manage.py makemigrations     # Generate migration files
+python manage.py migrate            # Apply migrations
+python manage.py showmigrations     # Show migration status
+
+# Admin & User management
+python manage.py createsuperuser    # Create admin account
+python manage.py changepassword <username>
+
+# Django shell
+python manage.py shell              # Python shell with Django context
+python manage.py shell_plus         # Enhanced shell (if django-extensions installed)
+
+# Static files
+python manage.py collectstatic      # Collect static files for production
+
+# Testing
+python manage.py test               # Run tests
+pytest                              # If using pytest-django
+
+# Django Channels (SSE/WebSocket)
+daphne config.asgi:application      # Run ASGI server
+```
+
+### Frontend (Vite + React)
+
+```bash
+# Development
+cd apps/frontend-app
+pnpm dev                            # Start dev server
+
+# Build
+pnpm build                          # Production build
+pnpm preview                        # Preview production build
+
+# Type generation from Django OpenAPI
+cd apps/backend
+python manage.py spectacular --file schema.yml
+cd ../frontend-app
+npx openapi-typescript-codegen --input ../backend/schema.yml --output ./src/api
+```
 
 ### Documentation Management
 
@@ -85,19 +139,6 @@ markdownlint docs/**/*.md
 
 # Find TODO items
 grep -r "TODO\|FIXME" docs/ --include="*.md"
-```
-
-### Content Validation
-
-```bash
-# Search for broken internal links
-grep -r "](docs/" docs/ --include="*.md"
-
-# Check for outdated version references
-grep -r "Version:" docs/ --include="*.md"
-
-# Verify all code examples have language tags
-grep -r '```$' docs/ --include="*.md"
 ```
 
 ## AI Development Context
@@ -144,8 +185,9 @@ Documentation references these external systems:
 
 ### AI & Infrastructure
 - **Claude API**: Anthropic Claude 3.5 Sonnet/Haiku (no other LLMs for MVP)
+- **Anthropic Python SDK**: Direct integration for multi-agent orchestration
+- **Django Channels**: SSE streaming for real-time Claude responses
 - **AWS Infrastructure**: ECS Fargate, RDS PostgreSQL, ElastiCache Redis, Lambda, S3/CloudFront
-- **Vercel AI SDK**: Streaming abstraction (not Vercel hosting - AWS only)
 
 ### Market Data
 - **CoinGecko API**: Price data for 6 cryptocurrencies (BTC, ETH, SOL, BNB, DOGE, XRP)
@@ -159,26 +201,32 @@ Documentation references these external systems:
   - Caching: Redis 30-minute TTL
 
 ### Auth & Notifications
-- **Google OAuth**: Auth.js integration (no email/password for MVP)
+- **Google OAuth**: Django-Allauth integration (no email/password for MVP)
 - **Discord Webhooks**: #market-alerts channel for community notifications
 - **Web Push API**: PWA push notifications (VAPID protocol)
 
 ## Important Notes
 
 - This is purely documentation - no executable code in this repository
-- All architectural decisions prioritize **simplicity** over **scalability** for MVP
-  - Monolithic Next.js (not microservices)
-  - 20-message context window (no RAG)
+- All architectural decisions prioritize **rapid MVP development** with **clean architecture**:
+  - Complete backend/frontend separation (Django + React SPA)
+  - Hexagonal architecture (Ports & Adapters) for maintainability
+  - Django Admin for 2x faster data management
+  - 20-message context window (no RAG for MVP)
   - ECS Fargate (not EKS)
 - Performance targets are **hard requirements**, not aspirational:
   - 2 seconds to first token
   - <1% hallucination rate
   - 0.5 seconds context load
-- The **8-week MVP timeline** is aggressive but achievable with Claude Code:
-  - Week 1-2: 1 developer can set up full infrastructure
-  - Week 3-4: Claude integration takes ~3 days with AI assistance
-  - Week 5-6: Portfolio tracking is straightforward CRUD
-  - Week 7-8: PWA push is well-documented, Lambda cron is simple
+- The **8-week MVP timeline** is achievable with Django's batteries-included approach:
+  - Week 1-2: Django Admin accelerates backend setup
+  - Week 3-4: Python AI ecosystem (Anthropic SDK) integration is straightforward
+  - Week 5-6: Django ORM makes CRUD operations simple
+  - Week 7-8: Django Channels for SSE, Lambda for market alerts
+- **Trade-offs accepted for speed**:
+  - Type safety: Python dynamic typing vs TypeScript (mitigated with mypy + Pydantic)
+  - Deployment: Separate backend/frontend pipelines (vs Next.js single deploy)
+  - Admin dependency: Django Admin lock-in (but 2x faster initial development)
 - **Dual Hook GTM** is critical:
   - WhyBitcoinFallen.com must launch Week 2
   - Sage.ai landing must convert at 10%+
@@ -190,18 +238,20 @@ For developers familiar with ORE documentation structure:
 | Aspect | Project ORE | Sage.ai |
 |--------|-------------|---------|
 | **Domain** | AR location-based game | AI investment mentor |
-| **Backend** | Rust + Go microservices | Next.js API Routes |
-| **Frontend** | Unity AR | Next.js + Vite |
+| **Backend** | Rust + Go microservices | Django + DRF (Python) |
+| **Frontend** | Unity AR | Vite + React (SPA) |
+| **Architecture** | Microservices (8 services) | Hexagonal monolith (clean separation) |
 | **AI** | None (game logic) | Claude 3.5 multi-agent |
 | **Timeline** | 16 weeks | 8 weeks |
 | **Scale Target** | 100K users | 10K users |
 | **Special Features** | Genesis 1000 | None (equal access) |
-| **Complexity** | High (8 services) | Low (monolith) |
+| **Complexity** | High (distributed) | Medium (monolith + hexagonal) |
 
-**Philosophy**: Sage.ai prioritizes **speed to market** and **AI quality** over **architectural elegance**.
+**Philosophy**: Sage.ai prioritizes **rapid MVP** with **clean architecture foundation** for future scaling.
 
 ---
 
 **Last Updated**: 2025년 12월 17일
-**Version**: 1.0
+**Version**: 2.0 - Django Migration
+**Architecture**: Django + DRF + Hexagonal + Complete Separation
 **Maintainer**: Sam (dev@5010.tech)
