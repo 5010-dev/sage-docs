@@ -19,7 +19,7 @@ This repository (`sage-docs`) contains all technical specifications, business do
 This is a **documentation-only repository** with markdown files organized by purpose:
 
 - `docs/business/` - Strategy documents, MVP definition, branding guide, market analysis
-- `docs/technical/` - System architecture for backend (Next.js), frontend (React), infrastructure (AWS)
+- `docs/technical/` - System architecture for backend (Django), frontend (React), infrastructure (AWS)
 - `docs/product/` - Product specifications, user journey, persona design, UX guidelines
 - `docs/operations/` - GTM strategy, viral campaign, community management, live operations
 - `docs/ai-guides/` - AI-native development patterns for Claude Code/Cursor
@@ -225,7 +225,7 @@ Documentation references these external systems:
   - Week 7-8: Django Channels for SSE, Lambda for market alerts
 - **Trade-offs accepted for speed**:
   - Type safety: Python dynamic typing vs TypeScript (mitigated with mypy + Pydantic)
-  - Deployment: Separate backend/frontend pipelines (vs Next.js single deploy)
+  - Deployment: Separate backend/frontend pipelines (ECS Fargate + S3/CloudFront)
   - Admin dependency: Django Admin lock-in (but 2x faster initial development)
 - **Dual Hook GTM** is critical:
   - WhyBitcoinFallen.com must launch Week 2
