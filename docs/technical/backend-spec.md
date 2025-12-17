@@ -525,7 +525,7 @@ CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "config.asgi:application"]
 - **데이터베이스**: RDS PostgreSQL 16+ (db.t3.micro)
 - **캐시**: ElastiCache Redis 7.x (cache.t3.micro)
 - **프론트엔드**: S3 + CloudFront (정적 호스팅)
-- **Lambda**: 15분마다 시장 분석 (EventBridge cron)
+- **스케줄링**: Celery Beat (15분마다 시장 분석, Django 내장)
 
 ### 6.3 CI/CD: GitHub Actions
 
@@ -605,13 +605,15 @@ jobs:
 - [ ] "섀도우에 추가" 버튼
 - [ ] 성능 차트 (Recharts)
 
-### Week 7-8: 알림 + 배포
-- [ ] Lambda 시장 분석기 (15분 cron)
+### Week 7-8: 능동적 분석 + 배포
+- [ ] Celery + Redis 설정 (비동기 작업)
+- [ ] Celery Beat 스케줄러 (15분 자동 시장 분석)
+- [ ] 시장 분석 태스크 구현 (CoinGecko, CryptoPanic, Fear & Greed)
 - [ ] Discord webhook 통합
 - [ ] PWA push notifications
 - [ ] Deep linking (`/chat/new?context=market_alert`)
-- [ ] Docker 빌드 최적화
-- [ ] ECS Fargate 배포
+- [ ] Docker 빌드 최적화 (Celery worker 컨테이너 추가)
+- [ ] ECS Fargate 배포 (Django + Celery worker)
 - [ ] S3 + CloudFront 프론트엔드 배포
 - [ ] CI/CD 파이프라인 (GitHub Actions)
 - [ ] 통합 테스트

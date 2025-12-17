@@ -76,7 +76,8 @@
 | **스트리밍** | Django Channels (SSE) |
 | **Database** | PostgreSQL (RDS) + Redis (ElastiCache) |
 | **감사 로그** | 별도 audit_log 테이블 (모든 중요 작업 추적) |
-| **Infrastructure** | ECS Fargate + S3/CloudFront + Lambda |
+| **Infrastructure** | ECS Fargate + S3/CloudFront |
+| **비동기 작업** | Celery + Redis (15분 자동 시장 분석) |
 | **API 문서** | drf-spectacular (OpenAPI 자동 생성) |
 
 ### AI 에이전트 시스템
@@ -127,10 +128,10 @@
 
 ### Phase 4: 능동적 분석 + 마무리 (Week 7-8)
 
-- Lambda 15분 자동 시장 분석
+- Celery Beat 15분 자동 시장 분석
 - PWA Push + Discord 알림
 - 딥링크 시스템 (/chat/new?context=xxx)
-- QA + ECS Fargate 배포
+- QA + ECS Fargate 배포 (Django + Celery worker)
 - 베타 런칭
 
 ---
