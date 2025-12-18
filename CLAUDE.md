@@ -26,13 +26,13 @@ This is a **documentation-only repository** with markdown files organized by pur
 
 ## Key Architecture Decisions
 
-The project follows an **AI-Native development approach** with **Hexagonal Architecture** (Ports & Adapters):
+The project follows an **AI-Native development approach** with **Clean Architecture Lite**:
 
 ### Backend Architecture (Django + DRF)
 
-- **Framework**: Django 5.1+ + Django REST Framework (완전 분리 아키텍처)
+- **Framework**: Django 5.1 + Django REST Framework (완전 분리 아키텍처)
 - **ORM**: Django ORM with PostgreSQL
-- **Architecture Pattern**: Hexagonal (Domain/Application/Infrastructure/Presentation layers)
+- **Architecture Pattern**: Clean Architecture Lite (Service Layer + Domain + Infrastructure)
 - **AI System**: Multi-agent orchestration with Claude 3.5 Sonnet/Haiku
   - **Manager Agent**: Sonnet 3.5 - Routes user intent
   - **Analyst Agent**: Haiku 3.5 - Fetches facts (price, news, sentiment)
@@ -46,8 +46,8 @@ The project follows an **AI-Native development approach** with **Hexagonal Archi
 
 ### Frontend Architecture (Complete Separation)
 
-- **Build Tool**: Vite 6 (all 3 frontend apps)
-- **Framework**: React 19 + TypeScript
+- **Build Tool**: Vite 5 (all 3 frontend apps)
+- **Framework**: React 18.3 + TypeScript
 - **Apps**: Main App + Landing + WhyBitcoinFallen (모두 SPA)
 - **State Management**:
   - Server State: TanStack Query (caching, real-time sync)
@@ -210,7 +210,7 @@ Documentation references these external systems:
 - This is purely documentation - no executable code in this repository
 - All architectural decisions prioritize **rapid MVP development** with **clean architecture**:
   - Complete backend/frontend separation (Django + React SPA)
-  - Hexagonal architecture (Ports & Adapters) for maintainability
+  - Clean Architecture Lite (Service Layer + Domain) for maintainability
   - Django Admin for 2x faster data management
   - 20-message context window (no RAG for MVP)
   - ECS Fargate (not EKS)
@@ -239,8 +239,8 @@ For developers familiar with ORE documentation structure:
 |--------|-------------|---------|
 | **Domain** | AR location-based game | AI investment mentor |
 | **Backend** | Rust + Go microservices | Django + DRF (Python) |
-| **Frontend** | Unity AR | Vite + React (SPA) |
-| **Architecture** | Microservices (8 services) | Hexagonal monolith (clean separation) |
+| **Frontend** | Unity AR | React + Vite (SPA) |
+| **Architecture** | Microservices (8 services) | Clean Lite monolith |
 | **AI** | None (game logic) | Claude 3.5 multi-agent |
 | **Timeline** | 16 weeks | 8 weeks |
 | **Scale Target** | 100K users | 10K users |
@@ -252,6 +252,6 @@ For developers familiar with ORE documentation structure:
 ---
 
 **Last Updated**: 2025년 12월 17일
-**Version**: 2.0 - Django Migration
-**Architecture**: Django + DRF + Hexagonal + Complete Separation
+**Version**: 2.1 - Django + Clean Lite
+**Architecture**: Django + DRF + Clean Architecture Lite + Complete Separation
 **Maintainer**: Sam (dev@5010.tech)

@@ -757,7 +757,7 @@ Discord 알림
 
 |월|단계|마일스톤 및 핵심 과업|
 |---|---|---|
-|1월|MVP 개발|- WhyBitcoinFallen.com 개발 및 런칭 (Next.js Edge, 한/영)<br>- Sage.ai 랜딩 페이지(Waitlist) 개발<br>- Claude API 연동 및 Manager/Analyst 에이전트 구현<br>- 쉐도우 포트폴리오 엔진 개발|
+|1월|MVP 개발|- WhyBitcoinFallen.com 개발 및 런칭 (Vite + React, 한/영)<br>- Sage.ai 랜딩 페이지(Waitlist) 개발<br>- Claude API 연동 및 Manager/Analyst 에이전트 구현<br>- 쉐도우 포트폴리오 엔진 개발|
 |2월|베타 테스트|- 클로즈드 베타 테스트(CBT) 진행<br>- 환각(Hallucination) 테스트 및 개선<br>- Discord 커뮤니티 개설 및 운영 시작<br>- 멀티 에이전트 오케스트레이션 고도화|
 |3월|초기 마케팅|- 퍼블릭 베타 오픈 (Waitlist 우선 초대)<br>- 쉐도우 포트폴리오 성과 마케팅 시작<br>- 능동적 알림 시스템 구현<br>- 초기 사용자 피드백 기반 UX 개선|
 

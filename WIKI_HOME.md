@@ -55,8 +55,8 @@ _"공포와 탐욕 사이에 지혜가 존재합니다."_
 
 ### 🔧 Technical Architecture
 
-- [Backend Specification](docs/technical/backend-spec.md) - Django + DRF + 헥사고널 아키텍처 + Claude 에이전트
-- [Frontend Specification](docs/technical/frontend-spec.md) - Vite 6 + React 19 (완전 분리 SPA)
+- [Backend Specification](docs/technical/backend-spec.md) - Django + DRF + Clean Architecture Lite + Claude 에이전트
+- [Frontend Specification](docs/technical/frontend-spec.md) - React 18.3 + Vite 5 (완전 분리 SPA)
 - [Infrastructure Design](docs/technical/infrastructure-spec.md) - AWS ECS Fargate, RDS, Redis
 - [Database Schema](docs/technical/database-schema.md) - Django ORM 스키마
 - [API Documentation Strategy](docs/technical/api-documentation-strategy.md) - REST API 명세 (drf-spectacular)
