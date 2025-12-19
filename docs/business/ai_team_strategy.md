@@ -29,11 +29,10 @@
 | 도구 | 용도 | 모델 | 비용 |
 |------|------|------|------|
 | **Claude Code** | 코드 생성, 리팩토링, 디버깅 | Sonnet 4 | $20/월 |
-| **Cursor** | IDE 통합 AI 코딩 | Claude | $20/월 |
 | **GitHub Copilot** | 코드 리뷰, 실시간 제안 | Codex | $10/월 |
 | **Figma + MCP** | UI/UX 디자인 | - | Figma 플랜 |
 
-**총 개발자당 비용**: $50/월 (10배 생산성 증가 대비 극히 저렴)
+**총 개발자당 비용**: $30/월 (10배 생산성 증가 대비 극히 저렴)
 
 ### AI 모델 선택 기준
 
@@ -69,23 +68,6 @@
 ```
 
 ### 2. 개발 단계
-
-#### Cursor 워크플로우
-
-**Step 1: 파일 생성**
-```
-Cmd + K → "Create a NestJS controller for shadow portfolio management"
-```
-
-**Step 2: 테스트 작성**
-```
-Cmd + K → "Write Jest tests for this controller with 80%+ coverage"
-```
-
-**Step 3: 리팩토링**
-```
-Cmd + L → "Refactor this code to follow Clean Architecture principles"
-```
 
 #### Claude Code 워크플로우
 
@@ -196,18 +178,16 @@ Provide specific line numbers and suggestions."
 ### 역할별 AI 활용
 
 #### Backend Developer
-- **Primary**: Claude Code (아키텍처, 복잡한 로직)
-- **Secondary**: Cursor (빠른 CRUD 생성)
+- **Primary**: Claude Code (아키텍처, 복잡한 로직, CRUD 생성)
 - **활용**: Prisma schema 생성, API 엔드포인트 구현, 멀티 에이전트 시스템
 
 #### Frontend Developer
-- **Primary**: v0.dev (UI 컴포넌트), Cursor (React 코드)
-- **Secondary**: Claude Code (복잡한 상태 관리)
+- **Primary**: Claude Code (React 코드, 상태 관리)
+- **Design**: Figma + MCP (사용자가 직접 디자인)
 - **활용**: shadcn/ui 커스터마이징, TanStack Query 설정, 채팅 UI 구현
 
 #### DevOps / Infrastructure
 - **Primary**: Claude Code (Terraform, GitHub Actions, Shell scripts)
-- **Secondary**: Cursor (빠른 스크립트 생성)
 - **활용**: ECS Fargate 배포, CI/CD 파이프라인, 모니터링 설정
 
 #### AI Engineer
@@ -267,7 +247,7 @@ async createTrade(userId: string, createTradeDto: CreateTradeDto) {
 
 | 작업 | 비용 | 추천 모델 |
 |------|------|----------|
-| **간단한 CRUD** | 저 | Cursor (Claude Haiku) |
+| **간단한 CRUD** | 저 | Claude Sonnet 4 |
 | **중간 복잡도** | 중 | Claude Sonnet 4 |
 | **복잡한 아키텍처** | 고 | Claude Sonnet 4 (깊은 사고 모드) |
 
@@ -294,9 +274,9 @@ async createTrade(userId: string, createTradeDto: CreateTradeDto) {
 | 항목 | 인원 | 단가 | 총액 |
 |------|------|------|------|
 | **Claude Code** | 5명 | $20 | $100 |
-| **Cursor** | 5명 | $20 | $100 |
+| **GitHub Copilot** | 5명 | $10 | $50 |
 | **Anthropic API** (개발) | - | - | $100 |
-| **Total** | - | - | **$300/월** |
+| **Total** | - | - | **$250/월** |
 
 **생산성 증가 대비 ROI**: 10배 이상
 
@@ -345,7 +325,7 @@ async createTrade(userId: string, createTradeDto: CreateTradeDto) {
 
 #### Level 1: Beginner (0-1개월)
 - [ ] Claude Code 기본 사용법 숙지
-- [ ] Cursor 단축키 암기
+- [ ] GitHub Copilot 설정 및 활용
 - [ ] 간단한 코드 생성 가능
 
 #### Level 2: Intermediate (1-3개월)
@@ -425,12 +405,12 @@ async createTrade(userId: string, createTradeDto: CreateTradeDto) {
 ### 사례 2: 섀도우 포트폴리오 기능
 
 **AI 활용**:
-1. Claude에게 PRD 작성 요청 → 2시간 → 30분
-2. Cursor로 백엔드 CRUD 생성 → 1일 → 2시간
-3. v0.dev로 UI 컴포넌트 생성 → 1일 → 1시간
-4. Claude로 테스트 자동 생성 → 4시간 → 1시간
+1. Claude Code로 PRD 작성 요청 → 2시간 → 30분
+2. Claude Code로 백엔드 CRUD 생성 → 1일 → 2시간
+3. Figma로 UI 디자인 + Claude Code로 구현 → 1일 → 3시간
+4. Claude Code로 테스트 자동 생성 → 4시간 → 1시간
 
-**총 절감 시간**: 2.5일 → 4.5시간 (**5배 빠름**)
+**총 절감 시간**: 2.5일 → 6.5시간 (**3배 빠름**)
 
 ---
 
@@ -465,8 +445,8 @@ _"Between the zeros and ones"_
 ### A. AI Tool Resources
 
 - [Claude Code Documentation](https://docs.anthropic.com/claude-code)
-- [Cursor AI Guide](https://cursor.sh/docs)
 - [GitHub Copilot Best Practices](https://github.com/features/copilot)
+- [Figma MCP Documentation](https://www.figma.com/)
 
 ### B. Prompt Library
 
