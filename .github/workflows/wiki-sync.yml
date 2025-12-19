@@ -98,16 +98,6 @@ jobs:
             fi
           done
 
-          echo "📁 Copying game-design documents..."
-          for file in docs/game-design/*.md; do
-            if [ -f "$file" ]; then
-              filename=$(basename "$file" .md)
-              newname=$(echo "$filename" | sed 's/_/-/g' | sed 's/\b\(.\)/\u\1/g')
-              echo "  - $filename → $newname"
-              cp "$file" "wiki-repo/$newname.md"
-            fi
-          done
-
           echo "📁 Copying operations documents..."
           for file in docs/operations/*.md; do
             if [ -f "$file" ]; then
@@ -147,12 +137,6 @@ jobs:
           - [Frontend Spec](Frontend-Spec)
           - [Infrastructure Spec](Infrastructure-Spec)
           - [API Documentation Strategy](Api-Documentation-Strategy)
-
-          ## 🎮 Game Design
-          - [Gameplay Spec](Game-Play-Spec)
-          - [Player Journey Map](Player-Journey-Map)
-          - [Game Worldview](Game-Worldview)
-          - [UX Guide](Ux-Guide)
 
           ## 🚀 Operations
           - [Operations Roadmap](Operations-Roadmap)
