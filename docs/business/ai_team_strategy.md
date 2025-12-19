@@ -29,19 +29,18 @@
 | 도구 | 용도 | 모델 | 비용 |
 |------|------|------|------|
 | **Claude Code** | 코드 생성, 리팩토링, 디버깅 | Sonnet 4 | $20/월 |
-| **Cursor** | IDE 통합 AI 코딩 | GPT-4 / Claude | $20/월 |
-| **GitHub Copilot** | 실시간 코드 제안 | Codex | $10/월 |
-| **v0.dev** | UI 컴포넌트 생성 | GPT-4V | Free (Beta) |
+| **Cursor** | IDE 통합 AI 코딩 | Claude | $20/월 |
+| **v0.dev** | UI 컴포넌트 생성 (선택) | - | Free (Beta) |
 
-**총 개발자당 비용**: $50/월 (10배 생산성 증가 대비 극히 저렴)
+**총 개발자당 비용**: $40/월 (10배 생산성 증가 대비 극히 저렴)
 
 ### AI 모델 선택 기준
 
 | 작업 유형 | 추천 모델 | 이유 |
 |----------|----------|------|
 | **복잡한 아키텍처 설계** | Claude Sonnet 4 | 긴 컨텍스트, 뛰어난 추론 |
-| **빠른 코드 생성** | GPT-4 Turbo | 속도, 범용성 |
-| **UI/UX 디자인** | GPT-4V / Midjourney | 시각적 이해 |
+| **빠른 코드 생성** | Claude Sonnet 4 | 속도, 정확성 |
+| **UI/UX 디자인** | v0.dev (선택) | 빠른 프로토타이핑 |
 | **코드 리뷰** | Claude Sonnet 4 | 상세한 분석 |
 
 ---
@@ -206,8 +205,8 @@ Provide specific line numbers and suggestions."
 - **활용**: shadcn/ui 커스터마이징, TanStack Query 설정, 채팅 UI 구현
 
 #### DevOps / Infrastructure
-- **Primary**: Claude Code (Terraform, GitHub Actions)
-- **Secondary**: ChatGPT (빠른 스크립트 생성)
+- **Primary**: Claude Code (Terraform, GitHub Actions, Shell scripts)
+- **Secondary**: Cursor (빠른 스크립트 생성)
 - **활용**: ECS Fargate 배포, CI/CD 파이프라인, 모니터링 설정
 
 #### AI Engineer
@@ -267,9 +266,9 @@ async createTrade(userId: string, createTradeDto: CreateTradeDto) {
 
 | 작업 | 비용 | 추천 모델 |
 |------|------|----------|
-| **간단한 CRUD** | 저 | GitHub Copilot (무제한) |
-| **중간 복잡도** | 중 | GPT-4 Turbo |
-| **복잡한 아키텍처** | 고 | Claude Sonnet 4 (필요시만) |
+| **간단한 CRUD** | 저 | Cursor (Claude Haiku) |
+| **중간 복잡도** | 중 | Claude Sonnet 4 |
+| **복잡한 아키텍처** | 고 | Claude Sonnet 4 (깊은 사고 모드) |
 
 #### 2. 프롬프트 효율화
 
@@ -295,9 +294,8 @@ async createTrade(userId: string, createTradeDto: CreateTradeDto) {
 |------|------|------|------|
 | **Claude Code** | 5명 | $20 | $100 |
 | **Cursor** | 5명 | $20 | $100 |
-| **GitHub Copilot** | 5명 | $10 | $50 |
 | **Anthropic API** (개발) | - | - | $100 |
-| **Total** | - | - | **$350/월** |
+| **Total** | - | - | **$300/월** |
 
 **생산성 증가 대비 ROI**: 10배 이상
 

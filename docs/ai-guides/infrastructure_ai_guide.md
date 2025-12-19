@@ -12,8 +12,7 @@
 ### Tools
 
 - **Claude Code**: Terraform, GitHub Actions, Shell scripts
-- **ChatGPT**: Quick script generation
-- **Cursor**: IaC (Infrastructure as Code)
+- **Cursor**: IaC (Infrastructure as Code), 빠른 스크립트 생성
 
 ---
 

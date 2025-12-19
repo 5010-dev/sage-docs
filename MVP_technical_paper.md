@@ -48,8 +48,9 @@
 
 | 컴포넌트 | 기술 | 용도 |
 |---------|------|------|
-| 메인 에이전트 | Claude Sonnet 4 | 웰렛 버핏 응답 생성, 복잡한 분석 |
-| 보조 에이전트 | Claude Haiku 4 | 라우팅, 팩트체크, Memory 추출 |
+| 개발 도구 | Claude Code (Sonnet 4) | 코드 작성, 아키텍처 설계, 디버깅 |
+| 프로덕션 - 메인 | Claude Sonnet 4 | 월렛 버핏 응답 생성 (Persona Agent) |
+| 프로덕션 - 보조 | Claude Haiku 4 | Manager, Analyst, Risk Agent |
 
 ---
 
