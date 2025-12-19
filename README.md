@@ -4,8 +4,8 @@
 
 > **"모든 개인 투자자에게 월가 수준의 AI 멘토를"**
 
-[![MVP Development](https://img.shields.io/badge/status-8%EC%A3%BC%20MVP%20%EA%B0%9C%EB%B0%9C-orange)](https://github.com/sage-ai/sage-platform)
-[![Version](https://img.shields.io/badge/version-3.1-blue)]()
+[![MVP Development](https://img.shields.io/badge/status-3%EA%B0%9C%EC%9B%94%20MVP%20%EA%B0%9C%EB%B0%9C-orange)](https://github.com/sage-ai/sage-platform)
+[![Version](https://img.shields.io/badge/version-4.0-blue)]()
 [![License](https://img.shields.io/badge/license-Proprietary-red)](LICENSE)
 
 ---
@@ -17,7 +17,7 @@
 ### 3가지 핵심 기능
 
 1. **월렛 버핏과의 대화**
-   - Claude 3.5 기반 실시간 AI 멘토링
+   - Claude Sonnet 4 기반 실시간 AI 멘토링
    - 대화를 통해 자연스럽게 투자 성향 파악
    - 시장 데이터 + 투자 철학 기반 통찰 제공
 
@@ -43,8 +43,10 @@
 |------|------|------|
 | **[WIKI_HOME.md](WIKI_HOME.md)** | 전체 문서 인덱스 | 모든 팀원 |
 | **[CLAUDE.md](CLAUDE.md)** | AI 개발 가이드 (Claude Code) | 개발자 |
-| **[01-SAGE-overview-kr.md](01-SAGE-overview-kr.md)** | 사업 기획서 (v2.2) | 경영진, 투자자 |
-| **[06-MVP-Spec-ko.md](06-MVP-Spec-ko.md)** | MVP 개발 스펙 (8주) | 개발팀 |
+| **[MVP_technical_paper.md](MVP_technical_paper.md)** | MVP 기술 스택 명세 | 개발팀 |
+| **[Business Plan](docs/business/business_plan.md)** | 비즈니스 플랜 | 경영진, 투자자 |
+| **[MVP Definition](docs/business/mvp_definition.md)** | MVP 정의 및 범위 | 전체 팀 |
+| **[Branding Guide](docs/business/branding_guide.md)** | 브랜드 가이드라인 | 마케팅, 디자인 |
 
 ### 문서 디렉토리
 
@@ -79,31 +81,32 @@
 
 | 컴포넌트 | 기술 스택 |
 |----------|-----------|
-| **백엔드** | Django 5.1 + Django REST Framework |
+| **백엔드** | Nest.js 10.x (TypeScript 네이티브, 모듈러 구조) |
 | **프론트엔드** | React 18.3 + Vite 5 + TypeScript (완전 분리 SPA) |
-| **아키텍처** | Clean Architecture Lite (Service Layer + Domain) |
-| **ORM** | Django ORM (PostgreSQL) |
-| **인증** | Django-Allauth (Google OAuth) |
-| **AI** | Claude 3.5 Sonnet + Haiku (Anthropic Python SDK) |
-| **실시간** | Django Channels (SSE) |
-| **Database** | PostgreSQL (RDS) + Redis (ElastiCache) |
-| **감사 로그** | 별도 audit_log 테이블 (모든 중요 작업 추적) |
+| **아키텍처** | Layered + Domain 분리 (Clean Lite) |
+| **ORM** | Prisma 5.x (타입 안정성, 직관적 마이그레이션) |
+| **인증** | Auth.js (@auth/core) with Google OAuth |
+| **AI** | Claude Sonnet 4 + Haiku 4 (@anthropic-ai/sdk) |
+| **실시간** | Nest.js 내장 SSE (Server-Sent Events) |
+| **Database** | PostgreSQL 16 (RDS) + Redis 7.x (ElastiCache) |
+| **상태 관리** | Zustand 4.x (클라이언트) + TanStack Query 5.x (서버) |
 | **Infrastructure** | ECS Fargate + S3/CloudFront |
-| **비동기 작업** | Celery + Redis (15분 자동 시장 분석) |
-| **API 문서** | drf-spectacular (OpenAPI 자동 생성) |
+| **비동기 작업** | BullMQ 5.x + Redis (Memory 추출, 알림 발송) |
+| **스케줄링** | @nestjs/schedule (15분 가격 폴링) |
+| **모니터링** | Sentry + CloudWatch + OpenTelemetry |
 
 ### AI 에이전트 시스템
 
 ```
 [사용자 질문]
     ↓
-[Manager Agent] - 의도 파악 및 라우팅
+[Manager Agent] - 의도 파악 및 라우팅 (Haiku 4)
     ↓
-[Analyst Agent] - 뉴스/가격 API로 Fact 수집
+[Analyst Agent] - 뉴스/가격 API로 Fact 수집 (Haiku 4)
     ↓
-[Persona Agent] - 월렛 버핏이 철학 기반 해석
+[Persona Agent] - 월렛 버핏이 철학 기반 해석 (Sonnet 4)
     ↓
-[Risk Agent] - 오류/편향 검증
+[Risk Agent] - 오류/편향 검증 (Haiku 4)
     ↓
 [최종 응답]
 ```
@@ -116,34 +119,30 @@
 
 ---
 
-## 8주 MVP 로드맵
+## 3개월 MVP 로드맵
 
-### Phase 1: 기반 구축 (Week 1-2)
+### Month 1: 기반 구축
 
 - 프로젝트 셋업 + AWS 인프라
-- Django-Allauth 인증 (Google OAuth)
+- Auth.js 인증 (Google OAuth)
 - WhyBitcoinFallen.com 개발 (Vite + React)
 - Sage.ai 랜딩 페이지 개발
 
-### Phase 2: 핵심 채팅 (Week 3-4)
+### Month 2: 핵심 채팅 & 포트폴리오
 
-- Claude API 연동 + Django Channels SSE 스트리밍
+- Claude API 연동 + Nest.js SSE 스트리밍
 - 월렛 버핏 페르소나 구현
-- 시장 데이터 연동 (CoinGecko, CryptoPanic)
+- 시장 데이터 연동 (CoinGecko, Alternative.me)
 - 유저 프로필 자동 추론
-
-### Phase 3: 포트폴리오 + 분석 (Week 5-6)
-
 - 섀도우 포트폴리오 시스템
-- AI 시그널 + [담아보기] 기능
-- 뉴스 + Fear & Greed 통합
 
-### Phase 4: 능동적 분석 + 마무리 (Week 7-8)
+### Month 3: 능동적 분석 & 마무리
 
-- Celery Beat 15분 자동 시장 분석
+- BullMQ 기반 Memory 추출/압축
+- @nestjs/schedule 15분 자동 시장 분석
 - PWA Push + Discord 알림
 - 딥링크 시스템 (/chat/new?context=xxx)
-- QA + ECS Fargate 배포 (Django + Celery worker)
+- QA + ECS Fargate 배포
 - 베타 런칭
 
 ---
@@ -224,15 +223,17 @@
 
 ### 개발팀을 위해
 
-1. **[06-MVP-Spec-ko.md](06-MVP-Spec-ko.md)** 읽기
-2. 현재 주차 계획 확인
-3. 기술 스택 및 폴더 구조 숙지
+1. **[MVP_technical_paper.md](MVP_technical_paper.md)** - 기술 스택 명세
+2. **[06-MVP-Spec-ko.md](06-MVP-Spec-ko.md)** - MVP 개발 스펙
+3. 현재 월 계획 확인
+4. 기술 스택 및 폴더 구조 숙지
 
 ### AI-Native Development
 
-- Claude 3.5 Sonnet: 메인 대화, Manager/Persona/Risk Agent
-- Claude 3.5 Haiku: 알림 요약, 바이럴 AI 코멘트
-- Anthropic Python SDK: 직접 통합
+- Claude Sonnet 4: 메인 대화, Persona Agent
+- Claude Haiku 4: 라우팅, 팩트체크, Memory 추출
+- @anthropic-ai/sdk: TypeScript 직접 통합
+- Nest.js: 멀티 에이전트 병렬 처리
 
 ---
 
@@ -266,8 +267,8 @@
 
 ## MVP 성공 기준
 
-| 지표 | 목표 (8주 후) |
-|------|---------------|
+| 지표 | 목표 (3개월 후) |
+|------|----------------|
 | **베타 테스터** | 10-20명 |
 | **WhyBitcoinFallen 방문자** | 일 1,000+ |
 | **Sage.ai MAU** | 500+ |
@@ -278,7 +279,7 @@
 
 _"자네, 시장이 공포에 질렸을 때가 바로 기회일세."_ - 월렛 버핏
 
-**Built with**: Django 5.1 + DRF, React 18.3 + Vite 5, Tailwind CSS 4, Claude 3.5 Sonnet & Haiku
-**Architecture**: Clean Architecture Lite, Complete Backend/Frontend Separation
-**Target**: 8주 MVP 완성, 2026년 MAU 10K+
-**Version**: 3.1 (2025년 12월 17일) - Clean Lite + Stable Versions
+**Built with**: Nest.js 10.x + Prisma 5.x, React 18.3 + Vite 5, Tailwind CSS 3.x, Claude Sonnet 4 & Haiku 4
+**Architecture**: Layered + Domain (Clean Lite), TypeScript Fullstack
+**Target**: 3개월 MVP 완성, 2026년 MAU 10K+
+**Version**: 4.0 (2025년 12월 19일) - Nest.js + Prisma Stack
