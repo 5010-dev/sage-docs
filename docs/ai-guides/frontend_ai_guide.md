@@ -1,27 +1,99 @@
 # Frontend Development AI Guide
 
-> **문서 버전**: 1.0
-> **최종 수정**: 2025년 12월 19일
-> **작성자**: Sam
-> **대상 독자**: Frontend 개발자
+> **Version**: 2.0
+> **Last Updated**: December 22, 2025
+> **Author**: Sam
+> **Target Audience**: Frontend Developers
 
 ---
 
-## AI-Powered Frontend Development
+## 1. AI-Powered Frontend Development
 
-### Tools
+### 1.1 Development Tools
 
-- **Claude Code**: React 컴포넌트, Hooks, 상태 관리, 아키텍처
-- **Figma + MCP**: UI/UX 디자인 (사용자가 직접 디자인)
-- **GitHub Copilot**: 실시간 코드 제안
+```typescript
+interface FrontendTools {
+  claudeCode: {
+    purpose: string[];
+    useCases: string[];
+  };
+  figmaMCP: {
+    purpose: string[];
+    useCases: string[];
+  };
+  githubCopilot: {
+    purpose: string[];
+    useCases: string[];
+  };
+}
+
+const tools: FrontendTools = {
+  claudeCode: {
+    purpose: ["React components", "Hooks", "State management", "Architecture"],
+    useCases: ["Component creation", "SSE streaming", "Form validation", "Chart integration"]
+  },
+  figmaMCP: {
+    purpose: ["UI/UX design"],
+    useCases: ["Design system creation", "Component design", "Prototype review"]
+  },
+  githubCopilot: {
+    purpose: ["Real-time code suggestions"],
+    useCases: ["Inline completion", "Refactoring", "Test generation"]
+  }
+};
+```
+
+### 1.2 Development Workflow
+
+```mermaid
+graph LR
+    A[Design in Figma] --> B[Generate Component]
+    B --> C[Add State Management]
+    C --> D[Integrate API]
+    D --> E[Test & Review]
+```
 
 ---
 
-## Prompts for Common Tasks
+## 2. Common Development Tasks
 
-### 1. Creating a React Component
+### 2.1 Creating a React Component
 
-**Prompt**:
+**Component Requirements**:
+```typescript
+interface ComponentSpec {
+  name: string;
+  props: {
+    symbol: string;
+    action: "buy" | "sell";
+    entryPrice: number;
+    currentPrice: number;
+  };
+  styling: {
+    framework: "Tailwind CSS";
+    components: "shadcn/ui";
+  };
+  features: {
+    responsive: boolean;
+    calculations: string[];
+    conditionalStyling: boolean;
+  };
+}
+```
+
+**Component Architecture**:
+```mermaid
+graph TB
+    A[PortfolioCard] --> B[Card Container]
+    B --> C[Symbol & Action]
+    B --> D[Price Info]
+    B --> E[P&L Display]
+    E --> F{Profit/Loss}
+    F -->|Profit| G[Green Styling]
+    F -->|Loss| H[Red Styling]
+```
+
+**Prompt Template**:
 ```
 Create a React component for Shadow Portfolio card with the following:
 
@@ -36,14 +108,14 @@ Requirements:
 
 Example:
 ┌─────────────────────────────┐
-│ BTC                    📈   │
+│ BTC                         │
 │ Buy @ $43,250               │
 │ Current: $44,100            │
-│ P&L: +$850 (+1.96%)     ✅ │
+│ P&L: +$850 (+1.96%)         │
 └─────────────────────────────┘
 ```
 
-**Expected Output**:
+**Expected Implementation**:
 ```tsx
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -73,7 +145,6 @@ export function PortfolioCard({ symbol, action, entryPrice, currentPrice }: Port
               Current: ${currentPrice.toLocaleString()}
             </p>
           </div>
-          <span className="text-2xl">{action === 'buy' ? '📈' : '📉'}</span>
         </div>
 
         <div className={cn(
@@ -83,7 +154,6 @@ export function PortfolioCard({ symbol, action, entryPrice, currentPrice }: Port
           <span className="font-bold">
             P&L: {isProfit ? '+' : ''}${pnl.toFixed(2)} ({isProfit ? '+' : ''}{pnlPercent}%)
           </span>
-          <span>{isProfit ? '✅' : '❌'}</span>
         </div>
       </CardContent>
     </Card>
@@ -93,9 +163,38 @@ export function PortfolioCard({ symbol, action, entryPrice, currentPrice }: Port
 
 ---
 
-### 2. Using TanStack Query
+### 2.2 Using TanStack Query
 
-**Prompt**:
+**Data Fetching Architecture**:
+```typescript
+interface QueryHookSpec {
+  hookName: string;
+  endpoint: string;
+  method: "GET" | "POST" | "PUT" | "DELETE";
+  refetchInterval?: number;
+  caching: {
+    staleTime: number;
+    cacheTime: number;
+  };
+  mutations: {
+    enabled: boolean;
+    invalidateQueries: string[];
+  };
+}
+```
+
+**Query Flow**:
+```mermaid
+graph LR
+    A[Component Mount] --> B[useQuery]
+    B --> C{Cache Hit?}
+    C -->|Yes| D[Return Cached]
+    C -->|No| E[Fetch from API]
+    E --> F[Update Cache]
+    F --> D
+```
+
+**Prompt Template**:
 ```
 Create a custom React hook for fetching shadow trades using TanStack Query:
 
@@ -112,7 +211,7 @@ const { trades, isLoading } = useShadowTrades();
 const { mutate } = useCreateShadowTrade();
 ```
 
-**Expected Code**:
+**Expected Implementation**:
 ```tsx
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
@@ -153,9 +252,38 @@ export function useCreateShadowTrade() {
 
 ---
 
-### 3. Building SSE Chat Component
+### 2.3 Building SSE Chat Component
 
-**Prompt**:
+**SSE Streaming Requirements**:
+```typescript
+interface StreamingChatSpec {
+  protocol: "Server-Sent Events";
+  api: "EventSource";
+  stateManagement: {
+    streaming: "Zustand";
+    messages: "TanStack Query";
+  };
+  features: {
+    tokenByToken: boolean;
+    typingIndicator: boolean;
+    autoScroll: boolean;
+    errorHandling: boolean;
+  };
+}
+```
+
+**Streaming Flow**:
+```mermaid
+graph LR
+    A[User Sends Message] --> B[Open EventSource]
+    B --> C{Receive Event}
+    C -->|token| D[Append to UI]
+    C -->|done| E[Close Connection]
+    C -->|error| F[Handle Error]
+    D --> C
+```
+
+**Prompt Template**:
 ```
 Create a React chat component with Server-Sent Events (SSE) streaming:
 
@@ -175,7 +303,7 @@ UI:
 └──────────────────────────────┘
 ```
 
-**Expected Code**:
+**Expected Implementation**:
 ```tsx
 import { useState, useRef, useEffect } from 'react';
 import { useStreamingStore } from '@/store/streaming.store';
@@ -241,9 +369,39 @@ export function ChatWindow({ chatId }: { chatId: string }) {
 
 ---
 
-### 4. Creating a Chart Component
+### 2.4 Creating a Chart Component
 
-**Prompt**:
+**Chart Requirements**:
+```typescript
+interface ChartSpec {
+  library: "Recharts";
+  chartType: "Line";
+  data: {
+    xAxis: "date";
+    yAxis: "value";
+    series: ["portfolio", "benchmark"];
+  };
+  features: {
+    tooltip: boolean;
+    legend: boolean;
+    responsive: boolean;
+    valueFormatting: boolean;
+  };
+}
+```
+
+**Chart Architecture**:
+```mermaid
+graph TB
+    A[PerformanceChart] --> B[ResponsiveContainer]
+    B --> C[LineChart]
+    C --> D[Portfolio Line]
+    C --> E[Benchmark Line]
+    C --> F[Axes & Grid]
+    C --> G[Tooltip]
+```
+
+**Prompt Template**:
 ```
 Create a performance chart using Recharts:
 
@@ -257,7 +415,7 @@ Requirements:
 - Data: { date: string, portfolio: number, benchmark: number }[]
 ```
 
-**Expected Code**:
+**Expected Implementation**:
 ```tsx
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
@@ -310,9 +468,40 @@ export function PerformanceChart({ data }: PerformanceChartProps) {
 
 ---
 
-### 5. Form Validation with React Hook Form
+### 2.5 Form Validation with React Hook Form
 
-**Prompt**:
+**Form Validation Requirements**:
+```typescript
+interface FormSpec {
+  library: "react-hook-form";
+  validation: {
+    schema: "Zod";
+    rules: {
+      symbol: ["required", "enum"];
+      action: ["required", "enum"];
+      price: ["required", "positive"];
+    };
+  };
+  features: {
+    errorMessages: boolean;
+    submitHandling: boolean;
+    resetOnSuccess: boolean;
+    disableWhileSubmitting: boolean;
+  };
+}
+```
+
+**Form Validation Flow**:
+```mermaid
+graph LR
+    A[User Input] --> B[Zod Validation]
+    B --> C{Valid?}
+    C -->|No| D[Show Errors]
+    C -->|Yes| E[Submit]
+    E --> F[Reset Form]
+```
+
+**Prompt Template**:
 ```
 Create a form for creating shadow trades:
 
@@ -325,7 +514,7 @@ Requirements:
 - Reset form after success
 ```
 
-**Expected Code**:
+**Expected Implementation**:
 ```tsx
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -392,29 +581,64 @@ export function CreateTradeForm() {
 
 ---
 
-## AI Code Review for Frontend
+## 3. AI-Assisted Code Review
 
-### Prompt
+### 3.1 Review Checklist
+
+```typescript
+interface FrontendReviewCriteria {
+  performance: {
+    checks: [
+      "Unnecessary re-renders",
+      "Missing memoization (useMemo, useCallback)",
+      "Large component bundles"
+    ];
+  };
+  accessibility: {
+    checks: [
+      "ARIA labels",
+      "Keyboard navigation",
+      "Screen reader support"
+    ];
+  };
+  ux: {
+    checks: [
+      "Loading states",
+      "Error states",
+      "Empty states"
+    ];
+  };
+  codeQuality: {
+    checks: [
+      "Component composition",
+      "Prop drilling",
+      "Naming conventions"
+    ];
+  };
+}
+```
+
+### 3.2 Code Review Prompt
 
 ```
 Review this React component for:
 
-1. **Performance**:
+1. Performance:
    - Unnecessary re-renders
    - Missing memoization (useMemo, useCallback)
    - Large component bundles
 
-2. **Accessibility**:
+2. Accessibility:
    - ARIA labels
    - Keyboard navigation
    - Screen reader support
 
-3. **UX**:
+3. UX:
    - Loading states
    - Error states
    - Empty states
 
-4. **Code Quality**:
+4. Code Quality:
    - Component composition
    - Prop drilling
    - Naming conventions
@@ -425,14 +649,37 @@ Code:
 
 ---
 
-## Best Practices
+## 4. Best Practices
 
-### 1. Component Composition
+### 4.1 Component Composition
 
-❌ Bad: Giant component
-✅ Good: Small, reusable components
+**Component Design Patterns**:
+```typescript
+interface CompositionPattern {
+  bad: {
+    approach: "Giant monolithic component";
+    issues: ["Hard to test", "Poor reusability", "Difficult to maintain"];
+  };
+  good: {
+    approach: "Small, focused components";
+    benefits: ["Easy to test", "Highly reusable", "Simple to understand"];
+  };
+}
+```
 
-**Prompt**:
+**Refactoring Flow**:
+```mermaid
+graph TB
+    A[Large Component] --> B[Identify Responsibilities]
+    B --> C[Extract ChatHeader]
+    B --> D[Extract MessageList]
+    B --> E[Extract MessageInput]
+    C --> F[Composed Chat]
+    D --> F
+    E --> F
+```
+
+**Prompt for Refactoring**:
 ```
 Refactor this component into smaller, reusable parts:
 - Extract ChatHeader
@@ -442,9 +689,33 @@ Refactor this component into smaller, reusable parts:
 [Paste large component]
 ```
 
-### 2. State Management
+---
 
-**Zustand Prompt**:
+### 4.2 State Management
+
+**State Management Strategy**:
+```typescript
+interface StateStrategy {
+  zustand: {
+    purpose: "UI state";
+    useCases: [
+      "Modal visibility",
+      "Sidebar state",
+      "Theme preferences"
+    ];
+  };
+  tanstackQuery: {
+    purpose: "Server state";
+    useCases: [
+      "API data fetching",
+      "Caching",
+      "Real-time updates"
+    ];
+  };
+}
+```
+
+**Zustand Store Prompt**:
 ```
 Create a Zustand store for UI state:
 - sidebarOpen (boolean)
@@ -461,9 +732,24 @@ Create TanStack Query hooks for:
 - useCreateChat (mutation)
 ```
 
-### 3. TypeScript Types
+---
 
-**Prompt**:
+### 4.3 TypeScript Types
+
+**Type Generation Requirements**:
+```typescript
+interface TypeGenerationSpec {
+  source: "API Response";
+  output: "TypeScript Interfaces";
+  features: {
+    nested: boolean;
+    optional: boolean;
+    unions: boolean;
+  };
+}
+```
+
+**Type Generation Prompt**:
 ```
 Generate TypeScript types from this API response:
 
@@ -482,8 +768,73 @@ Generate TypeScript types from this API response:
 }
 ```
 
+**Expected Types**:
+```typescript
+interface Chat {
+  id: string;
+  title: string;
+  createdAt: string;
+  messages: Message[];
+}
+
+interface Message {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  createdAt: string;
+}
+```
+
 ---
 
-**문서 끝**
+## 5. Performance Optimization
+
+### 5.1 Optimization Checklist
+
+```typescript
+interface PerformanceOptimization {
+  rendering: {
+    techniques: [
+      "useMemo for expensive calculations",
+      "useCallback for function props",
+      "React.memo for pure components"
+    ];
+  };
+  bundleSize: {
+    techniques: [
+      "Code splitting with lazy()",
+      "Dynamic imports",
+      "Tree shaking"
+    ];
+  };
+  dataFetching: {
+    techniques: [
+      "TanStack Query caching",
+      "Prefetching",
+      "Background refetch"
+    ];
+  };
+}
+```
+
+### 5.2 Optimization Flow
+
+```mermaid
+graph LR
+    A[Identify Bottleneck] --> B{Type?}
+    B -->|Rendering| C[Add Memoization]
+    B -->|Bundle| D[Code Splitting]
+    B -->|Data| E[Query Optimization]
+    C --> F[Measure Impact]
+    D --> F
+    E --> F
+```
+
+---
+
+**Document Version**: 2.0
+**Last Updated**: December 22, 2025
+**Stack**: React 18.3 + Vite 5 + TypeScript
+**Maintainer**: Sam (dev@5010.tech)
 
 _"Between the zeros and ones"_

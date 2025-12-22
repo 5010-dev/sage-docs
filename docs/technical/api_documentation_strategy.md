@@ -1,39 +1,47 @@
 # Sage.ai API Documentation Strategy
 
-> **문서 버전**: 1.0
-> **최종 수정**: 2025년 12월 19일
-> **작성자**: Sam
-> **대상 독자**: Backend 개발자, API 소비자
+```
+Document Info
+├── Version: 1.0
+├── Last Updated: 2025-12-19
+├── Author: Sam
+├── Status: Production Ready
+└── Audience: Backend Developers, API Consumers
+```
 
 ---
 
-## Documentation Philosophy
+## 1. Documentation Philosophy
 
-**"API First, Documentation Always"**
+```
+"API First, Documentation Always"
+```
 
-### 핵심 원칙
+### 1.1 Core Principles
 
-1. **Self-Documenting Code** - 코드 자체가 문서가 되도록
-2. **Auto-Generated Docs** - Swagger/OpenAPI 자동 생성
-3. **Living Documentation** - 코드 변경 시 문서도 자동 업데이트
-4. **Developer-Friendly** - 예제 중심, 빠른 시작 가이드
-
----
-
-## Tools & Technologies
-
-| 도구 | 용도 | 링크 |
-|------|------|------|
-| **Swagger UI** | Interactive API docs | `/api/docs` |
-| **OpenAPI 3.0** | API 스펙 정의 | `/api/docs-json` |
-| **Nest.js Swagger** | Auto-generation | `@nestjs/swagger` |
-| **Redoc** | Static docs (optional) | `/api/redoc` |
+| Principle | Description |
+|-----------|-------------|
+| Self-Documenting Code | Code itself becomes documentation |
+| Auto-Generated Docs | Swagger/OpenAPI automatic generation |
+| Living Documentation | Auto-updates when code changes |
+| Developer-Friendly | Example-driven, quick start guides |
 
 ---
 
-## OpenAPI Specification
+## 2. Tools & Technologies
 
-### Setup (Nest.js)
+| Tool | Purpose | URL |
+|------|---------|-----|
+| Swagger UI | Interactive API docs | `/api/docs` |
+| OpenAPI 3.0 | API spec definition | `/api/docs-json` |
+| Nest.js Swagger | Auto-generation | `@nestjs/swagger` |
+| Redoc | Static docs (optional) | `/api/redoc` |
+
+---
+
+## 3. OpenAPI Specification
+
+### 3.1 Nest.js Setup
 
 ```typescript
 // apps/backend/src/main.ts
@@ -62,7 +70,7 @@ async function bootstrap() {
 }
 ```
 
-### Controller Documentation
+### 3.2 Controller Documentation
 
 ```typescript
 // modules/chat/chat.controller.ts
@@ -129,7 +137,7 @@ export class ChatController {
 }
 ```
 
-### DTO Documentation
+### 3.3 DTO Documentation
 
 ```typescript
 // modules/chat/dto/message.dto.ts
@@ -202,11 +210,11 @@ export class AISignal {
 
 ---
 
-## API Endpoints Reference
+## 4. API Endpoints Reference
 
-### Authentication
+### 4.1 Authentication
 
-#### POST /api/auth/google
+#### 4.1.1 POST /api/auth/google
 
 **Description**: Authenticate with Google OAuth
 
@@ -234,9 +242,9 @@ export class AISignal {
 
 ---
 
-### Chat
+### 4.2 Chat
 
-#### POST /api/chats
+#### 4.2.1 POST /api/chats
 
 **Description**: Create a new chat
 
@@ -250,12 +258,12 @@ Authorization: Bearer <token>
 {
   "id": "chat-123",
   "userId": "user-123",
-  "title": "새 대화",
+  "title": "New Chat",
   "createdAt": "2024-01-15T10:30:00Z"
 }
 ```
 
-#### GET /api/chats
+#### 4.2.2 GET /api/chats
 
 **Description**: List user's chats
 
@@ -269,7 +277,7 @@ Authorization: Bearer <token>
 [
   {
     "id": "chat-123",
-    "title": "Bitcoin 투자 상담",
+    "title": "Bitcoin Investment Consultation",
     "createdAt": "2024-01-15T10:30:00Z",
     "updatedAt": "2024-01-15T11:00:00Z",
     "messageCount": 15
@@ -277,7 +285,7 @@ Authorization: Bearer <token>
 ]
 ```
 
-#### POST /api/chats/:id/messages
+#### 4.2.3 POST /api/chats/:id/messages
 
 **Description**: Send a message (SSE response)
 
@@ -290,20 +298,20 @@ Content-Type: application/json
 **Request Body**:
 ```json
 {
-  "content": "비트코인 지금 어때?"
+  "content": "What do you think about Bitcoin now?"
 }
 ```
 
 **Response**: `200 OK` (SSE Stream)
 ```
 event: token
-data: {"content":"자네"}
+data: {"content":"Well"}
 
 event: token
 data: {"content":", "}
 
 event: token
-data: {"content":"비트코인이"}
+data: {"content":"Bitcoin"}
 
 ...
 
@@ -311,7 +319,7 @@ event: done
 data: {"messageId":"msg-123"}
 ```
 
-#### GET /api/chats/:id/messages
+#### 4.2.4 GET /api/chats/:id/messages
 
 **Description**: Get chat messages
 
@@ -326,14 +334,14 @@ data: {"messageId":"msg-123"}
     "id": "msg-123",
     "chatId": "chat-123",
     "role": "user",
-    "content": "비트코인 지금 어때?",
+    "content": "What do you think about Bitcoin now?",
     "createdAt": "2024-01-15T10:30:00Z"
   },
   {
     "id": "msg-124",
     "chatId": "chat-123",
     "role": "assistant",
-    "content": "자네, 비트코인이 현재 $43,250에 거래되고 있네...",
+    "content": "Well, Bitcoin is currently trading at $43,250...",
     "signal": {
       "action": "buy",
       "symbol": "BTC",
@@ -346,9 +354,9 @@ data: {"messageId":"msg-123"}
 
 ---
 
-### Market
+### 4.3 Market
 
-#### GET /api/market/prices
+#### 4.3.1 GET /api/market/prices
 
 **Description**: Get current prices for all coins
 
@@ -374,7 +382,7 @@ data: {"messageId":"msg-123"}
 ]
 ```
 
-#### GET /api/market/fear-greed
+#### 4.3.2 GET /api/market/fear-greed
 
 **Description**: Get Fear & Greed Index
 
@@ -388,7 +396,7 @@ data: {"messageId":"msg-123"}
 }
 ```
 
-#### GET /api/market/history/:symbol
+#### 4.3.3 GET /api/market/history/:symbol
 
 **Description**: Get price history for a coin
 
@@ -420,9 +428,9 @@ data: {"messageId":"msg-123"}
 
 ---
 
-### Portfolio
+### 4.4 Portfolio
 
-#### POST /api/shadow-trades
+#### 4.4.1 POST /api/shadow-trades
 
 **Description**: Create a shadow trade
 
@@ -455,7 +463,7 @@ Authorization: Bearer <token>
 }
 ```
 
-#### GET /api/shadow-trades
+#### 4.4.2 GET /api/shadow-trades
 
 **Description**: List user's shadow trades
 
@@ -476,7 +484,7 @@ Authorization: Bearer <token>
 ]
 ```
 
-#### GET /api/shadow-trades/performance
+#### 4.4.3 GET /api/shadow-trades/performance
 
 **Description**: Calculate portfolio performance
 
@@ -504,9 +512,9 @@ Authorization: Bearer <token>
 
 ---
 
-### Notifications
+### 4.5 Notifications
 
-#### POST /api/push/subscribe
+#### 4.5.1 POST /api/push/subscribe
 
 **Description**: Subscribe to push notifications
 
@@ -529,7 +537,7 @@ Authorization: Bearer <token>
 }
 ```
 
-#### GET /api/notifications
+#### 4.5.2 GET /api/notifications
 
 **Description**: Get notification history
 
@@ -544,7 +552,7 @@ Authorization: Bearer <token>
     "id": "notif-123",
     "type": "market_alert",
     "title": "BTC Alert",
-    "message": "비트코인이 -5.2% 급락했습니다",
+    "message": "Bitcoin dropped -5.2%",
     "data": {
       "symbol": "BTC",
       "change": -5.2
@@ -557,9 +565,9 @@ Authorization: Bearer <token>
 
 ---
 
-## Error Handling
+## 5. Error Handling
 
-### Error Response Format
+### 5.1 Error Response Format
 
 All API errors follow this format:
 
@@ -577,20 +585,20 @@ All API errors follow this format:
 }
 ```
 
-### HTTP Status Codes
+### 5.2 HTTP Status Codes
 
 | Code | Meaning | Example |
 |------|---------|---------|
-| **200** | OK | Successful GET request |
-| **201** | Created | Resource created successfully |
-| **400** | Bad Request | Invalid input |
-| **401** | Unauthorized | Missing or invalid token |
-| **403** | Forbidden | User tier doesn't allow this action |
-| **404** | Not Found | Resource not found |
-| **429** | Too Many Requests | Rate limit exceeded |
-| **500** | Internal Server Error | Server error |
+| 200 | OK | Successful GET request |
+| 201 | Created | Resource created successfully |
+| 400 | Bad Request | Invalid input |
+| 401 | Unauthorized | Missing or invalid token |
+| 403 | Forbidden | User tier doesn't allow this action |
+| 404 | Not Found | Resource not found |
+| 429 | Too Many Requests | Rate limit exceeded |
+| 500 | Internal Server Error | Server error |
 
-### Error Examples
+### 5.3 Error Examples
 
 **400 Bad Request**:
 ```json
@@ -637,9 +645,9 @@ All API errors follow this format:
 
 ---
 
-## Authentication
+## 6. Authentication
 
-### Bearer Token
+### 6.1 Bearer Token
 
 All protected endpoints require a Bearer token:
 
@@ -648,12 +656,14 @@ GET /api/chats
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
-### Token Expiration
+### 6.2 Token Expiration
 
-- **Access Token**: 1 hour
-- **Refresh Token**: 30 days
+| Token Type | Duration |
+|------------|----------|
+| Access Token | 1 hour |
+| Refresh Token | 30 days |
 
-### Refresh Token Flow
+### 6.3 Refresh Token Flow
 
 ```http
 POST /api/auth/refresh
@@ -674,17 +684,17 @@ Content-Type: application/json
 
 ---
 
-## Rate Limiting
+## 7. Rate Limiting
 
-### Limits by Tier
+### 7.1 Limits by Tier
 
 | Tier | Chat Messages | Market Data | General API |
 |------|--------------|-------------|-------------|
-| **Free** | 10/min | 60/min | 100/min |
-| **Pro** | 30/min | 120/min | 300/min |
-| **Premium** | Unlimited | Unlimited | 1000/min |
+| Free | 10/min | 60/min | 100/min |
+| Pro | 30/min | 120/min | 300/min |
+| Premium | Unlimited | Unlimited | 1000/min |
 
-### Rate Limit Headers
+### 7.2 Rate Limit Headers
 
 ```http
 X-RateLimit-Limit: 10
@@ -694,15 +704,15 @@ X-RateLimit-Reset: 1642248000
 
 ---
 
-## Pagination
+## 8. Pagination
 
-### Query Parameters
+### 8.1 Query Parameters
 
 ```
 ?limit=20&offset=0
 ```
 
-### Response
+### 8.2 Response Format
 
 ```json
 {
@@ -718,17 +728,17 @@ X-RateLimit-Reset: 1642248000
 
 ---
 
-## Webhooks (Future)
+## 9. Webhooks (Future)
 
-### Discord Webhook Format
+### 9.1 Discord Webhook Format
 
 ```json
 {
-  "content": "🚨 **BTC Alert**",
+  "content": "**BTC Alert**",
   "embeds": [
     {
-      "title": "비트코인 -5.2% 급락",
-      "description": "현재 가격: $43,250",
+      "title": "Bitcoin -5.2% Drop",
+      "description": "Current price: $43,250",
       "color": 16711680,
       "timestamp": "2024-01-15T10:30:00Z"
     }
@@ -738,9 +748,9 @@ X-RateLimit-Reset: 1642248000
 
 ---
 
-## Testing API
+## 10. Testing API
 
-### Using cURL
+### 10.1 Using cURL
 
 ```bash
 # Login
@@ -756,14 +766,14 @@ curl -X POST https://api.sage.ai/api/chats \
 curl -X POST https://api.sage.ai/api/chats/chat-123/messages \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"content":"비트코인 지금 어때?"}'
+  -d '{"content":"What do you think about Bitcoin now?"}'
 ```
 
-### Using Postman
+### 10.2 Using Postman
 
 **Collection**: [Download Sage.ai Postman Collection](link)
 
-### Using JavaScript
+### 10.3 Using JavaScript
 
 ```javascript
 // Login
@@ -777,7 +787,7 @@ const { token } = await loginResponse.json();
 
 // Send message with SSE
 const eventSource = new EventSource(
-  `https://api.sage.ai/api/chats/chat-123/messages?message=비트코인%20지금%20어때?`,
+  `https://api.sage.ai/api/chats/chat-123/messages?message=What%20about%20Bitcoin?`,
   { headers: { Authorization: `Bearer ${token}` } }
 );
 
@@ -791,26 +801,28 @@ eventSource.onmessage = (event) => {
 
 ---
 
-## Versioning Strategy
+## 11. Versioning Strategy
 
-### URL Versioning
+### 11.1 URL Versioning
 
 ```
 https://api.sage.ai/api/v1/chats
 https://api.sage.ai/api/v2/chats  (future)
 ```
 
-### Deprecation Policy
+### 11.2 Deprecation Policy
 
-- **Announcement**: 3 months before deprecation
-- **Sunset Header**: `Sunset: Sat, 31 Dec 2024 23:59:59 GMT`
-- **Minimum Support**: 6 months after new version
+| Policy | Duration |
+|--------|----------|
+| Announcement | 3 months before deprecation |
+| Sunset Header | `Sunset: Sat, 31 Dec 2024 23:59:59 GMT` |
+| Minimum Support | 6 months after new version |
 
 ---
 
-## API Changelog
+## 12. API Changelog
 
-### v1.0.0 (2026-03-15) - Initial Release
+### 12.1 v1.0.0 (2026-03-15) - Initial Release
 
 **Features**:
 - Authentication (Google OAuth)
@@ -821,9 +833,9 @@ https://api.sage.ai/api/v2/chats  (future)
 
 ---
 
-## Best Practices for API Consumers
+## 13. Best Practices for API Consumers
 
-### 1. Always Handle Errors
+### 13.1 Always Handle Errors
 
 ```typescript
 try {
@@ -842,7 +854,7 @@ try {
 }
 ```
 
-### 2. Implement Retry Logic
+### 13.2 Implement Retry Logic
 
 ```typescript
 async function fetchWithRetry(url, options, retries = 3) {
@@ -863,7 +875,7 @@ async function fetchWithRetry(url, options, retries = 3) {
 }
 ```
 
-### 3. Use Pagination
+### 13.3 Use Pagination
 
 ```typescript
 async function getAllChats() {
@@ -887,9 +899,9 @@ async function getAllChats() {
 
 ---
 
-## SDK (Future)
+## 14. SDK (Future)
 
-### TypeScript SDK
+### 14.1 TypeScript SDK
 
 ```bash
 npm install @sage-ai/sdk
@@ -907,7 +919,7 @@ const chat = await sage.chats.create();
 
 // Send message
 const stream = await sage.chats.sendMessage(chat.id, {
-  content: '비트코인 지금 어때?'
+  content: 'What do you think about Bitcoin now?'
 });
 
 for await (const token of stream) {
@@ -917,28 +929,32 @@ for await (const token of stream) {
 
 ---
 
-**문서 끝**
-
-_"Between the zeros and ones"_
-
----
-
-## Appendix
-
-### A. Swagger UI Screenshot
+## Appendix A: Swagger UI Screenshot
 
 [Coming Soon]
 
-### B. Postman Collection
+## Appendix B: Postman Collection
 
 [Download Link]
 
-### C. API Playground
+## Appendix C: API Playground
 
 https://api.sage.ai/api/docs
 
-### D. Support
+## Appendix D: Support
 
-- **Email**: api@sage.ai
-- **Discord**: #api-support
-- **GitHub Issues**: https://github.com/sage-ai/sage/issues
+| Channel | Link |
+|---------|------|
+| Email | api@sage.ai |
+| Discord | #api-support |
+| GitHub Issues | https://github.com/sage-ai/sage/issues |
+
+---
+
+```
+Document Footer
+├── Last Updated: 2025-12-19
+├── Version: 1.0
+├── Status: Production Ready
+└── Maintainer: Sam (dev@5010.tech)
+```

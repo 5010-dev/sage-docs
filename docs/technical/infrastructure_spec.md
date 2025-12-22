@@ -1,54 +1,78 @@
 # Sage.ai Infrastructure Specification
 
-> **문서 버전**: 1.0
-> **최종 수정**: 2025년 12월 19일
-> **작성자**: Sam
-> **대상 독자**: DevOps, Infrastructure 팀
+> Document Version: 2.0
+> Last Modified: 2025-12-22
+> Author: Sam
+> Target Audience: DevOps, Infrastructure Team
 
 ---
 
-## Infrastructure Overview
+## 1. Infrastructure Overview
 
-### Architecture Diagram
+### 1.1 Architecture Diagram
 
+```mermaid
+graph TD
+    A[Internet] --> B[CloudFront CDN]
+    B --> C[S3 Frontend Static Files]
+    A --> D[Application Load Balancer]
+    D --> E[ECS Fargate Backend]
+    E --> F[RDS PostgreSQL 16]
+    E --> G[ElastiCache Redis 7.x]
+    E --> H[External APIs]
+    H --> I[Anthropic Claude]
+    H --> J[CoinGecko]
+    H --> K[Alternative.me]
 ```
-Internet
-   │
-   ├─> CloudFront (CDN)
-   │     └─> S3 (Frontend Static Files)
-   │
-   └─> Application Load Balancer
-         └─> ECS Fargate (Backend)
-               ├─> RDS PostgreSQL 16
-               ├─> ElastiCache Redis 7.x
-               └─> External APIs (Anthropic, CoinGecko)
+
+### 1.2 Technology Stack
+
+```typescript
+interface InfrastructureStack {
+  compute: {
+    service: "AWS ECS Fargate";
+    version: "1.4.0";
+  };
+  database: {
+    service: "AWS RDS PostgreSQL";
+    version: "16";
+  };
+  cache: {
+    service: "AWS ElastiCache Redis";
+    version: "7.x";
+  };
+  storage: {
+    service: "AWS S3";
+  };
+  cdn: {
+    service: "AWS CloudFront";
+  };
+  loadBalancer: {
+    service: "AWS ALB";
+  };
+  iac: {
+    tool: "Terraform";
+    version: "1.6+";
+  };
+  cicd: {
+    platform: "GitHub Actions";
+  };
+  monitoring: {
+    services: ["Sentry", "CloudWatch"];
+  };
+  logging: {
+    service: "CloudWatch Logs";
+  };
+}
 ```
-
-### Technology Stack
-
-| 컴포넌트 | 기술 | 버전/설정 |
-|---------|------|----------|
-| **Compute** | AWS ECS Fargate | 1.4.0 |
-| **Database** | AWS RDS PostgreSQL | 16 |
-| **Cache** | AWS ElastiCache Redis | 7.x |
-| **Storage** | AWS S3 | - |
-| **CDN** | AWS CloudFront | - |
-| **Load Balancer** | AWS ALB | - |
-| **IaC** | Terraform | 1.6+ |
-| **CI/CD** | GitHub Actions | - |
-| **Monitoring** | Sentry + CloudWatch | - |
-| **Logs** | CloudWatch Logs | - |
 
 ---
 
-## AWS Services
+## 2. Compute Layer
 
-### Compute: ECS Fargate
-
-#### Cluster Configuration
+### 2.1 ECS Cluster Configuration
 
 ```hcl
-# terraform/ecs.tf
 resource "aws_ecs_cluster" "sage" {
   name = "sage-cluster"
 
@@ -59,7 +83,7 @@ resource "aws_ecs_cluster" "sage" {
 }
 ```
 
-#### Task Definition (Backend)
+### 2.2 Task Definition (Backend)
 
 ```hcl
 resource "aws_ecs_task_definition" "backend" {
@@ -120,7 +144,7 @@ resource "aws_ecs_task_definition" "backend" {
 }
 ```
 
-#### Service Configuration
+### 2.3 Service Configuration
 
 ```hcl
 resource "aws_ecs_service" "backend" {
@@ -142,14 +166,13 @@ resource "aws_ecs_service" "backend" {
     container_port   = 3000
   }
 
-  # Auto Scaling
   lifecycle {
     ignore_changes = [desired_count]
   }
 }
 ```
 
-#### Auto Scaling
+### 2.4 Auto Scaling
 
 ```hcl
 resource "aws_appautoscaling_target" "backend" {
@@ -180,12 +203,11 @@ resource "aws_appautoscaling_policy" "backend_cpu" {
 
 ---
 
-### Database: RDS PostgreSQL
+## 3. Database Layer
 
-#### Instance Configuration
+### 3.1 RDS PostgreSQL Instance
 
 ```hcl
-# terraform/rds.tf
 resource "aws_db_instance" "postgres" {
   identifier     = "sage-postgres"
   engine         = "postgres"
@@ -220,7 +242,7 @@ resource "aws_db_instance" "postgres" {
 }
 ```
 
-#### Read Replica (Phase 2+)
+### 3.2 Read Replica (Phase 2+)
 
 ```hcl
 resource "aws_db_instance" "postgres_replica" {
@@ -230,19 +252,16 @@ resource "aws_db_instance" "postgres_replica" {
   replicate_source_db = aws_db_instance.postgres.id
 
   instance_class = "db.t4g.micro"
-
-  # Inherit most settings from primary
 }
 ```
 
 ---
 
-### Cache: ElastiCache Redis
+## 4. Cache Layer
 
-#### Cluster Configuration
+### 4.1 ElastiCache Redis Cluster
 
 ```hcl
-# terraform/elasticache.tf
 resource "aws_elasticache_replication_group" "redis" {
   replication_group_id       = "sage-redis"
   replication_group_description = "Sage.ai Redis cluster"
@@ -275,12 +294,11 @@ resource "aws_elasticache_replication_group" "redis" {
 
 ---
 
-### Storage & CDN
+## 5. Storage & CDN
 
-#### S3 Bucket (Frontend)
+### 5.1 S3 Bucket (Frontend)
 
 ```hcl
-# terraform/s3.tf
 resource "aws_s3_bucket" "frontend" {
   bucket = "sage-frontend-prod"
 
@@ -308,10 +326,9 @@ resource "aws_s3_bucket_public_access_block" "frontend" {
 }
 ```
 
-#### CloudFront Distribution
+### 5.2 CloudFront Distribution
 
 ```hcl
-# terraform/cloudfront.tf
 resource "aws_cloudfront_distribution" "frontend" {
   origin {
     domain_name = aws_s3_bucket.frontend.bucket_regional_domain_name
@@ -348,7 +365,6 @@ resource "aws_cloudfront_distribution" "frontend" {
     compress = true
   }
 
-  # SPA routing
   custom_error_response {
     error_code         = 404
     response_code      = 200
@@ -376,12 +392,11 @@ resource "aws_cloudfront_distribution" "frontend" {
 
 ---
 
-### Load Balancer
+## 6. Load Balancer
 
-#### Application Load Balancer
+### 6.1 Application Load Balancer
 
 ```hcl
-# terraform/alb.tf
 resource "aws_lb" "main" {
   name               = "sage-alb"
   internal           = false
@@ -429,31 +444,32 @@ resource "aws_lb_listener" "https" {
     target_group_arn = aws_lb_target_group.backend.arn
   }
 }
-
-resource "aws_lb_listener" "http" {
-  load_balancer_arn = aws_lb.main.arn
-  port              = "80"
-  protocol          = "HTTP"
-
-  default_action {
-    type = "redirect"
-    redirect {
-      port        = "443"
-      protocol    = "HTTPS"
-      status_code = "HTTP_301"
-    }
-  }
-}
 ```
 
 ---
 
-## Networking
+## 7. Networking
 
-### VPC Configuration
+### 7.1 VPC Configuration
+
+```mermaid
+graph TD
+    A[VPC 10.0.0.0/16] --> B[Public Subnet 1<br/>10.0.0.0/24]
+    A --> C[Public Subnet 2<br/>10.0.1.0/24]
+    A --> D[Private Subnet 1<br/>10.0.10.0/24]
+    A --> E[Private Subnet 2<br/>10.0.11.0/24]
+
+    B --> F[Internet Gateway]
+    C --> F
+
+    D --> G[NAT Gateway 1]
+    E --> H[NAT Gateway 2]
+
+    G --> F
+    H --> F
+```
 
 ```hcl
-# terraform/vpc.tf
 resource "aws_vpc" "main" {
   cidr_block           = "10.0.0.0/16"
   enable_dns_hostnames = true
@@ -464,7 +480,6 @@ resource "aws_vpc" "main" {
   }
 }
 
-# Public subnets (2 AZs)
 resource "aws_subnet" "public" {
   count             = 2
   vpc_id            = aws_vpc.main.id
@@ -478,7 +493,6 @@ resource "aws_subnet" "public" {
   }
 }
 
-# Private subnets (2 AZs)
 resource "aws_subnet" "private" {
   count             = 2
   vpc_id            = aws_vpc.main.id
@@ -489,144 +503,53 @@ resource "aws_subnet" "private" {
     Name = "sage-private-${count.index + 1}"
   }
 }
-
-# Internet Gateway
-resource "aws_internet_gateway" "main" {
-  vpc_id = aws_vpc.main.id
-
-  tags = {
-    Name = "sage-igw"
-  }
-}
-
-# NAT Gateway (for private subnets)
-resource "aws_eip" "nat" {
-  count  = 2
-  domain = "vpc"
-
-  tags = {
-    Name = "sage-nat-eip-${count.index + 1}"
-  }
-}
-
-resource "aws_nat_gateway" "main" {
-  count         = 2
-  allocation_id = aws_eip.nat[count.index].id
-  subnet_id     = aws_subnet.public[count.index].id
-
-  tags = {
-    Name = "sage-nat-${count.index + 1}"
-  }
-}
 ```
 
-### Security Groups
+### 7.2 Security Groups
 
-```hcl
-# terraform/security_groups.tf
-
-# ALB Security Group
-resource "aws_security_group" "alb" {
-  name        = "sage-alb-sg"
-  description = "Security group for ALB"
-  vpc_id      = aws_vpc.main.id
-
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = "sage-alb-sg"
-  }
-}
-
-# Backend (ECS) Security Group
-resource "aws_security_group" "backend" {
-  name        = "sage-backend-sg"
-  description = "Security group for ECS backend"
-  vpc_id      = aws_vpc.main.id
-
-  ingress {
-    from_port       = 3000
-    to_port         = 3000
-    protocol        = "tcp"
-    security_groups = [aws_security_group.alb.id]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = "sage-backend-sg"
-  }
-}
-
-# RDS Security Group
-resource "aws_security_group" "rds" {
-  name        = "sage-rds-sg"
-  description = "Security group for RDS"
-  vpc_id      = aws_vpc.main.id
-
-  ingress {
-    from_port       = 5432
-    to_port         = 5432
-    protocol        = "tcp"
-    security_groups = [aws_security_group.backend.id]
-  }
-
-  tags = {
-    Name = "sage-rds-sg"
-  }
-}
-
-# Redis Security Group
-resource "aws_security_group" "redis" {
-  name        = "sage-redis-sg"
-  description = "Security group for Redis"
-  vpc_id      = aws_vpc.main.id
-
-  ingress {
-    from_port       = 6379
-    to_port         = 6379
-    protocol        = "tcp"
-    security_groups = [aws_security_group.backend.id]
-  }
-
-  tags = {
-    Name = "sage-redis-sg"
-  }
+```typescript
+interface SecurityGroups {
+  alb: {
+    ingress: {
+      http: "Port 80 from 0.0.0.0/0";
+      https: "Port 443 from 0.0.0.0/0";
+    };
+    egress: "All traffic";
+  };
+  backend: {
+    ingress: "Port 3000 from ALB security group";
+    egress: "All traffic";
+  };
+  rds: {
+    ingress: "Port 5432 from Backend security group";
+    egress: "None";
+  };
+  redis: {
+    ingress: "Port 6379 from Backend security group";
+    egress: "None";
+  };
 }
 ```
 
 ---
 
-## CI/CD Pipeline
+## 8. CI/CD Pipeline
 
-### GitHub Actions Workflow
+### 8.1 Backend Deployment Flow
+
+```mermaid
+graph LR
+    A[Git Push to main] --> B[GitHub Actions]
+    B --> C[Run Tests]
+    C --> D[Build Docker Image]
+    D --> E[Push to ECR]
+    E --> F[Update ECS Service]
+    F --> G[Rolling Deployment]
+```
+
+### 8.2 Backend Deployment Workflow
 
 ```yaml
-# .github/workflows/deploy-backend.yml
 name: Deploy Backend
 
 on:
@@ -653,7 +576,7 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build, tag, and push image to Amazon ECR
+      - name: Build, tag, and push image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: sage-backend
@@ -673,10 +596,9 @@ jobs:
             --region us-west-2
 ```
 
-### Frontend Deployment
+### 8.3 Frontend Deployment Workflow
 
 ```yaml
-# .github/workflows/deploy-frontend.yml
 name: Deploy Frontend
 
 on:
@@ -719,73 +641,39 @@ jobs:
 
 ---
 
-## Monitoring & Logging
+## 9. Monitoring & Logging
 
-### CloudWatch Alarms
+### 9.1 CloudWatch Alarms
 
-```hcl
-# terraform/cloudwatch.tf
-
-# ECS CPU Utilization
-resource "aws_cloudwatch_metric_alarm" "ecs_cpu_high" {
-  alarm_name          = "sage-backend-cpu-high"
-  comparison_operator = "GreaterThanThreshold"
-  evaluation_periods  = 2
-  metric_name         = "CPUUtilization"
-  namespace           = "AWS/ECS"
-  period              = 300
-  statistic           = "Average"
-  threshold           = 80
-
-  dimensions = {
-    ClusterName = aws_ecs_cluster.sage.name
-    ServiceName = aws_ecs_service.backend.name
-  }
-
-  alarm_actions = [aws_sns_topic.alerts.arn]
-}
-
-# RDS CPU Utilization
-resource "aws_cloudwatch_metric_alarm" "rds_cpu_high" {
-  alarm_name          = "sage-rds-cpu-high"
-  comparison_operator = "GreaterThanThreshold"
-  evaluation_periods  = 2
-  metric_name         = "CPUUtilization"
-  namespace           = "AWS/RDS"
-  period              = 300
-  statistic           = "Average"
-  threshold           = 80
-
-  dimensions = {
-    DBInstanceIdentifier = aws_db_instance.postgres.id
-  }
-
-  alarm_actions = [aws_sns_topic.alerts.arn]
-}
-
-# Redis Memory
-resource "aws_cloudwatch_metric_alarm" "redis_memory_high" {
-  alarm_name          = "sage-redis-memory-high"
-  comparison_operator = "GreaterThanThreshold"
-  evaluation_periods  = 1
-  metric_name         = "DatabaseMemoryUsagePercentage"
-  namespace           = "AWS/ElastiCache"
-  period              = 300
-  statistic           = "Average"
-  threshold           = 80
-
-  dimensions = {
-    ReplicationGroupId = aws_elasticache_replication_group.redis.id
-  }
-
-  alarm_actions = [aws_sns_topic.alerts.arn]
+```typescript
+interface CloudWatchAlarms {
+  ecsCpuHigh: {
+    metric: "CPUUtilization";
+    threshold: "80%";
+    evaluationPeriods: 2;
+    period: "5 minutes";
+    action: "SNS notification";
+  };
+  rdsCpuHigh: {
+    metric: "CPUUtilization";
+    threshold: "80%";
+    evaluationPeriods: 2;
+    period: "5 minutes";
+    action: "SNS notification";
+  };
+  redisMemoryHigh: {
+    metric: "DatabaseMemoryUsagePercentage";
+    threshold: "80%";
+    evaluationPeriods: 1;
+    period: "5 minutes";
+    action: "SNS notification";
+  };
 }
 ```
 
-### Sentry Configuration
+### 9.2 Sentry Configuration
 
 ```typescript
-// apps/backend/src/main.ts
 import * as Sentry from '@sentry/node';
 
 Sentry.init({
@@ -801,57 +689,106 @@ Sentry.init({
 
 ---
 
-## Cost Optimization
+## 10. Cost Optimization
 
-### Monthly Cost Estimate (MVP)
+### 10.1 Monthly Cost Estimate (MVP)
 
-| 서비스 | 리소스 | 월 비용 |
-|--------|--------|---------|
-| **ECS Fargate** | 2 tasks x 0.5 vCPU x 1 GB | $30 |
-| **RDS (t4g.micro)** | 20 GB storage | $15 |
-| **ElastiCache (t4g.micro)** | 2 nodes | $20 |
-| **ALB** | 1 ALB | $20 |
-| **S3** | 10 GB storage + 1M requests | $5 |
-| **CloudFront** | 100 GB transfer | $10 |
-| **Data Transfer** | 100 GB egress | $10 |
-| **CloudWatch Logs** | 10 GB logs | $5 |
-| **Total** | - | **~$115/월** |
+```typescript
+interface MonthlyCostEstimate {
+  ecsFargate: {
+    resource: "2 tasks x 0.5 vCPU x 1 GB";
+    cost: "$30";
+  };
+  rds: {
+    resource: "db.t4g.micro, 20 GB storage";
+    cost: "$15";
+  };
+  elastiCache: {
+    resource: "cache.t4g.micro x 2 nodes";
+    cost: "$20";
+  };
+  alb: {
+    resource: "1 ALB";
+    cost: "$20";
+  };
+  s3: {
+    resource: "10 GB storage + 1M requests";
+    cost: "$5";
+  };
+  cloudFront: {
+    resource: "100 GB transfer";
+    cost: "$10";
+  };
+  dataTransfer: {
+    resource: "100 GB egress";
+    cost: "$10";
+  };
+  cloudWatchLogs: {
+    resource: "10 GB logs";
+    cost: "$5";
+  };
+  total: "$115/month";
+}
+```
 
-### Cost Saving Strategies
+### 10.2 Cost Saving Strategies
 
-1. **Reserved Instances** (Phase 2+)
-   - RDS 예약으로 40% 절감
-   - ElastiCache 예약으로 30% 절감
-
-2. **S3 Lifecycle Policies**
-   - 30일 이상 로그 → Glacier
-
-3. **CloudFront Cache 최적화**
-   - TTL 증가 → Origin 요청 감소
+```typescript
+interface CostSavingStrategies {
+  reservedInstances: {
+    phase: "Phase 2+";
+    savings: {
+      rds: "40% reduction";
+      elastiCache: "30% reduction";
+    };
+  };
+  s3Lifecycle: {
+    policy: "Logs older than 30 days move to Glacier";
+  };
+  cloudFrontOptimization: {
+    strategy: "Increase TTL to reduce origin requests";
+  };
+}
+```
 
 ---
 
-## Disaster Recovery
+## 11. Disaster Recovery
 
-### Backup Strategy
+### 11.1 Backup Strategy
 
-| 리소스 | 백업 주기 | 보관 기간 | RPO | RTO |
-|--------|----------|----------|-----|-----|
-| **RDS** | Daily | 7 days | 24h | 1h |
-| **S3** | Versioning | - | Immediate | Immediate |
-| **Redis** | Daily snapshot | 5 days | 24h | 30m |
+```typescript
+interface BackupStrategy {
+  rds: {
+    frequency: "Daily";
+    retention: "7 days";
+    rpo: "24 hours";
+    rto: "1 hour";
+  };
+  s3: {
+    method: "Versioning";
+    retention: "Indefinite";
+    rpo: "Immediate";
+    rto: "Immediate";
+  };
+  redis: {
+    frequency: "Daily snapshot";
+    retention: "5 days";
+    rpo: "24 hours";
+    rto: "30 minutes";
+  };
+}
+```
 
-### Recovery Procedures
+### 11.2 Recovery Procedures
 
-**RDS Restore**:
 ```bash
+# RDS Restore
 aws rds restore-db-instance-from-db-snapshot \
   --db-instance-identifier sage-postgres-restored \
   --db-snapshot-identifier sage-postgres-snapshot-2024-01-15
-```
 
-**S3 Restore (Version)**:
-```bash
+# S3 Restore (Version)
 aws s3api list-object-versions \
   --bucket sage-frontend-prod \
   --prefix index.html
@@ -865,9 +802,9 @@ aws s3api get-object \
 
 ---
 
-## Security
+## 12. Security
 
-### IAM Roles
+### 12.1 IAM Roles
 
 ```hcl
 # ECS Execution Role (pull images, write logs)
@@ -886,11 +823,6 @@ resource "aws_iam_role" "ecs_execution" {
   })
 }
 
-resource "aws_iam_role_policy_attachment" "ecs_execution" {
-  role       = aws_iam_role.ecs_execution.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
-}
-
 # ECS Task Role (access AWS services from app)
 resource "aws_iam_role" "ecs_task" {
   name = "sage-ecs-task-role"
@@ -906,35 +838,11 @@ resource "aws_iam_role" "ecs_task" {
     }]
   })
 }
-
-# Allow task to access Secrets Manager
-resource "aws_iam_policy" "secrets_access" {
-  name = "sage-secrets-access"
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Action = [
-        "secretsmanager:GetSecretValue"
-      ]
-      Effect = "Allow"
-      Resource = [
-        aws_secretsmanager_secret.anthropic_key.arn
-      ]
-    }]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "task_secrets" {
-  role       = aws_iam_role.ecs_task.name
-  policy_arn = aws_iam_policy.secrets_access.arn
-}
 ```
 
-### Secrets Management
+### 12.2 Secrets Management
 
 ```hcl
-# terraform/secrets.tf
 resource "aws_secretsmanager_secret" "anthropic_key" {
   name = "sage/anthropic-api-key"
 
@@ -945,41 +853,43 @@ resource "aws_secretsmanager_secret" "anthropic_key" {
 
 resource "aws_secretsmanager_secret_version" "anthropic_key" {
   secret_id     = aws_secretsmanager_secret.anthropic_key.id
-  secret_string = var.anthropic_api_key  # From tfvars
+  secret_string = var.anthropic_api_key
 }
 ```
 
 ---
 
-## Scaling Strategy
+## 13. Scaling Strategy
 
-### Phase 1: MVP (MAU 5,000)
-- ECS: 2 tasks (0.5 vCPU, 1 GB each)
-- RDS: db.t4g.micro (1 vCPU, 1 GB)
-- Redis: cache.t4g.micro x2
+### 13.1 Scaling Phases
 
-### Phase 2: Growth (MAU 50,000)
-- ECS: 5-10 tasks (auto-scaling)
-- RDS: db.t4g.small (2 vCPU, 2 GB) + Read Replica
-- Redis: cache.t4g.small x2
-
-### Phase 3: Scale (MAU 100,000+)
-- ECS: 10-20 tasks
-- RDS: db.r6g.large (2 vCPU, 16 GB) + 2 Read Replicas
-- Redis: cache.r6g.large x2
-- Multi-Region (US + Asia)
+```typescript
+interface ScalingPhases {
+  phase1_mvp: {
+    mau: "5,000";
+    ecs: "2 tasks (0.5 vCPU, 1 GB each)";
+    rds: "db.t4g.micro (1 vCPU, 1 GB)";
+    redis: "cache.t4g.micro x2";
+  };
+  phase2_growth: {
+    mau: "50,000";
+    ecs: "5-10 tasks (auto-scaling)";
+    rds: "db.t4g.small (2 vCPU, 2 GB) + Read Replica";
+    redis: "cache.t4g.small x2";
+  };
+  phase3_scale: {
+    mau: "100,000+";
+    ecs: "10-20 tasks";
+    rds: "db.r6g.large (2 vCPU, 16 GB) + 2 Read Replicas";
+    redis: "cache.r6g.large x2";
+    multiRegion: "US + Asia";
+  };
+}
+```
 
 ---
 
-**문서 끝**
-
-_"Between the zeros and ones"_
-
----
-
-## Appendix
-
-### A. Terraform Commands
+## Appendix A: Terraform Commands
 
 ```bash
 # Initialize
@@ -995,7 +905,7 @@ terraform apply tfplan
 terraform destroy
 ```
 
-### B. AWS CLI Useful Commands
+## Appendix B: AWS CLI Useful Commands
 
 ```bash
 # List ECS tasks
@@ -1008,7 +918,7 @@ aws ecs describe-tasks --cluster sage-cluster --tasks <task-id>
 aws logs tail /ecs/sage-backend --follow
 ```
 
-### C. Environment Variables
+## Appendix C: Environment Variables
 
 ```bash
 # AWS
@@ -1019,3 +929,10 @@ export AWS_ACCOUNT_ID=123456789012
 export TF_VAR_anthropic_api_key="sk-ant-..."
 export TF_VAR_db_password="..."
 ```
+
+---
+
+Document Version: 2.0
+Last Updated: 2025-12-22
+Infrastructure: AWS ECS Fargate + RDS + ElastiCache
+Maintainer: Sam (dev@5010.tech)

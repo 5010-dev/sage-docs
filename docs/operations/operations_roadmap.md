@@ -1,336 +1,672 @@
 # Sage.ai Operations Roadmap
 
-> **문서 버전**: 1.0
-> **최종 수정**: 2025년 12월 19일
-> **작성자**: Sam
-> **대상 독자**: 운영팀, 마케팅팀, 경영진
+> **Document Version**: 1.0
+> **Last Updated**: 2025년 12월 19일
+> **Author**: Sam
+> **Target Audience**: Operations Team, Marketing Team, Management
 
 ---
 
-## Operations Overview
+## 1. Operations Overview
 
-### Mission
+### 1.1 Mission
 
 **"사용자에게 신뢰할 수 있는 24/7 AI 투자 멘토 경험을 제공한다"**
 
-### Key Responsibilities
+### 1.2 Key Responsibilities
 
-| 영역 | 책임 |
-|------|------|
-| **Community Management** | Discord, Twitter/X, 카카오톡 커뮤니티 운영 |
-| **Content Operations** | 블로그, 소셜 미디어 콘텐츠 제작 |
-| **User Support** | 사용자 문의 대응, 피드백 수집 |
-| **Live Ops** | 이벤트, 캠페인, 프로모션 |
-| **Analytics** | KPI 추적, 사용자 행동 분석 |
+```typescript
+interface OperationsScope {
+  communityManagement: {
+    platforms: ['Discord', 'Twitter/X', 'KakaoTalk'];
+    activities: string[];
+  };
+  contentOperations: {
+    channels: ['Blog', 'Social Media'];
+    frequency: string;
+  };
+  userSupport: {
+    responseTime: string;
+    channels: string[];
+  };
+  liveOps: {
+    events: string[];
+    campaigns: string[];
+  };
+  analytics: {
+    kpis: string[];
+    reportingCadence: string;
+  };
+}
+```
 
 ---
 
-## Phase 1: MVP Launch (2026 Q1)
+## 2. Phase 1: MVP Launch (2026 Q1)
 
-### Week 1-4: Pre-Launch
+### 2.1 Timeline Overview
 
-#### WhyBitcoinFallen.com 준비
-- [ ] 랜딩 페이지 카피 최종화
-- [ ] OG 이미지, 메타 태그 최적화
-- [ ] Google Analytics 설정
-- [ ] Reddit, Twitter 시딩 준비
+```mermaid
+gantt
+    title MVP Launch Timeline
+    dateFormat YYYY-MM-DD
+    section Pre-Launch
+    WhyBitcoinFallen Prep: a1, 2026-01-01, 28d
+    Beta Tester Recruitment: a2, 2026-01-01, 28d
+    Content Preparation: a3, 2026-01-15, 14d
+    section Closed Beta
+    Beta Operations: b1, 2026-01-29, 28d
+    Community Activity: b2, 2026-01-29, 28d
+    section Public Launch
+    Launch Campaign: c1, 2026-02-26, 28d
+    Initial Operations: c2, 2026-02-26, 28d
+```
 
-#### 베타 테스터 모집
-- [ ] Discord 서버 생성 및 채널 구성
-- [ ] 베타 테스터 신청 폼 (Google Forms)
-- [ ] 10-20명 타겟 모집 (암호화폐 커뮤니티)
-- [ ] NDA 및 피드백 프로세스 정립
+### 2.2 Pre-Launch (Week 1-4)
 
-#### 콘텐츠 준비
-- [ ] 블로그 포스트 3개 사전 작성
-  - "월렛 버핏을 소개합니다"
-  - "환각 제로 AI 멘토의 비밀"
-  - "섀도우 포트폴리오란?"
-- [ ] Twitter 론칭 트윗 시리즈 (5개)
-- [ ] Discord 공지사항 템플릿
+#### 2.2.1 WhyBitcoinFallen.com Preparation
 
-### Week 5-8: Closed Beta
+```typescript
+interface PreLaunchTasks {
+  landing: {
+    copyFinalization: boolean;
+    ogImageOptimization: boolean;
+    analyticsSetup: boolean;
+    seedingPrep: string[];
+  };
+  betaTesting: {
+    discordSetup: boolean;
+    applicationForm: string;
+    targetSize: number;
+    ndaProcess: boolean;
+  };
+  content: {
+    blogPosts: string[];
+    twitterThreads: number;
+    discordTemplates: boolean;
+  };
+}
+```
 
-#### 베타 운영
-- [ ] 10-20명 베타 테스터 온보딩
-- [ ] 일일 사용자 피드백 수집
-- [ ] 버그 리포트 트래킹 (Notion/Linear)
-- [ ] 주간 베타 테스터 설문 (NPS, 만족도)
+**Tasks**:
+- Landing page copy finalization
+- OG image and meta tag optimization
+- Google Analytics setup
+- Reddit and Twitter seeding preparation
+- Discord server creation and channel configuration
+- Beta tester application form (Google Forms)
+- Target: 10-20 participants from crypto community
+- NDA and feedback process establishment
 
-#### 커뮤니티 활동
-- [ ] Discord에서 일일 Q&A 세션
-- [ ] Twitter에서 베타 스니펫 공유
-- [ ] 베타 테스터 인터뷰 (2-3명)
+**Content Preparation**:
+- 3 blog posts pre-written:
+  - "Introducing Wallet Buffett"
+  - "The Secret of Zero-Hallucination AI Mentor"
+  - "What is Shadow Portfolio?"
+- Twitter launch thread series (5 posts)
+- Discord announcement templates
 
-### Week 9-12: Public Launch
+### 2.3 Closed Beta (Week 5-8)
 
-#### 런칭 캠페인
-- [ ] WhyBitcoinFallen.com 공개
-- [ ] Product Hunt 런칭
-- [ ] Reddit r/cryptocurrency 포스트
-- [ ] Twitter 론칭 스레드
-- [ ] Discord 공식 오픈
+```typescript
+interface BetaOperations {
+  onboarding: {
+    participants: number;
+    dailyFeedback: boolean;
+    bugTracking: string;
+    weeklyNPS: boolean;
+  };
+  community: {
+    dailyQA: string;
+    betaSnippets: boolean;
+    interviews: number;
+  };
+}
+```
 
-#### 초기 운영
-- [ ] 일일 사용자 온보딩 모니터링
-- [ ] 환각률 추적 (<1% 목표)
-- [ ] 응답 속도 모니터링 (2초 목표)
-- [ ] Discord 커뮤니티 활성화
+**Beta Operations**:
+- 10-20 beta testers onboarding
+- Daily user feedback collection
+- Bug report tracking (Notion/Linear)
+- Weekly beta tester survey (NPS, satisfaction)
+
+**Community Activities**:
+- Daily Q&A sessions on Discord
+- Beta snippet sharing on Twitter
+- Beta tester interviews (2-3 participants)
+
+### 2.4 Public Launch (Week 9-12)
+
+```typescript
+interface LaunchCampaign {
+  channels: {
+    productHunt: boolean;
+    reddit: string[];
+    twitter: boolean;
+    discord: boolean;
+  };
+  operations: {
+    onboardingMonitoring: boolean;
+    hallucinationTracking: string;
+    performanceMonitoring: string;
+    communityActivation: boolean;
+  };
+  targets: {
+    MAU: number;
+    NPS: number;
+  };
+}
+```
+
+**Launch Campaign**:
+- WhyBitcoinFallen.com public release
+- Product Hunt launch
+- Reddit r/cryptocurrency post
+- Twitter launch thread
+- Discord official opening
+
+**Initial Operations**:
+- Daily user onboarding monitoring
+- Hallucination rate tracking (target: <1%)
+- Response time monitoring (target: 2 seconds)
+- Discord community activation
 
 **Target**: MAU 500+, NPS 40+
 
 ---
 
-## Phase 2: Growth (2026 Q2-Q3)
+## 3. Phase 2: Growth (2026 Q2-Q3)
 
-### Q2: Expansion
+### 3.1 Q2: Expansion
 
-#### 글로벌 확장
-- [ ] 일본어 커뮤니티 구축 (Twitter, Discord)
-- [ ] 중국어 커뮤니티 구축 (Weibo, WeChat)
-- [ ] 다국어 콘텐츠 제작 (월 4개 블로그)
+```typescript
+interface ExpansionStrategy {
+  global: {
+    markets: ['Japan', 'China'];
+    contentLocalization: {
+      frequency: string;
+      postsPerMonth: number;
+    };
+  };
+  partnerships: {
+    influencers: number;
+    exchanges: string[];
+    mediaOutlets: string[];
+  };
+  events: {
+    monthly: string;
+    rewards: string;
+  };
+  target: {
+    MAU: number;
+  };
+}
+```
 
-#### 파트너십
-- [ ] 암호화폐 인플루언서 협업 (3-5명)
-- [ ] 거래소 제휴 (Binance, Coinbase, Upbit)
-- [ ] 미디어 보도 (TechCrunch, CoinDesk)
+**Global Expansion**:
+- Japanese community building (Twitter, Discord)
+- Chinese community building (Weibo, WeChat)
+- Multilingual content creation (4 blog posts per month)
 
-#### 이벤트
-- [ ] "월렛 버핏과 함께하는 투자 챌린지" (월간)
-- [ ] 최고 수익률 사용자 포상 (Pro 플랜 1년 무료)
+**Partnerships**:
+- Crypto influencer collaborations (3-5 influencers)
+- Exchange partnerships (Binance, Coinbase, Upbit)
+- Media coverage (TechCrunch, CoinDesk)
+
+**Events**:
+- Monthly "Investment Challenge with Wallet Buffett"
+- Top performers rewarded with Pro plan (1 year free)
 
 **Target**: MAU 20,000+
 
-### Q3: Monetization
+### 3.2 Q3: Monetization
 
-#### 유료 플랜 런칭
-- [ ] Pro/Premium 플랜 오픈
-- [ ] 온보딩 이메일 시퀀스 (Drip Campaign)
-- [ ] Stripe 결제 페이지 최적화
+```typescript
+interface MonetizationStrategy {
+  paidPlans: {
+    launch: boolean;
+    onboarding: string;
+    paymentOptimization: string;
+  };
+  retention: {
+    newsletter: string;
+    pushCampaigns: string;
+    churnPrevention: string;
+  };
+  contentMarketing: {
+    youtube: boolean;
+    podcasts: number;
+  };
+  targets: {
+    MAU: number;
+    paidSubscribers: number;
+  };
+}
+```
 
-#### 리텐션 캠페인
-- [ ] 주간 뉴스레터 (시장 분석 + 월렛 버핏 조언)
-- [ ] Push 알림 재참여 캠페인
-- [ ] Churn 예방 이메일 (비활성 사용자)
+**Paid Plan Launch**:
+- Pro/Premium plan opening
+- Onboarding email sequence (Drip Campaign)
+- Stripe payment page optimization
 
-#### 콘텐츠 마케팅
-- [ ] YouTube 채널 런칭 (투자 교육)
-- [ ] 팟캐스트 게스트 출연 (3-5회)
+**Retention Campaigns**:
+- Weekly newsletter (market analysis + Wallet Buffett advice)
+- Push notification re-engagement campaigns
+- Churn prevention emails (inactive users)
 
-**Target**: MAU 40,000+, 유료 구독자 500+
+**Content Marketing**:
+- YouTube channel launch (investment education)
+- Podcast guest appearances (3-5 times)
+
+**Target**: MAU 40,000+, Paid subscribers 500+
 
 ---
 
-## Phase 3: Scale (2026 Q4)
+## 4. Phase 3: Scale (2026 Q4)
 
-### Community Scaling
+### 4.1 Community Scaling
 
-#### Discord 확장
-- [ ] 채널 세분화 (코인별, 전략별)
-- [ ] 커뮤니티 모더레이터 채용 (2-3명)
-- [ ] 주간 AMA (Ask Me Anything) with 월렛 버핏
+```typescript
+interface CommunityScale {
+  discord: {
+    channelSegmentation: string[];
+    moderators: number;
+    weeklyAMA: boolean;
+  };
+  socialProof: {
+    sharingFeature: boolean;
+    leaderboard: boolean;
+    campaignHashtag: string;
+  };
+  target: {
+    MAU: number;
+    discordDAU: number;
+  };
+}
+```
 
-#### 소셜 프루프
-- [ ] 성과 공유 기능 (Twitter 자동 포스팅)
-- [ ] 리더보드 (수익률 순위)
-- [ ] 사용자 후기 캠페인 (#MyWalletBuffett)
+**Discord Expansion**:
+- Channel segmentation (by coin, by strategy)
+- Community moderator hiring (2-3 people)
+- Weekly AMA with Wallet Buffett
 
-### 대규모 캠페인
+**Social Proof**:
+- Performance sharing feature (Twitter auto-posting)
+- Leaderboard (by ROI ranking)
+- User testimonial campaign (#MyWalletBuffett)
 
-#### ICO/Token Launch 준비 (Optional)
-- [ ] 토큰 이코노미 설계
-- [ ] 커뮤니티 투표 (거버넌스)
-- [ ] Whitepaper 발행
+### 4.2 Large-Scale Campaigns
 
-#### 글로벌 이벤트
-- [ ] 온라인 컨퍼런스 주최 ("AI & Crypto Investment Summit")
-- [ ] 오프라인 밋업 (서울, 도쿄, 싱가포르)
+```typescript
+interface ScaleCampaigns {
+  tokenLaunch?: {
+    tokenomics: boolean;
+    governance: boolean;
+    whitepaper: boolean;
+  };
+  globalEvents: {
+    onlineConference: string;
+    offlineMeetups: string[];
+  };
+}
+```
+
+**ICO/Token Launch Preparation (Optional)**:
+- Token economics design
+- Community voting (governance)
+- Whitepaper publication
+
+**Global Events**:
+- Online conference hosting ("AI & Crypto Investment Summit")
+- Offline meetups (Seoul, Tokyo, Singapore)
 
 **Target**: MAU 100,000+, Discord DAU 1,000+
 
 ---
 
-## Key Metrics (Operations KPIs)
+## 5. Key Metrics (Operations KPIs)
 
-### Community Metrics
+### 5.1 Community Metrics
 
-| 지표 | Q1 목표 | Q2 목표 | Q3 목표 | Q4 목표 |
-|------|---------|---------|---------|---------|
+```typescript
+interface CommunityMetrics {
+  discord: {
+    members: { Q1: number; Q2: number; Q3: number; Q4: number };
+    DAU: { Q1: number; Q2: number; Q3: number; Q4: number };
+  };
+  twitter: {
+    followers: { Q1: number; Q2: number; Q3: number; Q4: number };
+  };
+  newsletter: {
+    subscribers: { Q1: number; Q2: number; Q3: number; Q4: number };
+  };
+}
+```
+
+| Metric | Q1 Target | Q2 Target | Q3 Target | Q4 Target |
+|--------|-----------|-----------|-----------|-----------|
 | **Discord Members** | 200 | 1,000 | 3,000 | 10,000 |
 | **Discord DAU** | 50 | 200 | 500 | 1,000 |
 | **Twitter Followers** | 500 | 2,000 | 5,000 | 10,000 |
 | **Newsletter Subscribers** | 100 | 500 | 1,500 | 5,000 |
 
-### Content Metrics
+### 5.2 Content Metrics
 
-| 지표 | Q1 | Q2 | Q3 | Q4 |
-|------|----|----|----|----|
+```typescript
+interface ContentMetrics {
+  blogPosts: { Q1: number; Q2: number; Q3: number; Q4: number };
+  tweetsPerWeek: { Q1: number; Q2: number; Q3: number; Q4: number };
+  youtubeVideos: { Q1: number; Q2: number; Q3: number; Q4: number };
+}
+```
+
+| Metric | Q1 | Q2 | Q3 | Q4 |
+|--------|----|----|----|----|
 | **Blog Posts** | 4 | 8 | 12 | 16 |
 | **Tweets per Week** | 3 | 5 | 7 | 10 |
 | **YouTube Videos** | 0 | 2 | 5 | 10 |
 
-### Support Metrics
+### 5.3 Support Metrics
 
-| 지표 | Target |
-|------|--------|
+```typescript
+interface SupportMetrics {
+  averageResponseTime: string;
+  resolutionRate: string;
+  customerSatisfaction: number;
+}
+```
+
+| Metric | Target |
+|--------|--------|
 | **Average Response Time** | < 2시간 |
 | **Resolution Rate** | > 90% |
 | **Customer Satisfaction (CSAT)** | > 4.5/5.0 |
 
 ---
 
-## Community Management
+## 6. Community Management
 
-### Discord Operations
+### 6.1 Discord Operations
 
-#### Channel Structure
+#### 6.1.1 Channel Structure
 
-```
-📢 Announcements
-  - #announcements
-  - #updates
-
-💬 General
-  - #general-chat
-  - #introductions
-  - #feedback
-
-📊 Market
-  - #market-alerts
-  - #btc-discussion
-  - #eth-discussion
-  - #altcoins
-
-📈 Portfolio
-  - #portfolio-showcase
-  - #strategy-discussion
-
-🤖 AI
-  - #wallet-buffett-qa
-  - #ai-feedback
-
-🎉 Events
-  - #challenges
-  - #giveaways
-
-ℹ️ Support
-  - #help
-  - #faq
+```typescript
+interface DiscordStructure {
+  announcements: string[];
+  general: string[];
+  market: string[];
+  portfolio: string[];
+  ai: string[];
+  events: string[];
+  support: string[];
+}
 ```
 
-#### Moderation Guidelines
+**Channels**:
+- **Announcements**: #announcements, #updates
+- **General**: #general-chat, #introductions, #feedback
+- **Market**: #market-alerts, #btc-discussion, #eth-discussion, #altcoins
+- **Portfolio**: #portfolio-showcase, #strategy-discussion
+- **AI**: #wallet-buffett-qa, #ai-feedback
+- **Events**: #challenges, #giveaways
+- **Support**: #help, #faq
+
+#### 6.1.2 Moderation Guidelines
+
+```typescript
+interface ModerationGuidelines {
+  responseTime: {
+    urgent: string;
+    general: string;
+    feedback: string;
+  };
+  tone: {
+    style: string;
+    emojiUsage: string;
+    formality: string;
+  };
+}
+```
 
 **Response Time**:
-- 긴급 문의 (버그, 계정 문제): 1시간 이내
-- 일반 문의: 2시간 이내
-- 피드백: 24시간 이내
+- Urgent inquiries (bugs, account issues): Within 1 hour
+- General inquiries: Within 2 hours
+- Feedback: Within 24 hours
 
 **Tone**:
-- 친근하고 전문적
-- 이모지 적절히 사용
-- "자네" 말투 지양 (Discord에서는 편한 톤)
+- Friendly and professional
+- Appropriate emoji usage
+- Avoid overly formal language on Discord
 
-### Twitter/X Strategy
+### 6.2 Twitter/X Strategy
 
-#### Content Mix (3-5 트윗/일)
+#### 6.2.1 Content Mix
 
-| 유형 | 비율 | 예시 |
-|------|------|------|
-| **Market Insights** | 40% | "BTC Fear & Greed 25. 과거 이 구간에서 매수했던 사람들은 평균 +47% 수익" |
-| **Product Updates** | 20% | "새로운 기능: 섀도우 포트폴리오에서 샤프 비율 확인 가능" |
-| **User Stories** | 20% | "사용자 @john_doe님이 월렛 버핏 조언으로 +23% 수익 달성" |
-| **Educational** | 10% | "워렌 버핏의 투자 원칙 #1: 모르는 것에 투자하지 말라" |
-| **Engagement** | 10% | "여러분은 지금 매수? 매도? 투표해주세요!" |
+```typescript
+interface TwitterContentMix {
+  marketInsights: { ratio: number; example: string };
+  productUpdates: { ratio: number; example: string };
+  userStories: { ratio: number; example: string };
+  educational: { ratio: number; example: string };
+  engagement: { ratio: number; example: string };
+}
+```
 
-#### Hashtag Strategy
+**Daily Posts (3-5 tweets)**:
+
+| Type | Ratio | Example |
+|------|-------|---------|
+| **Market Insights** | 40% | "BTC Fear & Greed 25. Buyers in this range averaged +47% returns" |
+| **Product Updates** | 20% | "New feature: Check Sharpe ratio in Shadow Portfolio" |
+| **User Stories** | 20% | "User @john_doe achieved +23% returns with Wallet Buffett advice" |
+| **Educational** | 10% | "Warren Buffett's investment principle #1: Don't invest in what you don't understand" |
+| **Engagement** | 10% | "Are you buying or selling? Vote below!" |
+
+#### 6.2.2 Hashtag Strategy
+
+```typescript
+interface HashtagStrategy {
+  branded: string[];
+  industry: string[];
+  conditional: string[];
+}
+```
 
 - #SageAI
 - #WalletBuffett
 - #CryptoInvesting
 - #AITrading
-- #Bitcoin (관련 포스트에만)
+- #Bitcoin (only on relevant posts)
 
 ---
 
-## Content Calendar
+## 7. Content Calendar
 
-### Weekly Schedule
+### 7.1 Weekly Schedule
 
-| 요일 | 콘텐츠 |
-|------|--------|
-| **월요일** | 주간 시장 전망 (블로그 + Twitter) |
-| **화요일** | 사용자 성과 공유 (Discord + Twitter) |
-| **수요일** | 투자 교육 콘텐츠 (블로그 or YouTube) |
-| **목요일** | 제품 업데이트 (Discord + Twitter) |
-| **금요일** | 주간 마무리 분석 (블로그 + Twitter) |
-| **토요일** | 커뮤니티 활동 (AMA, 이벤트) |
-| **일요일** | 휴식 (자동 포스팅만) |
+```typescript
+interface WeeklyContent {
+  monday: string;
+  tuesday: string;
+  wednesday: string;
+  thursday: string;
+  friday: string;
+  saturday: string;
+  sunday: string;
+}
+```
 
----
+```mermaid
+gantt
+    title Weekly Content Schedule
+    dateFormat YYYY-MM-DD
+    section Monday
+    Market Outlook: a1, 2026-01-06, 1d
+    section Tuesday
+    User Performance: a2, 2026-01-07, 1d
+    section Wednesday
+    Education Content: a3, 2026-01-08, 1d
+    section Thursday
+    Product Update: a4, 2026-01-09, 1d
+    section Friday
+    Week Recap: a5, 2026-01-10, 1d
+    section Saturday
+    Community Event: a6, 2026-01-11, 1d
+    section Sunday
+    Auto-posting Only: a7, 2026-01-12, 1d
+```
 
-## Customer Support
-
-### Support Channels
-
-| 채널 | 용도 | 응답 시간 |
-|------|------|----------|
-| **Discord #help** | 일반 문의 | < 2시간 |
-| **Email (support@sage.ai)** | 공식 문의 | < 24시간 |
-| **Twitter DM** | 간단한 문의 | < 4시간 |
-
-### Common Issues & Solutions
-
-#### "AI가 이상한 답변을 했어요"
-→ 환각 케이스로 기록, Risk Agent 재검증 요청
-
-#### "섀도우 포트폴리오 수익률이 안 맞아요"
-→ 가격 데이터 확인, 캐시 리프레시
-
-#### "로그인이 안 돼요"
-→ Auth.js 세션 확인, 쿠키 설정 체크
-
----
-
-## Crisis Management
-
-### Incident Response
-
-#### Level 1: Minor (환각 1건 발생)
-- 사용자에게 사과
-- 내부 로그 기록
-- Risk Agent 개선
-
-#### Level 2: Moderate (서비스 다운 < 1시간)
-- Discord/Twitter 공지
-- ETA 공유
-- 복구 후 사후 보고
-
-#### Level 3: Critical (데이터 유출, 장시간 다운)
-- 즉시 CEO/CTO 에스컬레이션
-- 전체 사용자 이메일 발송
-- 투명한 사후 보고서 공개
+| Day | Content |
+|-----|---------|
+| **Monday** | Weekly market outlook (Blog + Twitter) |
+| **Tuesday** | User performance sharing (Discord + Twitter) |
+| **Wednesday** | Investment education content (Blog or YouTube) |
+| **Thursday** | Product updates (Discord + Twitter) |
+| **Friday** | Weekly recap analysis (Blog + Twitter) |
+| **Saturday** | Community activities (AMA, events) |
+| **Sunday** | Rest (auto-posting only) |
 
 ---
 
-## Analytics & Reporting
+## 8. Customer Support
 
-### Weekly Report
+### 8.1 Support Channels
 
-- MAU/DAU 추이
-- 신규 가입자 수
-- Discord 활성도
-- Twitter 성장률
-- 주요 피드백 요약
+```typescript
+interface SupportChannels {
+  discord: { purpose: string; responseTime: string };
+  email: { purpose: string; responseTime: string };
+  twitter: { purpose: string; responseTime: string };
+}
+```
 
-### Monthly Report
+| Channel | Purpose | Response Time |
+|---------|---------|--------------|
+| **Discord #help** | General inquiries | < 2 hours |
+| **Email (support@sage.ai)** | Official inquiries | < 24 hours |
+| **Twitter DM** | Quick inquiries | < 4 hours |
 
-- 모든 KPI 달성률
-- 사용자 코호트 분석
-- Churn 분석
-- 다음 달 액션 아이템
+### 8.2 Common Issues & Solutions
+
+```typescript
+interface CommonIssues {
+  hallucination: {
+    symptom: string;
+    action: string;
+  };
+  portfolioMismatch: {
+    symptom: string;
+    action: string;
+  };
+  authFailure: {
+    symptom: string;
+    action: string;
+  };
+}
+```
+
+**Issue: "AI gave strange response"**
+- Record as hallucination case, request Risk Agent re-validation
+
+**Issue: "Shadow Portfolio ROI doesn't match"**
+- Check price data, refresh cache
+
+**Issue: "Cannot log in"**
+- Check Auth.js session, verify cookie settings
 
 ---
 
-**문서 끝**
+## 9. Crisis Management
+
+### 9.1 Incident Response
+
+```typescript
+interface IncidentLevels {
+  level1: {
+    severity: 'Minor';
+    example: string;
+    response: string[];
+  };
+  level2: {
+    severity: 'Moderate';
+    example: string;
+    response: string[];
+  };
+  level3: {
+    severity: 'Critical';
+    example: string;
+    response: string[];
+  };
+}
+```
+
+```mermaid
+flowchart TD
+    A[Incident Detected] --> B{Severity Level?}
+    B -->|Level 1: Minor| C[Apologize to user]
+    B -->|Level 2: Moderate| D[Public announcement]
+    B -->|Level 3: Critical| E[CEO/CTO escalation]
+    C --> F[Internal logging]
+    D --> G[ETA sharing]
+    E --> H[User-wide email]
+    F --> I[Improve Risk Agent]
+    G --> J[Post-incident report]
+    H --> K[Transparent public report]
+```
+
+**Level 1: Minor (Single hallucination incident)**
+- Apologize to user
+- Internal log recording
+- Risk Agent improvement
+
+**Level 2: Moderate (Service down < 1 hour)**
+- Discord/Twitter announcement
+- Share ETA
+- Post-incident report after recovery
+
+**Level 3: Critical (Data breach, extended downtime)**
+- Immediate CEO/CTO escalation
+- Full user email notification
+- Transparent post-incident report publication
+
+---
+
+## 10. Analytics & Reporting
+
+### 10.1 Reporting Structure
+
+```typescript
+interface ReportingCadence {
+  weekly: {
+    metrics: string[];
+    format: string;
+  };
+  monthly: {
+    metrics: string[];
+    format: string;
+  };
+}
+```
+
+### 10.2 Weekly Report
+
+**Contents**:
+- MAU/DAU trends
+- New signups count
+- Discord activity
+- Twitter growth rate
+- Key feedback summary
+
+### 10.3 Monthly Report
+
+**Contents**:
+- All KPI achievement rates
+- User cohort analysis
+- Churn analysis
+- Next month action items
+
+---
+
+**Document End**
 
 _"Between the zeros and ones"_

@@ -1,96 +1,115 @@
 # Sage.ai Frontend Specification
 
-> **문서 버전**: 1.0
-> **최종 수정**: 2025년 12월 19일
-> **작성자**: Sam
-> **대상 독자**: Frontend 개발자
+```
+Document Info
+├── Version: 1.0
+├── Last Updated: 2025-12-19
+├── Author: Sam
+├── Status: Production Ready
+└── Audience: Frontend Developers
+```
 
 ---
 
-## 기술 스택
+## 1. Technology Stack
 
-### Core
+### 1.1 Core Technologies
 
-| 컴포넌트 | 기술 | 버전 | 선택 이유 |
-|---------|------|------|-----------|
-| **Framework** | React | 18.3 | 생태계, 안정성, Hooks |
-| **Build Tool** | Vite | 5.x | 빠른 HMR, ESM 네이티브 |
-| **Language** | TypeScript | 5.x | 타입 안정성 |
-| **Routing** | React Router | 6.x | SPA 라우팅 |
+```typescript
+interface TechnologyStack {
+  core: {
+    framework: "React 18.3";
+    buildTool: "Vite 5.x";
+    language: "TypeScript 5.x";
+    routing: "React Router 6.x";
+  };
+  stateManagement: {
+    clientState: "Zustand 4.x";
+    serverState: "TanStack Query 5.x";
+  };
+  styling: {
+    framework: "Tailwind CSS 3.x";
+    components: "shadcn/ui";
+    icons: "Lucide React";
+  };
+  pwa: {
+    serviceWorker: "Vite PWA Plugin";
+    notifications: "Web Push API";
+  };
+}
+```
 
-### State Management
+### 1.2 Stack Selection Rationale
 
-| 상태 유형 | 도구 | 버전 | 용도 |
-|----------|------|------|------|
-| **Client State** | Zustand | 4.x | 사이드바, 모달, UI 상태 |
-| **Server State** | TanStack Query | 5.x | API 데이터, 캐싱, 동기화 |
-
-### Styling & UI
-
-| 컴포넌트 | 기술 | 버전 |
-|---------|------|------|
-| **CSS Framework** | Tailwind CSS | 3.x |
-| **Component Library** | shadcn/ui | - |
-| **Icons** | Lucide React | - |
-
-### PWA & Notifications
-
-| 컴포넌트 | 기술 |
-|---------|------|
-| **Service Worker** | Vite PWA Plugin |
-| **Push Notifications** | Web Push API |
+| Component | Technology | Version | Reason |
+|-----------|------------|---------|--------|
+| Framework | React | 18.3 | Ecosystem, stability, Hooks |
+| Build Tool | Vite | 5.x | Fast HMR, ESM native |
+| Language | TypeScript | 5.x | Type safety |
+| Routing | React Router | 6.x | SPA routing |
+| Client State | Zustand | 4.x | Sidebar, modal, UI state |
+| Server State | TanStack Query | 5.x | API data, caching, sync |
+| CSS Framework | Tailwind CSS | 3.x | Rapid development |
+| Component Library | shadcn/ui | - | Copy-paste components |
+| Icons | Lucide React | - | Consistent icon set |
 
 ---
 
-## Architecture
+## 2. Architecture
 
-### Component Hierarchy
+### 2.1 Component Hierarchy
 
 ```
-App
-├── Layouts
-│   ├── AuthLayout (WhyBitcoinFallen, Sage.ai Landing)
-│   └── AppLayout (Main App)
-│       ├── Sidebar
-│       ├── Header
-│       └── Main Content
+Application Architecture
 │
-├── Pages
-│   ├── WhyBitcoinFallen
-│   ├── Landing
-│   ├── Chat
-│   ├── Portfolio
-│   ├── Notifications
-│   └── Settings
-│
-├── Features
-│   ├── chat/
-│   │   ├── ChatList
-│   │   ├── ChatWindow
-│   │   ├── MessageInput
-│   │   └── MessageBubble
+├── App
+│   ├── Layouts
+│   │   ├── AuthLayout
+│   │   │   ├── WhyBitcoinFallen
+│   │   │   └── Sage.ai Landing
+│   │   │
+│   │   └── AppLayout
+│   │       ├── Sidebar
+│   │       ├── Header
+│   │       └── Main Content
 │   │
-│   ├── portfolio/
-│   │   ├── PortfolioOverview
-│   │   ├── TradeList
-│   │   └── PerformanceChart
+│   ├── Pages
+│   │   ├── WhyBitcoinFallen
+│   │   ├── Landing
+│   │   ├── Chat
+│   │   ├── Portfolio
+│   │   ├── Notifications
+│   │   └── Settings
 │   │
-│   └── market/
-│       ├── PriceTicker
-│       ├── FearGreedGauge
-│       └── CoinCard
-│
-└── Shared Components
-    ├── Button
-    ├── Card
-    ├── Dialog
-    └── Loading
+│   ├── Features
+│   │   ├── chat/
+│   │   │   ├── ChatList
+│   │   │   ├── ChatWindow
+│   │   │   ├── MessageInput
+│   │   │   └── MessageBubble
+│   │   │
+│   │   ├── portfolio/
+│   │   │   ├── PortfolioOverview
+│   │   │   ├── TradeList
+│   │   │   └── PerformanceChart
+│   │   │
+│   │   └── market/
+│   │       ├── PriceTicker
+│   │       ├── FearGreedGauge
+│   │       └── CoinCard
+│   │
+│   └── Shared Components
+│       ├── Button
+│       ├── Card
+│       ├── Dialog
+│       └── Loading
 ```
 
-### Folder Structure
+### 2.2 Folder Structure
 
 ```
 apps/frontend/
+│
 ├── public/
 │   ├── manifest.json          # PWA manifest
 │   ├── sw.js                  # Service worker
@@ -146,11 +165,12 @@ apps/frontend/
 
 ---
 
-## State Management
+## 3. State Management
 
-### Zustand (Client State)
+### 3.1 Zustand (Client State)
 
-**UI State**:
+#### 3.1.1 UI State
+
 ```typescript
 // store/ui.store.ts
 interface UIState {
@@ -172,7 +192,8 @@ export const useUIStore = create<UIState>((set) => ({
 }));
 ```
 
-**Chat State**:
+#### 3.1.2 Chat State
+
 ```typescript
 // store/chat.store.ts
 interface ChatState {
@@ -185,9 +206,10 @@ interface ChatState {
 }
 ```
 
-### TanStack Query (Server State)
+### 3.2 TanStack Query (Server State)
 
-**Chats**:
+#### 3.2.1 Chats
+
 ```typescript
 // hooks/useChats.ts
 export function useChats() {
@@ -210,7 +232,8 @@ export function useCreateChat() {
 }
 ```
 
-**Messages**:
+#### 3.2.2 Messages
+
 ```typescript
 // hooks/useMessages.ts
 export function useMessages(chatId: string) {
@@ -222,7 +245,8 @@ export function useMessages(chatId: string) {
 }
 ```
 
-**Market Data**:
+#### 3.2.3 Market Data
+
 ```typescript
 // hooks/useMarket.ts
 export function usePrices() {
@@ -244,9 +268,9 @@ export function useFearGreed() {
 
 ---
 
-## SSE (Server-Sent Events)
+## 4. SSE (Server-Sent Events)
 
-### Chat Streaming
+### 4.1 Chat Streaming Client
 
 ```typescript
 // lib/sse.ts
@@ -283,7 +307,7 @@ export class SSEClient {
 }
 ```
 
-### Usage in Component
+### 4.2 Usage in Component
 
 ```typescript
 // features/chat/components/ChatWindow.tsx
@@ -322,13 +346,12 @@ export function ChatWindow({ chatId }: { chatId: string }) {
 
 ---
 
-## Key Components
+## 5. Key Components
 
-### ChatWindow
-
-**Path**: `features/chat/components/ChatWindow.tsx`
+### 5.1 ChatWindow
 
 ```typescript
+// features/chat/components/ChatWindow.tsx
 interface ChatWindowProps {
   chatId: string;
 }
@@ -364,7 +387,7 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
 }
 ```
 
-### MessageBubble
+### 5.2 MessageBubble
 
 ```typescript
 interface MessageBubbleProps {
@@ -391,27 +414,27 @@ export function MessageBubble({ role, content, isStreaming, signal }: MessageBub
           <ReactMarkdown>{content}</ReactMarkdown>
         </div>
 
-        {/* AI Signal (담아보기 버튼) */}
+        {/* AI Signal (Add to Portfolio button) */}
         {signal && (
           <div className="mt-2 p-2 bg-yellow-50 rounded border border-yellow-200">
             <p className="text-sm text-yellow-800">
-              {signal.action === 'buy' ? '📈 매수' : '📉 매도'} 시그널: {signal.symbol}
+              {signal.action === 'buy' ? 'Buy' : 'Sell'} Signal: {signal.symbol}
             </p>
             <Button size="sm" onClick={() => handleAddToPortfolio(signal)}>
-              담아보기
+              Add to Portfolio
             </Button>
           </div>
         )}
 
         {/* Streaming indicator */}
-        {isStreaming && <span className="animate-pulse">▋</span>}
+        {isStreaming && <span className="animate-pulse">|</span>}
       </div>
     </div>
   );
 }
 ```
 
-### PortfolioOverview
+### 5.3 PortfolioOverview
 
 ```typescript
 export function PortfolioOverview() {
@@ -423,16 +446,16 @@ export function PortfolioOverview() {
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatCard
-          title="총 수익률"
+          title="Total Return"
           value={`${performance?.totalReturn.toFixed(2)}%`}
           trend={performance?.totalReturn > 0 ? 'up' : 'down'}
         />
         <StatCard
-          title="벤치마크 대비"
+          title="vs Benchmark"
           value={`${performance?.vsBasemark.toFixed(2)}%`}
         />
         <StatCard
-          title="총 트레이드"
+          title="Total Trades"
           value={trades?.length || 0}
         />
       </div>
@@ -440,7 +463,7 @@ export function PortfolioOverview() {
       {/* Performance Chart */}
       <Card>
         <CardHeader>
-          <CardTitle>성과 추이</CardTitle>
+          <CardTitle>Performance History</CardTitle>
         </CardHeader>
         <CardContent>
           <PerformanceChart data={performance?.history} />
@@ -450,7 +473,7 @@ export function PortfolioOverview() {
       {/* Trade List */}
       <Card>
         <CardHeader>
-          <CardTitle>거래 내역</CardTitle>
+          <CardTitle>Trade History</CardTitle>
         </CardHeader>
         <CardContent>
           <TradeList trades={trades} />
@@ -461,7 +484,7 @@ export function PortfolioOverview() {
 }
 ```
 
-### PriceTicker
+### 5.4 PriceTicker
 
 ```typescript
 export function PriceTicker() {
@@ -475,7 +498,7 @@ export function PriceTicker() {
             <span className="font-bold">{coin.symbol}</span>
             <span>${coin.price.toLocaleString()}</span>
             <span className={coin.change24h > 0 ? 'text-green-400' : 'text-red-400'}>
-              {coin.change24h > 0 ? '▲' : '▼'} {Math.abs(coin.change24h).toFixed(2)}%
+              {coin.change24h > 0 ? '+' : ''}{Math.abs(coin.change24h).toFixed(2)}%
             </span>
           </div>
         ))}
@@ -485,7 +508,7 @@ export function PriceTicker() {
 }
 ```
 
-### FearGreedGauge
+### 5.5 FearGreedGauge
 
 ```typescript
 export function FearGreedGauge() {
@@ -554,9 +577,9 @@ export function FearGreedGauge() {
 
 ---
 
-## PWA & Push Notifications
+## 6. PWA & Push Notifications
 
-### Service Worker Registration
+### 6.1 Service Worker Registration
 
 ```typescript
 // main.tsx
@@ -572,7 +595,7 @@ registerSW({
 });
 ```
 
-### Push Subscription
+### 6.2 Push Subscription
 
 ```typescript
 // hooks/usePush.ts
@@ -609,7 +632,7 @@ export function usePush() {
 }
 ```
 
-### Service Worker (sw.js)
+### 6.3 Service Worker (sw.js)
 
 ```javascript
 self.addEventListener('push', (event) => {
@@ -640,9 +663,9 @@ self.addEventListener('notificationclick', (event) => {
 
 ---
 
-## Routing
+## 7. Routing
 
-### Route Configuration
+### 7.1 Route Configuration
 
 ```typescript
 // App.tsx
@@ -677,7 +700,7 @@ function App() {
 }
 ```
 
-### Deep Links
+### 7.2 Deep Links
 
 ```typescript
 // Handle deep link from notification
@@ -699,9 +722,9 @@ export function ChatWindow() {
 
 ---
 
-## Styling
+## 8. Styling
 
-### Tailwind Configuration
+### 8.1 Tailwind Configuration
 
 ```javascript
 // tailwind.config.js
@@ -723,7 +746,7 @@ export default {
 };
 ```
 
-### Component Styling (shadcn/ui)
+### 8.2 Component Styling (shadcn/ui)
 
 ```tsx
 // components/ui/button.tsx
@@ -759,9 +782,9 @@ export function Button({ variant = 'default', size = 'md', className, ...props }
 
 ---
 
-## Performance Optimization
+## 9. Performance Optimization
 
-### Code Splitting
+### 9.1 Code Splitting
 
 ```typescript
 // Lazy load pages
@@ -773,7 +796,7 @@ const Portfolio = lazy(() => import('./pages/Portfolio'));
 </Suspense>
 ```
 
-### Image Optimization
+### 9.2 Image Optimization
 
 ```typescript
 // Use WebP with fallback
@@ -783,7 +806,7 @@ const Portfolio = lazy(() => import('./pages/Portfolio'));
 </picture>
 ```
 
-### Memoization
+### 9.3 Memoization
 
 ```typescript
 // Expensive calculation
@@ -799,9 +822,9 @@ const handleSendMessage = useCallback((message: string) => {
 
 ---
 
-## Testing
+## 10. Testing
 
-### Component Tests (Vitest + Testing Library)
+### 10.1 Component Tests (Vitest + Testing Library)
 
 ```typescript
 // ChatWindow.test.tsx
@@ -827,9 +850,9 @@ describe('ChatWindow', () => {
 
 ---
 
-## Build & Deployment
+## 11. Build & Deployment
 
-### Build Configuration
+### 11.1 Build Configuration
 
 ```typescript
 // vite.config.ts
@@ -870,7 +893,7 @@ export default defineConfig({
 });
 ```
 
-### Deployment (S3 + CloudFront)
+### 11.2 Deployment (S3 + CloudFront)
 
 ```bash
 # Build
@@ -885,15 +908,7 @@ aws cloudfront create-invalidation --distribution-id XXX --paths "/*"
 
 ---
 
-**문서 끝**
-
-_"Between the zeros and ones"_
-
----
-
-## Appendix
-
-### A. Key Dependencies
+## Appendix A: Key Dependencies
 
 ```json
 {
@@ -918,14 +933,14 @@ _"Between the zeros and ones"_
 }
 ```
 
-### B. Environment Variables
+## Appendix B: Environment Variables
 
 ```env
 VITE_API_URL=https://api.sage.ai
 VITE_VAPID_PUBLIC_KEY=xxx
 ```
 
-### C. Useful Hooks
+## Appendix C: Useful Hooks
 
 ```typescript
 // hooks/useDebounce.ts
@@ -939,4 +954,14 @@ export function useDebounce<T>(value: T, delay: number): T {
 
   return debouncedValue;
 }
+```
+
+---
+
+```
+Document Footer
+├── Last Updated: 2025-12-19
+├── Version: 1.0
+├── Status: Production Ready
+└── Maintainer: Sam (dev@5010.tech)
 ```

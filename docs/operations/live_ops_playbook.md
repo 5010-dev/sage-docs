@@ -1,113 +1,271 @@
 # Sage.ai Live Ops Playbook
 
-> **문서 버전**: 1.0
-> **최종 수정**: 2025년 12월 19일
-> **작성자**: Sam
-> **대상 독자**: 운영팀, 커뮤니티 매니저
+> **Document Version**: 1.0
+> **Last Updated**: 2025년 12월 19일
+> **Author**: Sam
+> **Target Audience**: Operations Team, Community Managers
 
 ---
 
-## Live Ops Overview
+## 1. Live Ops Overview
 
-### Definition
+### 1.1 Definition
 
-**Live Ops (Live Operations)**: 런칭 후 서비스를 실시간으로 운영하며 사용자 참여, 리텐션, 수익화를 지속적으로 개선하는 활동
+```typescript
+interface LiveOpsDefinition {
+  concept: 'Real-time service operations after launch';
+  focus: ['User engagement', 'Retention', 'Monetization', 'Community'];
+}
+```
 
-### Goals
+**Live Ops (Live Operations)**: Post-launch real-time operations to continuously improve user engagement, retention, and monetization
 
-1. **Engagement** - 사용자 활성화 (DAU/MAU 30%+)
-2. **Retention** - 재방문율 증가 (D7 40%+, D30 20%+)
-3. **Monetization** - 유료 전환 (Free → Pro 5%+)
-4. **Community** - 커뮤니티 성장 (Discord DAU 1,000+)
+### 1.2 Goals
+
+```typescript
+interface LiveOpsGoals {
+  engagement: {
+    metric: 'DAU/MAU ratio';
+    target: string;
+  };
+  retention: {
+    metrics: {
+      D7: string;
+      D30: string;
+    };
+  };
+  monetization: {
+    metric: 'Free to Pro conversion';
+    target: string;
+  };
+  community: {
+    metric: 'Discord DAU';
+    target: number;
+  };
+}
+```
+
+1. **Engagement** - User activation (DAU/MAU 30%+)
+2. **Retention** - Revisit rate increase (D7 40%+, D30 20%+)
+3. **Monetization** - Paid conversion (Free → Pro 5%+)
+4. **Community** - Community growth (Discord DAU 1,000+)
 
 ---
 
-## Daily Operations
+## 2. Daily Operations
 
-### Morning Routine (09:00-10:00)
+### 2.1 Daily Workflow
 
-#### 1. Metrics Review
+```mermaid
+flowchart TD
+    A[09:00 Morning Routine] --> B[14:00 Afternoon Routine]
+    B --> C[18:00 Evening Routine]
 
-```bash
-# Daily Dashboard Check
+    A --> A1[Metrics Review]
+    A --> A2[Community Check]
+    A --> A3[System Health]
+
+    B --> B1[Content Publishing]
+    B --> B2[User Engagement]
+
+    C --> C1[Market Monitoring]
+    C --> C2[Proactive Analysis]
+
+    style A fill:#e1f5ff
+    style B fill:#fff4e1
+    style C fill:#ffe1e1
+```
+
+### 2.2 Morning Routine (09:00-10:00)
+
+```typescript
+interface MorningRoutine {
+  metricsReview: {
+    kpis: ['MAU', 'DAU', 'Signups', 'Churn'];
+    dashboardURL: string;
+  };
+  communityCheck: {
+    discord: string[];
+    twitter: string[];
+  };
+  systemHealth: {
+    sentry: boolean;
+    cloudwatch: boolean;
+  };
+}
+```
+
+#### 2.2.1 Metrics Review
+
+**Daily Dashboard Check**:
 - MAU / DAU
 - New signups
 - Churn rate
 - Discord activity
 - Twitter mentions
 - Sentry errors
-```
 
 **Dashboard URL**: https://analytics.sage.ai/daily
 
-#### 2. Community Check
+#### 2.2.2 Community Check
 
 **Discord**:
-- #general-chat 활동 확인
-- #feedback 새 피드백 리뷰
-- #help 미답변 질문 확인
+- #general-chat activity check
+- #feedback new feedback review
+- #help unanswered questions check
 
 **Twitter**:
-- @SageAI 멘션 확인
-- DM 답변
-- 트렌딩 토픽 확인
+- @SageAI mentions check
+- DM responses
+- Trending topics check
 
-#### 3. System Health
+#### 2.2.3 System Health
 
 **Sentry**:
-- 지난 24시간 에러 수
-- Critical 이슈 확인
+- Last 24 hours error count
+- Critical issues check
 
 **CloudWatch**:
-- API 응답 속도
+- API response time
 - ECS CPU/Memory
 - RDS connections
 
-### Afternoon Routine (14:00-15:00)
+### 2.3 Afternoon Routine (14:00-15:00)
 
-#### 1. Content Publishing
+```typescript
+interface AfternoonRoutine {
+  contentPublishing: {
+    twitter: number;
+    discord: boolean;
+    blog: string;
+  };
+  userEngagement: {
+    discordAMA: string;
+    twitterPolls: boolean;
+    testimonialRetweets: boolean;
+  };
+}
+```
 
-- Twitter 포스트 (1-2개)
-- Discord 시장 업데이트
-- 블로그 포스트 (주 2회)
+#### 2.3.1 Content Publishing
 
-#### 2. User Engagement
+- Twitter posts (1-2)
+- Discord market updates
+- Blog posts (2 per week)
 
-- Discord AMA (주 1회, 수요일)
-- Twitter 투표/질문
-- 사용자 후기 리트윗
+#### 2.3.2 User Engagement
 
-### Evening Routine (18:00-19:00)
+- Discord AMA (weekly, Wednesday)
+- Twitter polls/questions
+- User testimonial retweets
 
-#### 1. Market Monitoring
+### 2.4 Evening Routine (18:00-19:00)
 
-- 급변 감지 (±5% BTC, ±7% ETH)
-- Fear & Greed 변화
-- 주요 뉴스 체크
+```typescript
+interface EveningRoutine {
+  marketMonitoring: {
+    volatilityDetection: {
+      BTC: string;
+      ETH: string;
+    };
+    fearGreedChange: boolean;
+    newsCheck: boolean;
+  };
+  proactiveAnalysis: {
+    discordAlert: boolean;
+    twitterPost: boolean;
+    pwaPush: boolean;
+  };
+}
+```
 
-#### 2. Proactive Analysis 알림
+#### 2.4.1 Market Monitoring
 
-- 급변 시 Discord 알림
-- Twitter 긴급 분석 포스트
-- PWA Push 발송
+- Volatility detection (±5% BTC, ±7% ETH)
+- Fear & Greed changes
+- Major news check
+
+#### 2.4.2 Proactive Analysis Alerts
+
+- Discord alerts on volatility
+- Twitter emergency analysis posts
+- PWA Push notifications
 
 ---
 
-## Weekly Operations
+## 3. Weekly Operations
 
-### Monday: Week Planning
+### 3.1 Weekly Schedule
 
-- [ ] 주간 목표 설정 (MAU, 가입자, Discord 활동)
-- [ ] 콘텐츠 캘린더 리뷰
-- [ ] 이벤트 계획 (챌린지, 프로모션)
+```mermaid
+gantt
+    title Weekly Operations Schedule
+    dateFormat YYYY-MM-DD
+    section Monday
+    Week Planning: a1, 2026-01-06, 1d
+    section Tuesday
+    Feedback Review: a2, 2026-01-07, 1d
+    section Wednesday
+    AMA Session: a3, 2026-01-08, 1d
+    section Thursday
+    Content Creation: a4, 2026-01-09, 1d
+    section Friday
+    Week Review: a5, 2026-01-10, 1d
+```
 
-### Tuesday: User Feedback Review
+```typescript
+interface WeeklyOperations {
+  monday: {
+    task: 'Week Planning';
+    activities: string[];
+  };
+  tuesday: {
+    task: 'User Feedback Review';
+    activities: string[];
+  };
+  wednesday: {
+    task: 'AMA Session';
+    time: string;
+    format: string;
+  };
+  thursday: {
+    task: 'Content Creation Day';
+    deliverables: string[];
+  };
+  friday: {
+    task: 'Week Review';
+    metrics: string[];
+  };
+}
+```
 
-- [ ] #feedback 채널 정리
-- [ ] Top 3 피드백 선정
-- [ ] 개발팀과 우선순위 논의
+### 3.2 Monday: Week Planning
 
-### Wednesday: AMA Session (Discord)
+**Tasks**:
+- [ ] Set weekly goals (MAU, signups, Discord activity)
+- [ ] Review content calendar
+- [ ] Plan events (challenges, promotions)
+
+### 3.3 Tuesday: User Feedback Review
+
+**Tasks**:
+- [ ] Organize #feedback channel
+- [ ] Select top 3 feedback items
+- [ ] Discuss priorities with development team
+
+### 3.4 Wednesday: AMA Session (Discord)
+
+```typescript
+interface AMASession {
+  time: '20:00-21:00 KST';
+  channel: '#wallet-buffett-qa';
+  format: {
+    announcement: string;
+    questionCollection: boolean;
+    liveAnswers: boolean;
+  };
+}
+```
 
 **Time**: 20:00-21:00 KST
 
@@ -115,13 +273,13 @@
 ```
 @everyone
 
-🎙️ Weekly AMA with Wallet Buffett 🎙️
+[Microphone] Weekly AMA with Wallet Buffett [Microphone]
 
 오늘 밤 8시, 월렛 버핏과 함께하는 Q&A 시간!
 
 질문 있으신 분들은 #wallet-buffett-qa에 남겨주세요.
 
-See you there! 🚀
+See you there! [Rocket]
 ```
 
 **Example Questions**:
@@ -129,68 +287,121 @@ See you there! 🚀
 - "섀도우 포트폴리오 수익률이 마이너스인데 어떻게 하나요?"
 - "알트코인 추천해주세요"
 
-### Thursday: Content Creation Day
+### 3.5 Thursday: Content Creation Day
 
-- [ ] 블로그 포스트 작성 (1개)
-- [ ] Twitter 스레드 준비 (주말용)
-- [ ] YouTube 스크립트 (Phase 2+)
+**Tasks**:
+- [ ] Write blog post (1)
+- [ ] Prepare Twitter thread (for weekend)
+- [ ] YouTube script (Phase 2+)
 
-### Friday: Week Review
+### 3.6 Friday: Week Review
 
-- [ ] 주간 지표 리뷰
-  - MAU / DAU 달성률
+**Tasks**:
+- [ ] Review weekly metrics
+  - MAU / DAU achievement rate
   - Conversion rate
   - Churn rate
   - Discord activity
-- [ ] Next week 액션 아이템
+- [ ] Define next week action items
 
 ---
 
-## Monthly Operations
+## 4. Monthly Operations
 
-### Month Start (1일)
+### 4.1 Monthly Timeline
 
-- [ ] 월간 목표 설정
-- [ ] 이벤트 캘린더 확정
-- [ ] 마케팅 예산 배정
+```mermaid
+gantt
+    title Monthly Operations Cycle
+    dateFormat YYYY-MM-DD
+    section Month Start
+    Goal Setting: a1, 2026-01-01, 1d
+    Event Calendar: a2, 2026-01-01, 2d
+    section Mid-Month
+    Progress Check: b1, 2026-01-15, 1d
+    Strategy Adjustment: b2, 2026-01-15, 2d
+    section Month End
+    Monthly Report: c1, 2026-01-30, 1d
+    Retrospective: c2, 2026-01-30, 1d
+    OKR Setting: c3, 2026-01-31, 1d
+```
 
-### Mid-Month (15일)
+```typescript
+interface MonthlyOperations {
+  monthStart: {
+    day: 1;
+    tasks: string[];
+  };
+  midMonth: {
+    day: 15;
+    tasks: string[];
+  };
+  monthEnd: {
+    day: 30;
+    tasks: string[];
+  };
+}
+```
 
-- [ ] 진행 상황 체크
-- [ ] 필요 시 전략 조정
-- [ ] 다음 달 계획 초안
+### 4.2 Month Start (Day 1)
 
-### Month End (30일)
+**Tasks**:
+- [ ] Set monthly goals
+- [ ] Finalize event calendar
+- [ ] Allocate marketing budget
 
-- [ ] 월간 리포트 작성
-- [ ] 팀 회고 (Retrospective)
-- [ ] 다음 달 OKR 설정
+### 4.3 Mid-Month (Day 15)
+
+**Tasks**:
+- [ ] Check progress status
+- [ ] Adjust strategy if needed
+- [ ] Draft next month's plan
+
+### 4.4 Month End (Day 30)
+
+**Tasks**:
+- [ ] Write monthly report
+- [ ] Team retrospective
+- [ ] Set next month OKRs
 
 ---
 
-## Events & Campaigns
+## 5. Events & Campaigns
 
-### Monthly Investment Challenge
+### 5.1 Monthly Investment Challenge
 
-**Concept**: 섀도우 포트폴리오 수익률 경쟁
+```typescript
+interface MonthlyChallenge {
+  concept: 'Shadow Portfolio ROI competition';
+  timeline: 'Month 1st - End of month';
+  rules: string[];
+  prizes: {
+    first: string;
+    second: string;
+    third: string;
+  };
+}
+```
 
-**Timeline**: 매월 1일 - 말일
+**Concept**: Shadow Portfolio ROI competition
+
+**Timeline**: Every month 1st - End of month
 
 **Rules**:
-1. 참가자는 Discord #challenges 채널에 등록
-2. 월렛 버핏 조언 기반 섀도우 트레이드만 인정
-3. 최고 수익률 3명에게 보상
+1. Register in Discord #challenges channel
+2. Only shadow trades based on Wallet Buffett advice
+3. Top 3 ROI winners receive rewards
 
 **Prizes**:
-- 🥇 1st: Pro 플랜 1년 무료
-- 🥈 2nd: Pro 플랜 6개월 무료
-- 🥉 3rd: Pro 플랜 3개월 무료
+- 1st: Pro plan 1 year free
+- 2nd: Pro plan 6 months free
+- 3rd: Pro plan 3 months free
 
 **Announcement (Discord)**:
 ```
 @everyone
 
-🏆 Monthly Investment Challenge 🏆
+[Trophy] Monthly Investment Challenge [Trophy]
 
 This month's theme: "Buy the Fear, Sell the Greed"
 
@@ -201,29 +412,46 @@ Rules:
 
 Top 3 ROI winners get Pro Plan FREE!
 
-Join now: 👇
+Join now: [Down Arrow]
 ```
 
-### Weekly Twitter Engagement
+### 5.2 Weekly Twitter Engagement
 
-#### Monday: Market Recap
+```typescript
+interface WeeklyTwitterContent {
+  monday: {
+    type: 'Market Recap';
+    format: string;
+  };
+  wednesday: {
+    type: 'Wallet Buffett Wisdom';
+    format: string;
+  };
+  friday: {
+    type: 'User Spotlight';
+    format: string;
+  };
+}
+```
+
+#### 5.2.1 Monday: Market Recap
 
 ```
-📊 Last Week in Crypto
+[Chart] Last Week in Crypto
 
 BTC: $43,250 → $45,100 (+4.3%)
 ETH: $2,280 → $2,450 (+7.5%)
 Fear & Greed: 25 → 35 (Fear → Neutral)
 
-What's your play this week? 🤔
+What's your play this week? [Thinking]
 
-Vote below! 👇
+Vote below! [Down Arrow]
 ```
 
-#### Wednesday: Wallet Buffett Wisdom
+#### 5.2.2 Wednesday: Wallet Buffett Wisdom
 
 ```
-💡 Wallet Buffett says:
+[Light Bulb] Wallet Buffett says:
 
 "자네, 시장이 공포에 질렸을 때가
 바로 기회일세."
@@ -233,13 +461,13 @@ BTC Fear & Greed: 25 (Extreme Fear)
 Historically, buying at this level has led to
 +47% average returns in 6 months.
 
-Are you buying the fear? 🤔
+Are you buying the fear? [Thinking]
 ```
 
-#### Friday: User Spotlight
+#### 5.2.3 Friday: User Spotlight
 
 ```
-🌟 User Spotlight 🌟
+[Star] User Spotlight [Star]
 
 Meet @john_doe, who used Wallet Buffett's advice
 to achieve +23% returns this month!
@@ -252,44 +480,72 @@ Here's his strategy:
 Want to be featured? Share your wins in our Discord!
 ```
 
-### Quarterly Events
+### 5.3 Quarterly Events
 
-#### Q1: Genesis Launch Party (Virtual)
+```typescript
+interface QuarterlyEvents {
+  Q1: {
+    event: 'Genesis Launch Party';
+    platform: string[];
+  };
+  Q2: {
+    event: 'Invest Like Buffett Webinar';
+    speaker: string;
+  };
+  Q3: {
+    event: 'Beta Anniversary Event';
+    celebration: string[];
+  };
+}
+```
 
-**Date**: Launch Day
+```mermaid
+timeline
+    title Quarterly Events Timeline
+    Q1 : Genesis Launch Party
+       : Discord + Twitter Spaces
+    Q2 : Invest Like Buffett Webinar
+       : Guest Speaker Event
+    Q3 : Beta Anniversary Event
+       : Top 10 Portfolios + Discounts
+```
 
-**Platform**: Discord + Twitter Spaces
+**Q1: Genesis Launch Party (Virtual)**
+- **Date**: Launch Day
+- **Platform**: Discord + Twitter Spaces
+- **Agenda**: CEO Welcome, Product Demo, Team AMA, Giveaway (10 Pro plans)
 
-**Agenda**:
-- CEO Welcome
-- Product Demo
-- AMA with team
-- Giveaway (Pro 플랜 10개)
+**Q2: "Invest Like Buffett" Webinar**
+- **Date**: TBD
+- **Speaker**: Crypto expert guest
+- **Topic**: Applying Warren Buffett's philosophy to crypto
 
-#### Q2: "Invest Like Buffett" Webinar
-
-**Date**: TBD
-
-**Speaker**: 암호화폐 전문가 초대
-
-**Topic**: 워렌 버핏 투자 철학을 암호화폐에 적용하기
-
-#### Q3: Beta Anniversary Event
-
-**Date**: 3 months after launch
-
-**Celebration**:
-- 베타 테스터 감사 이벤트
-- 섀도우 포트폴리오 Top 10 공개
-- Special discount (Pro 플랜 50% off)
+**Q3: Beta Anniversary Event**
+- **Date**: 3 months after launch
+- **Celebration**: Beta tester appreciation, Top 10 Shadow Portfolios, Special discount (50% off Pro plan)
 
 ---
 
-## Community Management
+## 6. Community Management
 
-### Discord Moderation
+### 6.1 Discord Moderation
 
-#### Response Time SLA
+```typescript
+interface DiscordModeration {
+  responseSLA: {
+    help: string;
+    feedback: string;
+    general: string;
+  };
+  guidelines: {
+    allowed: string[];
+    notAllowed: string[];
+    enforcement: string[];
+  };
+}
+```
+
+#### 6.1.1 Response Time SLA
 
 | Channel | Response Time |
 |---------|--------------|
@@ -297,29 +553,43 @@ Want to be featured? Share your wins in our Discord!
 | #feedback | < 24시간 |
 | #general-chat | Best effort |
 
-#### Moderation Guidelines
+#### 6.1.2 Moderation Guidelines
 
 **Allowed**:
-- 투자 토론
-- Sage.ai 피드백
-- 시장 분석 공유
+- Investment discussions
+- Sage.ai feedback
+- Market analysis sharing
 
 **Not Allowed**:
 - Spam
-- 직접적 투자 권유 ("Buy X coin now!")
-- 타 서비스 홍보
-- 욕설, 비방
+- Direct investment solicitation ("Buy X coin now!")
+- Other service promotion
+- Profanity, defamation
 
-**Warning → Mute (1일) → Kick → Ban**
+**Enforcement**: Warning → Mute (1 day) → Kick → Ban
 
-### Twitter Engagement
+### 6.2 Twitter Engagement
 
-#### Reply Strategy
+```typescript
+interface TwitterEngagement {
+  positiveMentions: {
+    responseTemplate: string;
+  };
+  featureRequests: {
+    responseTemplate: string;
+  };
+  complaints: {
+    responseTemplate: string;
+  };
+}
+```
+
+#### 6.2.1 Reply Strategy
 
 **Positive Mentions**:
 ```
 User: "Sage.ai is amazing! Just made my first shadow portfolio"
-Reply: "That's awesome! 🎉 Let us know how it performs. We're here to help!"
+Reply: "That's awesome! [Party] Let us know how it performs. We're here to help!"
 ```
 
 **Feature Requests**:
@@ -338,14 +608,51 @@ We take accuracy very seriously and want to fix this ASAP."
 
 ---
 
-## User Retention Strategies
+## 7. User Retention Strategies
 
-### Email Campaigns
+### 7.1 Email Campaign Flow
 
-#### Day 0: Welcome Email
+```mermaid
+flowchart TD
+    A[Day 0: Welcome] --> B{Active?}
+    B -->|Yes| C[Day 7: Feature Discovery]
+    B -->|No| D[Day 3: Activation Nudge]
+    D --> E{Active?}
+    E -->|Yes| C
+    E -->|No| F[Day 30: Re-engagement]
+
+    style A fill:#e1f5ff
+    style C fill:#90EE90
+    style F fill:#FFB6C1
+```
+
+```typescript
+interface EmailCampaigns {
+  day0: {
+    trigger: 'Signup';
+    subject: string;
+  };
+  day3: {
+    trigger: 'Inactive user';
+    subject: string;
+  };
+  day7: {
+    trigger: 'Active user';
+    subject: string;
+  };
+  day30: {
+    trigger: 'Churned user';
+    subject: string;
+  };
+}
+```
+
+### 7.2 Email Templates
+
+#### 7.2.1 Day 0: Welcome Email
 
 ```
-Subject: Welcome to Sage.ai! 🎉
+Subject: Welcome to Sage.ai! [Party]
 
 Hi [Name],
 
@@ -358,7 +665,7 @@ Welcome! Here's how to get the most out of Sage.ai:
 Happy investing!
 ```
 
-#### Day 3: Activation Nudge
+#### 7.2.2 Day 3: Activation Nudge
 
 ```
 Subject: Try asking Wallet Buffett this...
@@ -374,7 +681,7 @@ Quick question for Wallet Buffett:
 See what he says!
 ```
 
-#### Day 7: Feature Discovery
+#### 7.2.3 Day 7: Feature Discovery
 
 ```
 Subject: Did you know? Shadow Portfolios track AI recommendations
@@ -388,7 +695,7 @@ Just click "Add to Portfolio" on any AI buy/sell signal.
 [Learn more] →
 ```
 
-#### Day 30: Re-engagement
+#### 7.2.4 Day 30: Re-engagement
 
 ```
 Subject: We miss you! Here's what you missed...
@@ -401,49 +708,97 @@ You haven't visited in a while. Here's what's new:
 - Fear & Greed hit "Extreme Greed" (time to be cautious?)
 - 500+ investors joined our Discord
 
-Come back and say hi! 👋
+Come back and say hi! [Wave]
 
 [Chat with Wallet Buffett] →
 ```
 
-### Push Notifications
+### 7.3 Push Notifications
 
-#### Trigger 1: Market Alert
+```typescript
+interface PushNotifications {
+  marketAlert: {
+    trigger: string;
+    template: string;
+  };
+  portfolioUpdate: {
+    trigger: string;
+    template: string;
+  };
+  inactivity: {
+    trigger: string;
+    template: string;
+  };
+}
+```
+
+#### 7.3.1 Trigger 1: Market Alert
 
 ```
-Title: 🚨 BTC -5.2%
+Title: [Alert] BTC -5.2%
 Body: Bitcoin just dropped -5.2%. Wallet Buffett says: "자네, 공포가 기회일세."
 Action: Tap to analyze
 ```
 
-#### Trigger 2: Portfolio Update
+#### 7.3.2 Trigger 2: Portfolio Update
 
 ```
-Title: 📈 Your Shadow Portfolio +8.5%
+Title: [Chart Up] Your Shadow Portfolio +8.5%
 Body: Your BTC position is up 8.5% since you added it!
 Action: View portfolio
 ```
 
-#### Trigger 3: Inactivity (7 days)
+#### 7.3.3 Trigger 3: Inactivity (7 days)
 
 ```
-Title: 💬 Wallet Buffett misses you
+Title: [Speech Balloon] Wallet Buffett misses you
 Body: Market moved a lot this week. Want to chat?
 Action: Ask Wallet Buffett
 ```
 
 ---
 
-## Monetization Tactics
+## 8. Monetization Tactics
 
-### Free → Pro Conversion
+### 8.1 Conversion Funnel
 
-#### In-App Prompts
+```mermaid
+flowchart TD
+    A[Free User] --> B{Hit Limit?}
+    B -->|Portfolio Limit| C[Upgrade Prompt]
+    B -->|Rate Limit| D[Upgrade Prompt]
+    B -->|Exit Intent| E[Free Trial Offer]
+    C --> F{Upgrade?}
+    D --> F
+    E --> F
+    F -->|Yes| G[Pro User]
+    F -->|No| A
+
+    style A fill:#e1f5ff
+    style G fill:#90EE90
+```
+
+```typescript
+interface MonetizationTactics {
+  inAppPrompts: {
+    portfolioLimit: string;
+    rateLimit: string;
+  };
+  exitIntent: {
+    trigger: string;
+    offer: string;
+  };
+}
+```
+
+### 8.2 Free to Pro Conversion
+
+#### 8.2.1 In-App Prompts
 
 **Trigger**: User creates 2nd shadow portfolio (Free tier limit: 1)
 
 ```
-🔒 Upgrade to Pro
+[Lock] Upgrade to Pro
 
 You've reached the limit of 1 Shadow Portfolio on Free tier.
 
@@ -458,7 +813,7 @@ Upgrade to Pro for:
 **Trigger**: User asks 11th question in 1 minute (Rate limit)
 
 ```
-⏳ Slow down there, investor!
+[Hourglass] Slow down there, investor!
 
 You've hit the Free tier limit of 10 questions per minute.
 
@@ -467,7 +822,7 @@ Upgrade to Pro for unlimited chats.
 [Upgrade to Pro - $19.99/mo] →
 ```
 
-#### Exit Intent (Web)
+#### 8.2.2 Exit Intent (Web)
 
 **Trigger**: User moves mouse to close tab
 
@@ -485,9 +840,17 @@ Try Pro FREE for 7 days
 
 ---
 
-## Analytics & Reporting
+## 9. Analytics & Reporting
 
-### Daily Metrics
+### 9.1 Key Metrics Queries
+
+```typescript
+interface AnalyticsQueries {
+  dailyActiveUsers: string;
+  newSignups: string;
+  churnRate: string;
+}
+```
 
 ```sql
 -- Daily Active Users (DAU)
@@ -511,36 +874,61 @@ WHERE u.created_at < NOW() - INTERVAL '30 days'
   AND m.id IS NULL;
 ```
 
-### Weekly Report
+### 9.2 Weekly Report Format
 
-**Format**:
+```typescript
+interface WeeklyReport {
+  period: string;
+  keyMetrics: {
+    MAU: { value: number; change: string };
+    DAU: { value: number; ratio: string };
+    signups: { value: number; change: string };
+    churnRate: { value: string; change: string };
+  };
+  monetization: {
+    conversions: number;
+    conversionRate: string;
+    MRR: string;
+  };
+  community: {
+    discordMembers: { value: number; change: string };
+    discordDAU: { value: number; ratio: string };
+    twitterFollowers: { value: number; change: string };
+  };
+  feedback: string[];
+  bugs: string[];
+  nextWeekFocus: string[];
+}
+```
+
+**Example**:
 ```
 Week [N] Report (YYYY-MM-DD ~ YYYY-MM-DD)
 
-📊 Key Metrics:
+[Chart] Key Metrics:
 - MAU: 1,250 (+15% WoW)
 - DAU: 375 (DAU/MAU: 30%)
 - New Signups: 150 (+10% WoW)
 - Churn Rate: 5% (-1% WoW)
 
-💰 Monetization:
+[Money] Monetization:
 - Pro Conversions: 5 (conversion rate: 3.3%)
 - MRR: $99.95
 
-💬 Community:
+[Speech Balloon] Community:
 - Discord Members: 450 (+50 WoW)
 - Discord DAU: 120 (DAU/Members: 26.7%)
 - Twitter Followers: 850 (+100 WoW)
 
-📝 Top Feedback:
+[Memo] Top Feedback:
 1. "Add more coins (ADA, DOT)"
 2. "Mobile app needed"
 3. "Love the shadow portfolio feature!"
 
-🐛 Critical Bugs:
-- None this week ✅
+[Bug] Critical Bugs:
+- None this week [Checkmark]
 
-🎯 Next Week Focus:
+[Target] Next Week Focus:
 - Launch Monthly Investment Challenge
 - Publish blog post on Shadow Portfolios
 - Improve onboarding flow (target: +20% activation)
@@ -548,9 +936,53 @@ Week [N] Report (YYYY-MM-DD ~ YYYY-MM-DD)
 
 ---
 
-## Incident Response
+## 10. Incident Response
 
-### Severity Levels
+### 10.1 Severity Levels
+
+```typescript
+interface IncidentSeverity {
+  P0: {
+    description: string;
+    responseTime: string;
+    escalation: string[];
+  };
+  P1: {
+    description: string;
+    responseTime: string;
+    escalation: string[];
+  };
+  P2: {
+    description: string;
+    responseTime: string;
+    escalation: string[];
+  };
+  P3: {
+    description: string;
+    responseTime: string;
+    escalation: string[];
+  };
+}
+```
+
+```mermaid
+flowchart TD
+    A[Incident Detected] --> B{Severity?}
+    B -->|P0: Critical| C[Immediate Response]
+    B -->|P1: Major| D[< 1 hour Response]
+    B -->|P2: Minor| E[< 4 hours Response]
+    B -->|P3: Cosmetic| F[< 24 hours Response]
+
+    C --> G[CEO + CTO]
+    D --> H[CTO]
+    E --> I[Tech Lead]
+    F --> J[Team Discretion]
+
+    style C fill:#FF6B6B
+    style D fill:#FFB6C1
+    style E fill:#FFF4E1
+    style F fill:#E1FFE1
+```
 
 | Level | Description | Response Time | Escalation |
 |-------|-------------|--------------|------------|
@@ -559,13 +991,26 @@ Week [N] Report (YYYY-MM-DD ~ YYYY-MM-DD)
 | **P2** | Minor feature broken (notifications) | < 4 hours | Tech Lead |
 | **P3** | Cosmetic issues | < 24 hours | Team discretion |
 
-### Communication Template
+### 10.2 Communication Templates
 
-#### P0/P1 Incident
+```typescript
+interface IncidentCommunication {
+  initial: {
+    discord: string;
+    twitter: string;
+  };
+  resolution: {
+    discord: string;
+    twitter: string;
+  };
+}
+```
+
+#### 10.2.1 P0/P1 Incident
 
 **Discord #announcements**:
 ```
-⚠️ Service Issue
+[Warning] Service Issue
 
 We're currently experiencing [issue description].
 
@@ -580,16 +1025,17 @@ Thank you for your patience!
 
 **Twitter**:
 ```
-🛠️ We're aware of an issue affecting [feature].
+[Tool] We're aware of an issue affecting [feature].
 
 Our team is on it and working on a fix.
 
 We'll keep you updated. Sorry for the inconvenience!
 ```
 
-**Resolution Announcement**:
+#### 10.2.2 Resolution Announcement
+
 ```
-✅ Issue Resolved
+[Checkmark] Issue Resolved
 
 [Feature] is now back to normal.
 
@@ -601,6 +1047,6 @@ Thank you for your patience!
 
 ---
 
-**문서 끝**
+**Document End**
 
 _"Between the zeros and ones"_

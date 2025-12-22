@@ -1,4 +1,4 @@
-# Sage.ai AI Team Strategy
+# AI-Native 시대의 기술팀 구성 전략 가이드
 
 > **문서 버전**: 1.0
 > **최종 수정**: 2025년 12월 19일
@@ -7,7 +7,7 @@
 
 ---
 
-## 전략 개요
+## Executive Summary
 
 ### Vision
 
@@ -15,10 +15,25 @@
 
 ### 핵심 원칙
 
-1. **AI-First Development** - 모든 개발 과정에 AI 활용
-2. **Human-AI Collaboration** - AI는 보조자가 아닌 파트너
-3. **Quality over Speed** - 빠르지만 품질 타협 없음
-4. **Continuous Learning** - AI 도구 진화에 맞춰 성장
+```typescript
+interface AIDevelopmentPrinciples {
+  aiFirst: "모든 개발 과정에 AI 활용";
+  humanAICollab: "AI는 보조자가 아닌 파트너";
+  qualityOverSpeed: "빠르지만 품질 타협 없음";
+  continuousLearning: "AI 도구 진화에 맞춰 성장";
+}
+```
+
+---
+
+## AI가 가져온 개발 패러다임 전환
+
+| 영역 | 전통적 방식 | AI-Native 방식 | 변화율 |
+|------|------------|---------------|--------|
+| **기능 개발** | 1 feature/주 | 5 features/주 | 5x |
+| **버그 수정** | 2시간/버그 | 30분/버그 | 4x |
+| **코드 리뷰** | 1시간/PR | 20분/PR | 3x |
+| **문서화 완성도** | 30% | 90% | 3x |
 
 ---
 
@@ -46,6 +61,24 @@
 ---
 
 ## AI-Native Development Workflow
+
+```mermaid
+graph LR
+    A[기획 & 설계] --> B[개발]
+    B --> C[코드 리뷰]
+    C --> D[배포 & 모니터링]
+    D --> A
+
+    subgraph AI 활용
+        A1[PRD 작성]
+        A2[아키텍처 다이어그램]
+        A3[API 스펙 생성]
+    end
+
+    A --> A1
+    A --> A2
+    A --> A3
+```
 
 ### 1. 기획 & 설계 단계
 
@@ -123,47 +156,33 @@ Provide specific line numbers and suggestions."
 
 ## AI Pair Programming Best Practices
 
-### DO's ✅
+### DO's
+
+```typescript
+// ❌ 나쁜 예
+const badPrompt = "Create a user service";
+
+// ✅ 좋은 예
+const goodPrompt = `Create a NestJS user service that:
+  - Uses Prisma for DB access
+  - Implements Auth.js session management
+  - Includes pagination (20 items per page)
+  - Follows our existing pattern in src/modules/chat/chat.service.ts`;
+```
 
 1. **구체적인 컨텍스트 제공**
-   ```
-   ❌ "Create a user service"
-   ✅ "Create a NestJS user service that:
-      - Uses Prisma for DB access
-      - Implements Auth.js session management
-      - Includes pagination (20 items per page)
-      - Follows our existing pattern in src/modules/chat/chat.service.ts"
-   ```
+2. **작은 단위로 반복** - 한 번에 한 기능만 요청, 각 단계 검증 후 다음 진행
+3. **코드 리뷰 요청** - Performance, Security, Readability
+4. **테스트 우선 작성** - "First write tests for this feature, then implement the code"
 
-2. **작은 단위로 반복**
-   - 한 번에 한 기능만 요청
-   - 각 단계 검증 후 다음 진행
+### DON'Ts
 
-3. **코드 리뷰 요청**
-   ```
-   "Review this code and suggest improvements for:
-   - Performance
-   - Security
-   - Readability"
-   ```
-
-4. **테스트 우선 작성**
-   ```
-   "First write tests for this feature, then implement the code"
-   ```
-
-### DON'Ts ❌
-
-1. **블라인드 신뢰 금지**
-   - AI 코드는 반드시 검증
-   - 특히 보안 관련 코드
-
+1. **블라인드 신뢰 금지** - AI 코드는 반드시 검증, 특히 보안 관련 코드
 2. **너무 큰 변경 요청**
    ```
    ❌ "Refactor the entire codebase to use hexagonal architecture"
    ✅ "Refactor src/modules/portfolio to separate domain logic from infrastructure"
    ```
-
 3. **컨텍스트 없는 질문**
    ```
    ❌ "Why is this slow?"
@@ -176,6 +195,33 @@ Provide specific line numbers and suggestions."
 ## Team Collaboration with AI
 
 ### 역할별 AI 활용
+
+```mermaid
+graph TD
+    subgraph Backend Developer
+        BE1[Claude Code]
+        BE2[Prisma Schema 생성]
+        BE3[API 엔드포인트 구현]
+    end
+
+    subgraph Frontend Developer
+        FE1[Claude Code]
+        FE2[Figma + MCP]
+        FE3[React 컴포넌트]
+    end
+
+    subgraph DevOps
+        DO1[Claude Code]
+        DO2[Terraform]
+        DO3[GitHub Actions]
+    end
+
+    subgraph AI Engineer
+        AI1[Claude Code]
+        AI2[Anthropic Workbench]
+        AI3[프롬프트 엔지니어링]
+    end
+```
 
 #### Backend Developer
 - **Primary**: Claude Code (아키텍처, 복잡한 로직, CRUD 생성)
@@ -243,7 +289,7 @@ async createTrade(userId: string, createTradeDto: CreateTradeDto) {
 
 ### 비용 최적화 전략
 
-#### 1. 모델 선택 최적화
+#### 모델 선택 최적화
 
 | 작업 | 비용 | 추천 모델 |
 |------|------|----------|
@@ -251,34 +297,40 @@ async createTrade(userId: string, createTradeDto: CreateTradeDto) {
 | **중간 복잡도** | 중 | Claude Sonnet 4 |
 | **복잡한 아키텍처** | 고 | Claude Sonnet 4 (깊은 사고 모드) |
 
-#### 2. 프롬프트 효율화
+#### 프롬프트 효율화
 
-**비효율적 (비용 ⬆️)**
-```
-"Explain what this code does line by line"
-```
+```typescript
+// 비효율적 (비용 높음)
+const inefficient = "Explain what this code does line by line";
 
-**효율적 (비용 ⬇️)**
-```
-"Summarize this code's purpose in 2-3 sentences"
+// 효율적 (비용 낮음)
+const efficient = "Summarize this code's purpose in 2-3 sentences";
 ```
 
-#### 3. 캐싱 활용
-
+#### 캐싱 활용
 - 같은 프롬프트 반복 금지
 - 자주 쓰는 패턴은 스니펫으로 저장
 - Claude의 Prompt Caching 기능 활용
 
 ### 월별 AI 비용 예산
 
-| 항목 | 인원 | 단가 | 총액 |
-|------|------|------|------|
-| **Claude Code** | 5명 | $20 | $100 |
-| **GitHub Copilot** | 5명 | $10 | $50 |
-| **Anthropic API** (개발) | - | - | $100 |
-| **Total** | - | - | **$250/월** |
+```javascript
+function calculateMonthlyCost() {
+  const team = {
+    claudeCode: { users: 5, price: 20 },    // $100
+    githubCopilot: { users: 5, price: 10 }, // $50
+    anthropicAPI: { estimate: 100 }          // $100
+  };
 
-**생산성 증가 대비 ROI**: 10배 이상
+  const total =
+    (team.claudeCode.users * team.claudeCode.price) +
+    (team.githubCopilot.users * team.githubCopilot.price) +
+    team.anthropicAPI.estimate;
+
+  return { total, roi: "10x+ productivity increase" };
+}
+// Result: $250/월
+```
 
 ---
 
@@ -319,38 +371,6 @@ async createTrade(userId: string, createTradeDto: CreateTradeDto) {
 
 ---
 
-## Learning & Growth
-
-### AI 도구 숙련도 로드맵
-
-#### Level 1: Beginner (0-1개월)
-- [ ] Claude Code 기본 사용법 숙지
-- [ ] GitHub Copilot 설정 및 활용
-- [ ] 간단한 코드 생성 가능
-
-#### Level 2: Intermediate (1-3개월)
-- [ ] 복잡한 기능 AI와 함께 구현
-- [ ] AI 코드 리뷰 습관화
-- [ ] 프롬프트 엔지니어링 기본
-
-#### Level 3: Advanced (3-6개월)
-- [ ] 아키텍처 설계에 AI 활용
-- [ ] AI 페어 프로그래밍 자동화
-- [ ] 팀 내 AI 베스트 프랙티스 공유
-
-#### Level 4: Expert (6개월+)
-- [ ] AI 도구 커스터마이징 (자체 프롬프트 라이브러리)
-- [ ] AI-Native 워크플로우 설계
-- [ ] 외부 컨퍼런스 발표
-
-### 주간 학습 시간
-
-- **AI 도구 연습**: 2시간/주
-- **AI 베스트 프랙티스 세션**: 1시간/주 (팀 공유)
-- **새로운 AI 도구 탐색**: 1시간/주
-
----
-
 ## Success Metrics
 
 ### 팀 생산성 지표
@@ -364,12 +384,58 @@ async createTrade(userId: string, createTradeDto: CreateTradeDto) {
 
 ### 코드 품질 지표
 
-| 지표 | Target |
-|------|--------|
-| **테스트 커버리지** | 80%+ |
-| **TypeScript 타입 커버리지** | 95%+ |
-| **ESLint Errors** | 0 |
-| **Code Smells (SonarQube)** | <10 |
+```typescript
+interface QualityTargets {
+  testCoverage: "80%+";
+  typeScriptCoverage: "95%+";
+  eslintErrors: 0;
+  codeSmells: "<10";
+}
+```
+
+---
+
+## Learning & Growth
+
+### AI 도구 숙련도 로드맵
+
+```mermaid
+graph LR
+    L1[Level 1: Beginner] --> L2[Level 2: Intermediate]
+    L2 --> L3[Level 3: Advanced]
+    L3 --> L4[Level 4: Expert]
+
+    L1 --- |0-1개월| D1[기본 사용법 숙지]
+    L2 --- |1-3개월| D2[복잡한 기능 구현]
+    L3 --- |3-6개월| D3[아키텍처 설계]
+    L4 --- |6개월+| D4[AI 워크플로우 설계]
+```
+
+#### Phase 1: Beginner (0-1개월)
+- [ ] Claude Code 기본 사용법 숙지
+- [ ] GitHub Copilot 설정 및 활용
+- [ ] 간단한 코드 생성 가능
+
+#### Phase 2: Intermediate (1-3개월)
+- [ ] 복잡한 기능 AI와 함께 구현
+- [ ] AI 코드 리뷰 습관화
+- [ ] 프롬프트 엔지니어링 기본
+
+#### Phase 3: Advanced (3-6개월)
+- [ ] 아키텍처 설계에 AI 활용
+- [ ] AI 페어 프로그래밍 자동화
+- [ ] 팀 내 AI 베스트 프랙티스 공유
+
+#### Phase 4: Expert (6개월+)
+- [ ] AI 도구 커스터마이징 (자체 프롬프트 라이브러리)
+- [ ] AI-Native 워크플로우 설계
+- [ ] 외부 컨퍼런스 발표
+
+### 주간 학습 시간
+
+- **AI 도구 연습**: 2시간/주
+- **AI 베스트 프랙티스 세션**: 1시간/주 (팀 공유)
+- **새로운 AI 도구 탐색**: 1시간/주
 
 ---
 
@@ -390,27 +456,31 @@ async createTrade(userId: string, createTradeDto: CreateTradeDto) {
 
 ### 사례 1: 멀티 에이전트 시스템 구현
 
-**Before AI**:
-- 예상 개발 시간: 4주
-- 개발자: 2명
-- 총 공수: 320시간
-
-**With AI**:
-- 실제 개발 시간: 1주
-- 개발자: 1명 + Claude Code
-- 총 공수: 40시간
-
-**결과**: **8배 빠른 개발**, 품질 동일
+```typescript
+interface CaseStudy1 {
+  beforeAI: {
+    estimatedTime: "4주";
+    developers: 2;
+    totalHours: 320;
+  };
+  withAI: {
+    actualTime: "1주";
+    developers: "1명 + Claude Code";
+    totalHours: 40;
+  };
+  result: "8배 빠른 개발, 품질 동일";
+}
+```
 
 ### 사례 2: 섀도우 포트폴리오 기능
 
-**AI 활용**:
-1. Claude Code로 PRD 작성 요청 → 2시간 → 30분
-2. Claude Code로 백엔드 CRUD 생성 → 1일 → 2시간
-3. Figma로 UI 디자인 + Claude Code로 구현 → 1일 → 3시간
-4. Claude Code로 테스트 자동 생성 → 4시간 → 1시간
-
-**총 절감 시간**: 2.5일 → 6.5시간 (**3배 빠름**)
+| 작업 | AI 없이 | AI 활용 | 절감 |
+|------|--------|---------|------|
+| PRD 작성 | 2시간 | 30분 | 4배 |
+| 백엔드 CRUD | 1일 | 2시간 | 4배 |
+| UI 디자인 + 구현 | 1일 | 3시간 | 3배 |
+| 테스트 자동 생성 | 4시간 | 1시간 | 4배 |
+| **총계** | 2.5일 | 6.5시간 | **3배** |
 
 ---
 
@@ -420,10 +490,14 @@ async createTrade(userId: string, createTradeDto: CreateTradeDto) {
 
 **"AI는 도구가 아닌 팀원이다"**
 
-1. **Speed**: 10배 빠른 개발 속도
-2. **Quality**: AI 코드 리뷰로 품질 향상
-3. **Learning**: AI와 함께 성장하는 팀
-4. **Innovation**: AI로 불가능을 가능하게
+```typescript
+const aiTeamValues = {
+  speed: "10배 빠른 개발 속도",
+  quality: "AI 코드 리뷰로 품질 향상",
+  learning: "AI와 함께 성장하는 팀",
+  innovation: "AI로 불가능을 가능하게"
+};
+```
 
 ### Next Steps
 

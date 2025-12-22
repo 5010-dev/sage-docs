@@ -1,35 +1,78 @@
 # WhyBitcoinFallen.com - Mystery Campaign
 
-> **문서 버전**: 1.0
-> **최종 수정**: 2025년 12월 19일
-> **작성자**: Sam
-> **대상 독자**: 마케팅팀, 경영진
+> **Document Version**: 1.0
+> **Last Updated**: 2025년 12월 19일
+> **Author**: Sam
+> **Target Audience**: Marketing Team, Management
 
 ---
 
-## Campaign Overview
+## 1. Campaign Overview
 
-### Concept
+### 1.1 Concept
 
 **"왜 비트코인이 떨어졌을까요?"** - 누구나 한 번쯤 궁금해하는 질문에 AI가 즉시 답변
 
-### Objectives
+### 1.2 Objectives
 
-| 목표 | 지표 | Target (3개월) |
-|------|------|---------------|
-| **Viral Reach** | 일 방문자 | 1,000+ |
-| **Conversion** | Sage.ai 가입 전환율 | 10% |
-| **Brand Awareness** | SNS 공유 | 100+ shares/day |
+```typescript
+interface CampaignObjectives {
+  viralReach: {
+    metric: 'Daily visitors';
+    target: number;
+  };
+  conversion: {
+    metric: 'Sage.ai signup rate';
+    target: string;
+  };
+  brandAwareness: {
+    metric: 'SNS shares';
+    target: string;
+  };
+  timeline: string;
+}
+```
+
+| Goal | Metric | Target (3 months) |
+|------|--------|-------------------|
+| **Viral Reach** | Daily visitors | 1,000+ |
+| **Conversion** | Sage.ai signup rate | 10% |
+| **Brand Awareness** | SNS shares | 100+ shares/day |
 
 ---
 
-## Landing Page Design
+## 2. Landing Page Design
 
-### Hero Section
+### 2.1 Page Structure
+
+```typescript
+interface LandingPageSections {
+  hero: {
+    realtimeBTCPrice: boolean;
+    change24h: boolean;
+    cta: string;
+  };
+  aiAnswer: {
+    persona: string;
+    contentSource: string[];
+    ctaButton: string;
+  };
+  fearGreedGauge: {
+    visualization: boolean;
+    historicalInsight: boolean;
+  };
+  finalCTA: {
+    benefits: string[];
+    actionButton: string;
+  };
+}
+```
+
+### 2.2 Hero Section
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📉 비트코인, 어제보다 -5.2% 떨어졌습니다
+[Chart Down] 비트코인, 어제보다 -5.2% 떨어졌습니다
 
 왜일까요?
 
@@ -38,11 +81,11 @@
 ```
 
 **Elements**:
-- 실시간 BTC 가격
-- 24시간 변동률 (빨간색/초록색)
-- 간단한 CTA 버튼
+- Real-time BTC price
+- 24-hour change (red/green)
+- Simple CTA button
 
-### AI Answer Section
+### 2.3 AI Answer Section
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -64,7 +107,16 @@
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-### Fear & Greed Gauge
+### 2.4 Fear & Greed Gauge
+
+```mermaid
+graph LR
+    A[0 - Extreme Fear] -->|Current: 25| B[Fear Zone]
+    B --> C[50 - Neutral]
+    C --> D[Greed Zone]
+    D --> E[100 - Extreme Greed]
+    style B fill:#f99,stroke:#333,stroke-width:4px
+```
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -73,12 +125,21 @@
 Extreme Fear                    Extreme Greed
     25  ●━━━━━━━━━━━━━━━━━━━━○  100
 
-💡 역사적으로 "Extreme Fear" 구간에서 매수한 사람들은
+[Light Bulb] 역사적으로 "Extreme Fear" 구간에서 매수한 사람들은
    평균 3개월 후 +35% 수익을 기록했습니다.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-### CTA Section
+### 2.5 CTA Section
+
+```typescript
+interface CTASection {
+  headline: string;
+  subheadline: string;
+  benefits: string[];
+  actionButton: string;
+}
+```
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -86,9 +147,9 @@ Extreme Fear                    Extreme Greed
 
 월렛 버핏과 함께 더 현명한 투자를
 
-✅ 환각 제로 - 오직 데이터에 기반한 분석
-✅ 섀도우 포트폴리오로 AI 추천 검증
-✅ 급변 시 자동 알림
+[Checkmark] 환각 제로 - 오직 데이터에 기반한 분석
+[Checkmark] 섀도우 포트폴리오로 AI 추천 검증
+[Checkmark] 급변 시 자동 알림
 
 [무료로 시작하기 →]
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -96,13 +157,18 @@ Extreme Fear                    Extreme Greed
 
 ---
 
-## Technical Implementation
+## 3. Technical Implementation
 
-### Real-Time BTC Price
+### 3.1 Real-Time BTC Price
 
 ```typescript
 // lib/coingecko.ts
-export async function getBTCPrice() {
+interface BTCPriceData {
+  price: number;
+  change24h: number;
+}
+
+export async function getBTCPrice(): Promise<BTCPriceData> {
   const response = await fetch(
     'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true'
   );
@@ -116,13 +182,23 @@ export async function getBTCPrice() {
 }
 ```
 
-### AI Response Generation
+### 3.2 AI Response Generation
 
 ```typescript
 // lib/generateAnswer.ts
 import Anthropic from '@anthropic-ai/sdk';
 
-export async function generateAnswer(price: number, change24h: number, fearGreed: number) {
+interface MarketData {
+  price: number;
+  change24h: number;
+  fearGreed: number;
+}
+
+export async function generateAnswer(
+  price: number,
+  change24h: number,
+  fearGreed: number
+): Promise<string> {
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
   const prompt = `You are Wallet Buffett (월렛 버핏), an AI investment mentor.
@@ -146,9 +222,14 @@ Focus on data and market psychology.`;
 }
 ```
 
-### Caching Strategy
+### 3.3 Caching Strategy
 
 ```typescript
+interface CachingConfig {
+  revalidate: number; // seconds
+  staleWhileRevalidate: number;
+}
+
 // Refresh every 5 minutes
 export const revalidate = 300;
 
@@ -166,9 +247,28 @@ export async function getStaticProps() {
 
 ---
 
-## SEO Optimization
+## 4. SEO Optimization
 
-### Meta Tags
+### 4.1 Meta Tags
+
+```typescript
+interface SEOMetadata {
+  title: string;
+  description: string;
+  ogTags: {
+    title: string;
+    description: string;
+    image: string;
+    type: string;
+  };
+  twitterCard: {
+    card: string;
+    title: string;
+    description: string;
+    image: string;
+  };
+}
+```
 
 ```html
 <head>
@@ -189,8 +289,17 @@ export async function getStaticProps() {
 </head>
 ```
 
-### Keywords
+### 4.2 Target Keywords
 
+```typescript
+interface KeywordStrategy {
+  primary: string[];
+  secondary: string[];
+  longTail: string[];
+}
+```
+
+**Keywords**:
 - 비트코인 하락 이유
 - 비트코인 왜 떨어짐
 - 암호화폐 시장 분석
@@ -199,15 +308,26 @@ export async function getStaticProps() {
 
 ---
 
-## Viral Marketing Strategy
+## 5. Viral Marketing Strategy
 
-### Reddit Seeding
+### 5.1 Reddit Seeding
+
+```typescript
+interface RedditStrategy {
+  subreddits: string[];
+  postTemplate: {
+    title: string;
+    body: string;
+  };
+  timing: string;
+}
+```
 
 **Subreddits**:
 - r/cryptocurrency
 - r/Bitcoin
 - r/CryptoMarkets
-- r/korea (한국어 버전)
+- r/korea (Korean version)
 
 **Post Template**:
 ```
@@ -223,7 +343,15 @@ and gives you a quick explanation in Warren Buffett's investing philosophy.
 Feedback welcome!
 ```
 
-### Twitter Strategy
+### 5.2 Twitter Strategy
+
+```typescript
+interface TwitterStrategy {
+  viralHook: string;
+  engagementTactics: string[];
+  frequency: string;
+}
+```
 
 **Viral Hook**:
 ```
@@ -236,17 +364,25 @@ https://whybitcoinfallen.com
 ```
 
 **Engagement Tactics**:
-- 매일 가격 변동 시 자동 트윗
-- 유명 크립토 인플루언서 멘션
-- "What do you think?" 질문으로 댓글 유도
+- Daily automated tweets on price movements
+- Mention crypto influencers
+- "What do you think?" questions to drive comments
 
-### Discord/Telegram
+### 5.3 Discord/Telegram
 
-**Crypto 커뮤니티에 공유**:
+```typescript
+interface CommunityStrategy {
+  platforms: ['Discord', 'Telegram'];
+  messageTemplate: string;
+  targetCommunities: string[];
+}
+```
+
+**Crypto Community Sharing**:
 ```
 Hey everyone! Made a fun little tool:
 
-🤖 WhyBitcoinFallen.com
+[Robot] WhyBitcoinFallen.com
 
 Real-time AI analysis of why BTC price is moving
 Based on Warren Buffett's investing philosophy
@@ -257,33 +393,101 @@ Try it and let me know what you think!
 
 ---
 
-## Conversion Funnel
+## 6. Conversion Funnel
 
-### Stage 1: Curiosity (Landing)
+### 6.1 Funnel Flow
+
+```mermaid
+flowchart TD
+    A[Stage 1: Curiosity] -->|Hook| B[Landing Page Visit]
+    B -->|30+ seconds| C[Stage 2: Interest]
+    C -->|Read AI Answer| D[Stage 3: Desire]
+    D -->|See Benefits| E[Stage 4: Action]
+    E -->|Click CTA| F[Sage.ai Signup]
+
+    style A fill:#e1f5ff
+    style C fill:#fff4e1
+    style E fill:#ffe1e1
+    style F fill:#e1ffe1
+```
+
+### 6.2 Funnel Stages
+
+```typescript
+interface ConversionFunnel {
+  stage1: {
+    name: 'Curiosity';
+    hook: string;
+    engagement: string;
+    goal: string;
+  };
+  stage2: {
+    name: 'Interest';
+    value: string;
+    trust: string;
+    goal: string;
+  };
+  stage3: {
+    name: 'Desire';
+    benefit: string[];
+    socialProof: string;
+    goal: string;
+  };
+  stage4: {
+    name: 'Action';
+    frictionReduction: string;
+    incentive: string;
+    goal: string;
+  };
+}
+```
+
+**Stage 1: Curiosity (Landing)**
 - **Hook**: "왜 비트코인이 떨어졌어요?"
-- **Engagement**: 실시간 가격 + AI 답변
-- **Goal**: 페이지에 30초+ 머물기
+- **Engagement**: Real-time price + AI answer
+- **Goal**: Stay on page for 30+ seconds
 
-### Stage 2: Interest (Read AI Answer)
-- **Value**: 데이터 기반 통찰 제공
-- **Trust**: Fear & Greed 지표 시각화
-- **Goal**: AI 답변 끝까지 읽기
+**Stage 2: Interest (Read AI Answer)**
+- **Value**: Data-driven insights provided
+- **Trust**: Fear & Greed indicator visualization
+- **Goal**: Read AI answer to the end
 
-### Stage 3: Desire (See CTA)
-- **Benefit**: "24/7 AI 멘토", "환각 제로", "섀도우 포트폴리오"
-- **Social Proof**: "1,000+ 투자자가 사용 중"
-- **Goal**: CTA 버튼 클릭
+**Stage 3: Desire (See CTA)**
+- **Benefit**: "24/7 AI mentor", "Zero hallucination", "Shadow Portfolio"
+- **Social Proof**: "1,000+ investors using"
+- **Goal**: Click CTA button
 
-### Stage 4: Action (Sign Up)
-- **Friction 제거**: Google OAuth 원클릭 가입
-- **Incentive**: "첫 달 Pro 기능 무료"
-- **Goal**: Sage.ai 가입 완료
+**Stage 4: Action (Sign Up)**
+- **Friction Reduction**: Google OAuth one-click signup
+- **Incentive**: "First month Pro features free"
+- **Goal**: Complete Sage.ai signup
 
 ---
 
-## Analytics & Tracking
+## 7. Analytics & Tracking
 
-### Key Metrics
+### 7.1 Key Metrics
+
+```typescript
+interface AnalyticsEvents {
+  pageView: {
+    event: 'page_view';
+    params: { page_title: string };
+  };
+  aiAnswerRead: {
+    event: 'ai_answer_read';
+    params: { duration_seconds: number };
+  };
+  ctaClick: {
+    event: 'cta_click';
+    params: { button_location: string };
+  };
+  signupConversion: {
+    event: 'signup_conversion';
+    params: { source: string };
+  };
+}
+```
 
 ```javascript
 // Google Analytics Events
@@ -293,7 +497,19 @@ gtag('event', 'cta_click', { button_location: 'hero' });
 gtag('event', 'signup_conversion', { source: 'whybitcoinfallen' });
 ```
 
-### Conversion Tracking
+### 7.2 Conversion Tracking
+
+```mermaid
+graph TD
+    A[Visit 100%] --> B[Engage 70%]
+    B --> C[Click CTA 30%]
+    C --> D[Sign Up 10%]
+
+    style A fill:#e1f5ff
+    style B fill:#fff4e1
+    style C fill:#ffe1e1
+    style D fill:#e1ffe1
+```
 
 | Funnel Step | Event | Target Conversion |
 |-------------|-------|-------------------|
@@ -304,54 +520,127 @@ gtag('event', 'signup_conversion', { source: 'whybitcoinfallen' });
 
 ---
 
-## A/B Testing
+## 8. A/B Testing
 
-### Test 1: Headline
+### 8.1 Test Configuration
+
+```typescript
+interface ABTest {
+  testId: string;
+  variants: {
+    variantA: string;
+    variantB: string;
+  };
+  hypothesis: string;
+  metric: string;
+}
+```
+
+### 8.2 Test 1: Headline
 
 **Variant A**: "비트코인 왜 떨어졌어요?"
 **Variant B**: "AI가 알려주는 비트코인 급락 이유"
 
-**Hypothesis**: B가 AI 강조로 클릭률 높을 것
+**Hypothesis**: B will have higher click-through rate with AI emphasis
 
-### Test 2: CTA Text
+### 8.3 Test 2: CTA Text
 
 **Variant A**: "무료로 시작하기"
 **Variant B**: "월렛 버핏과 대화하기"
 
-**Hypothesis**: B가 페르소나 강조로 전환율 높을 것
+**Hypothesis**: B will have higher conversion rate with persona emphasis
 
 ---
 
-## Launch Checklist
+## 9. Launch Checklist
 
-- [ ] 도메인 구매 및 DNS 설정
-- [ ] SSL 인증서 설정 (Let's Encrypt)
-- [ ] Google Analytics 설정
-- [ ] OG 이미지 제작 (1200x630px)
-- [ ] Twitter Card 이미지 제작 (1200x675px)
-- [ ] CoinGecko API 키 발급
-- [ ] Alternative.me API 테스트
-- [ ] Claude API 호출 테스트
-- [ ] 모바일 반응형 테스트
-- [ ] 로딩 속도 최적화 (< 2초)
-- [ ] Reddit 계정 karma 쌓기 (spam 방지)
-- [ ] Twitter 계정 생성 및 프로필 설정
+### 9.1 Technical Setup
+
+```typescript
+interface LaunchChecklist {
+  infrastructure: string[];
+  analytics: string[];
+  content: string[];
+  testing: string[];
+  marketing: string[];
+}
+```
+
+**Infrastructure**:
+- [ ] Domain purchase and DNS setup
+- [ ] SSL certificate setup (Let's Encrypt)
+- [ ] CloudFront CDN configuration
+- [ ] API rate limiting setup
+
+**Analytics**:
+- [ ] Google Analytics setup
+- [ ] Event tracking implementation
+- [ ] Conversion funnel configuration
+
+**Content**:
+- [ ] OG image creation (1200x630px)
+- [ ] Twitter Card image creation (1200x675px)
+- [ ] Copy finalization and proofreading
+
+**API Integration**:
+- [ ] CoinGecko API key issuance
+- [ ] Alternative.me API testing
+- [ ] Claude API call testing
+
+**Testing**:
+- [ ] Mobile responsiveness testing
+- [ ] Loading speed optimization (< 2 seconds)
+- [ ] Cross-browser compatibility
+
+**Marketing**:
+- [ ] Reddit account karma building (spam prevention)
+- [ ] Twitter account creation and profile setup
+- [ ] Discord community preparation
 
 ---
 
-## Success Criteria (3개월)
+## 10. Success Criteria (3 months)
 
-| 지표 | 목표 | 측정 방법 |
-|------|------|----------|
-| **일 방문자** | 1,000+ | Google Analytics |
-| **평균 체류 시간** | 1분+ | GA Engagement Time |
-| **CTA 클릭률** | 30%+ | Event tracking |
-| **가입 전환율** | 10%+ | Signup event / page_view |
-| **SNS 공유** | 100+ shares/day | Share buttons tracking |
+### 10.1 Key Performance Indicators
+
+```typescript
+interface SuccessCriteria {
+  traffic: {
+    dailyVisitors: number;
+    avgEngagementTime: string;
+  };
+  conversion: {
+    ctaClickRate: string;
+    signupConversionRate: string;
+  };
+  viral: {
+    socialShares: string;
+    organicSearchTraffic: string;
+  };
+}
+```
+
+```mermaid
+graph LR
+    A[Daily Visitors 1000+] --> E[Success]
+    B[CTR 30%+] --> E
+    C[Conversion 10%+] --> E
+    D[Organic 30%+] --> E
+
+    style E fill:#90EE90
+```
+
+| Metric | Target | Measurement Method |
+|--------|--------|-------------------|
+| **Daily Visitors** | 1,000+ | Google Analytics |
+| **Avg Engagement Time** | 1 minute+ | GA Engagement Time |
+| **CTA Click Rate** | 30%+ | Event tracking |
+| **Signup Conversion Rate** | 10%+ | Signup event / page_view |
+| **SNS Shares** | 100+ shares/day | Share button tracking |
 | **Organic Search Traffic** | 30% | GA Acquisition |
 
 ---
 
-**문서 끝**
+**Document End**
 
 _"Between the zeros and ones"_

@@ -1,26 +1,76 @@
 # Backend Development AI Guide
 
-> **문서 버전**: 1.0
-> **최종 수정**: 2025년 12월 19일
-> **작성자**: Sam
-> **대상 독자**: Backend 개발자
+> **Version**: 2.0
+> **Last Updated**: December 22, 2025
+> **Author**: Sam
+> **Target Audience**: Backend Developers
 
 ---
 
-## AI-Powered Backend Development
+## 1. AI-Powered Backend Development
 
-### Tools
+### 1.1 Development Tools
 
-- **Claude Code**: 복잡한 로직, 아키텍처 설계, CRUD 생성
-- **GitHub Copilot**: 코드 리뷰, 실시간 코드 제안
+```typescript
+interface DevelopmentTools {
+  claudeCode: {
+    purpose: string[];
+    useCases: string[];
+  };
+  githubCopilot: {
+    purpose: string[];
+    useCases: string[];
+  };
+}
+
+const tools: DevelopmentTools = {
+  claudeCode: {
+    purpose: ["Complex logic design", "Architecture planning", "CRUD generation"],
+    useCases: ["Module creation", "AI agent implementation", "Database optimization"]
+  },
+  githubCopilot: {
+    purpose: ["Code review", "Real-time suggestions"],
+    useCases: ["Inline code completion", "Test generation", "Refactoring"]
+  }
+};
+```
+
+### 1.2 Development Workflow
+
+```mermaid
+graph LR
+    A[Read Requirements] --> B[Design Architecture]
+    B --> C[Generate Code with Claude]
+    C --> D[Review with Copilot]
+    D --> E[Write Tests]
+    E --> F[Deploy]
+```
 
 ---
 
-## Prompts for Common Tasks
+## 2. Common Development Tasks
 
-### 1. Creating a New Module
+### 2.1 Creating a New Module
 
-**Prompt**:
+**Context Setup**:
+```typescript
+interface ModuleRequirements {
+  name: string;
+  endpoints: RestEndpoint[];
+  prismaModel: string;
+  validation: boolean;
+  testing: boolean;
+  pattern: string;
+}
+
+interface RestEndpoint {
+  method: "GET" | "POST" | "PUT" | "DELETE";
+  path: string;
+  description: string;
+}
+```
+
+**Prompt Template**:
 ```
 Create a Nest.js module for shadow portfolio management with the following:
 
@@ -43,18 +93,34 @@ model ShadowTrade {
 }
 ```
 
-**Expected Output**:
-- `portfolio.module.ts`
-- `portfolio.controller.ts`
-- `portfolio.service.ts`
-- `dto/create-trade.dto.ts`
-- `portfolio.service.spec.ts`
+**Expected Output Structure**:
+```typescript
+interface GeneratedFiles {
+  module: "portfolio.module.ts";
+  controller: "portfolio.controller.ts";
+  service: "portfolio.service.ts";
+  dto: "dto/create-trade.dto.ts";
+  tests: "portfolio.service.spec.ts";
+}
+```
 
 ---
 
-### 2. Implementing AI Agent
+### 2.2 Implementing AI Agent
 
-**Prompt**:
+**Agent Architecture**:
+```mermaid
+graph TB
+    A[User Query] --> B[Analyst Agent]
+    B --> C{Tool Selection}
+    C -->|Price Data| D[get_price]
+    C -->|Sentiment| E[get_fear_greed]
+    D --> F[Process Facts]
+    E --> F
+    F --> G[Structured Response]
+```
+
+**Prompt Template**:
 ```
 Implement the Analyst Agent for Sage.ai multi-agent system:
 
@@ -75,10 +141,23 @@ Example input: "What's happening with Bitcoin?"
 Example output: { facts: { BTC: { price: 43250, change_24h: -5.2 }, fear_greed: 25 }, summary: "..." }
 ```
 
-**Expected Code**:
+**Expected Implementation**:
 ```typescript
 // ai-agents/analyst.agent.ts
 import Anthropic from '@anthropic-ai/sdk';
+
+interface AnalystResponse {
+  facts: MarketFacts;
+  summary: string;
+}
+
+interface MarketFacts {
+  [symbol: string]: {
+    price: number;
+    change_24h: number;
+  };
+  fear_greed?: number;
+}
 
 export class AnalystAgent {
   private client: Anthropic;
@@ -121,9 +200,27 @@ export class AnalystAgent {
 
 ---
 
-### 3. Adding Validation
+### 2.3 Adding Validation
 
-**Prompt**:
+**Validation Requirements**:
+```typescript
+interface ValidationRules {
+  symbol: {
+    type: "enum";
+    values: ["BTC", "ETH", "SOL", "BNB", "DOGE", "XRP"];
+  };
+  action: {
+    type: "enum";
+    values: ["buy", "sell"];
+  };
+  price: {
+    type: "number";
+    constraints: ["positive"];
+  };
+}
+```
+
+**Prompt Template**:
 ```
 Add validation to this DTO using class-validator:
 
@@ -140,7 +237,7 @@ Requirements:
 - Add API documentation annotations (@ApiProperty)
 ```
 
-**Expected Code**:
+**Expected Implementation**:
 ```typescript
 import { ApiProperty } from '@nestjs/swagger';
 import { IsIn, IsNumber, Min } from 'class-validator';
@@ -175,9 +272,26 @@ export class CreateTradeDto {
 
 ---
 
-### 4. Writing Tests
+### 2.4 Writing Tests
 
-**Prompt**:
+**Test Structure**:
+```typescript
+interface TestRequirements {
+  framework: "Jest";
+  coverage: ">80%";
+  scenarios: {
+    happyPath: boolean;
+    errorCases: boolean;
+    edgeCases: boolean;
+  };
+  mocking: {
+    prisma: boolean;
+    externalServices: boolean;
+  };
+}
+```
+
+**Prompt Template**:
 ```
 Write Jest unit tests for this service:
 
@@ -210,7 +324,7 @@ Requirements:
 - Coverage > 80%
 ```
 
-**Expected Code**:
+**Expected Implementation**:
 ```typescript
 // portfolio.service.spec.ts
 import { Test } from '@nestjs/testing';
@@ -276,9 +390,31 @@ describe('PortfolioService', () => {
 
 ---
 
-### 5. Optimizing Database Queries
+### 2.5 Optimizing Database Queries
 
-**Prompt**:
+**Performance Issues**:
+```typescript
+interface PerformanceProblems {
+  nPlusOne: {
+    description: "Multiple sequential queries in a loop";
+    impact: "High latency, database overload";
+    solution: "Use Prisma include/select or aggregation";
+  };
+}
+```
+
+**Query Optimization Flow**:
+```mermaid
+graph LR
+    A[N+1 Problem] --> B[Identify Loop]
+    B --> C{Solution Type}
+    C -->|Relations| D[Use include]
+    C -->|Aggregation| E[Use _count]
+    D --> F[Single Query]
+    E --> F
+```
+
+**Prompt Template**:
 ```
 Optimize this Prisma query that has N+1 problem:
 
@@ -299,8 +435,9 @@ async getChatsWithMessageCount(userId: string) {
 Rewrite using Prisma's include/select to avoid N+1.
 ```
 
-**Expected Code**:
+**Optimized Implementation**:
 ```typescript
+// Solution 1: Using _count
 async getChatsWithMessageCount(userId: string) {
   return this.prisma.chat.findMany({
     where: { userId },
@@ -312,7 +449,7 @@ async getChatsWithMessageCount(userId: string) {
   });
 }
 
-// Alternative: Use aggregation
+// Solution 2: Using select for specific fields
 async getChatsWithMessageCount(userId: string) {
   return this.prisma.chat.findMany({
     where: { userId },
@@ -330,31 +467,68 @@ async getChatsWithMessageCount(userId: string) {
 
 ---
 
-## AI Code Review Checklist
+## 3. AI-Assisted Code Review
 
-### Prompt for Code Review
+### 3.1 Review Checklist
+
+```typescript
+interface CodeReviewCriteria {
+  security: {
+    checks: [
+      "SQL injection vulnerabilities",
+      "XSS risks",
+      "Auth bypass",
+      "Secrets exposure"
+    ];
+  };
+  performance: {
+    checks: [
+      "N+1 queries",
+      "Memory leaks",
+      "Inefficient algorithms"
+    ];
+  };
+  codeQuality: {
+    checks: [
+      "SOLID principles",
+      "Naming conventions",
+      "Error handling",
+      "Type safety"
+    ];
+  };
+  testing: {
+    checks: [
+      "Test coverage",
+      "Edge cases",
+      "Mocking best practices"
+    ];
+  };
+}
+```
+
+### 3.2 Code Review Prompt
 
 ```
 Review this code for:
 
-1. **Security**:
+1. Security:
    - SQL injection vulnerabilities
    - XSS risks
    - Auth bypass
    - Secrets exposure
 
-2. **Performance**:
+2. Performance:
    - N+1 queries
    - Memory leaks
    - Inefficient algorithms
 
-3. **Code Quality**:
+3. Code Quality:
    - SOLID principles
    - Naming conventions
    - Error handling
    - Type safety
 
-4. **Testing**:
+4. Testing:
    - Test coverage
    - Edge cases
    - Mocking best practices
@@ -367,9 +541,20 @@ Code:
 
 ---
 
-## Debugging with AI
+## 4. Debugging with AI
 
-### Prompt for Bug Analysis
+### 4.1 Bug Analysis Process
+
+```mermaid
+graph TB
+    A[Error Occurs] --> B[Collect Error Context]
+    B --> C[Analyze Stack Trace]
+    C --> D[Identify Root Cause]
+    D --> E[Generate Fix]
+    E --> F[Verify Solution]
+```
+
+### 4.2 Bug Analysis Prompt
 
 ```
 I'm getting this error:
@@ -393,11 +578,12 @@ async createTrade(userId: string, dto: CreateTradeDto) {
 What's the issue and how to fix it?
 ```
 
-**AI Response**:
-```
-The issue is that `user` can be `null` if the user is not found, but you're accessing `user.id` without checking.
+### 4.3 Expected AI Response
 
-Fix:
+```typescript
+// Problem: user can be null if not found
+
+// Fix Option 1: Add null check
 async createTrade(userId: string, dto: CreateTradeDto) {
   const user = await this.prisma.user.findUnique({ where: { id: userId } });
 
@@ -415,7 +601,7 @@ async createTrade(userId: string, dto: CreateTradeDto) {
   });
 }
 
-// OR, simply use userId directly if you trust it:
+// Fix Option 2: Use userId directly (recommended)
 async createTrade(userId: string, dto: CreateTradeDto) {
   return this.prisma.shadowTrade.create({
     data: {
@@ -430,23 +616,43 @@ async createTrade(userId: string, dto: CreateTradeDto) {
 
 ---
 
-## Best Practices
+## 5. Best Practices
 
-### 1. Be Specific
+### 5.1 Effective Prompting
 
-❌ Bad: "Create a service"
-✅ Good: "Create a Nest.js service for portfolio management with Prisma integration, following the pattern in src/modules/chat/chat.service.ts"
+```typescript
+interface PromptQuality {
+  bad: {
+    example: "Create a service";
+    issues: ["Too vague", "No context", "No requirements"];
+  };
+  good: {
+    example: "Create a Nest.js service for portfolio management with Prisma integration, following the pattern in src/modules/chat/chat.service.ts";
+    strengths: ["Specific", "Contextual", "References existing patterns"];
+  };
+}
+```
 
-### 2. Provide Context
+### 5.2 Context Provision
 
-Always include:
-- Existing patterns (e.g., "Follow src/modules/chat structure")
-- Tech stack (e.g., "Using Nest.js 10.x + Prisma 5.x")
-- Requirements (e.g., "Must include validation, tests, API docs")
+```typescript
+interface RequiredContext {
+  existingPatterns: string;  // e.g., "Follow src/modules/chat structure"
+  techStack: string;         // e.g., "Using Nest.js 10.x + Prisma 5.x"
+  requirements: string[];    // e.g., ["Must include validation", "tests", "API docs"]
+}
+```
 
-### 3. Iterate
+### 5.3 Iterative Development
 
-Don't expect perfect code on first try. Refine:
+```mermaid
+graph LR
+    A[Prompt 1: Basic Service] --> B[Prompt 2: Error Handling]
+    B --> C[Prompt 3: Tests]
+    C --> D[Prompt 4: Optimization]
+```
+
+**Iteration Example**:
 ```
 Prompt 1: "Create a basic service"
 Prompt 2: "Add error handling"
@@ -456,6 +662,9 @@ Prompt 4: "Optimize this query"
 
 ---
 
-**문서 끝**
+**Document Version**: 2.0
+**Last Updated**: December 22, 2025
+**Architecture**: Nest.js + Prisma Stack
+**Maintainer**: Sam (dev@5010.tech)
 
 _"Between the zeros and ones"_

@@ -1,26 +1,113 @@
 # Infrastructure & DevOps AI Guide
 
-> **문서 버전**: 1.0
-> **최종 수정**: 2025년 12월 19일
-> **작성자**: Sam
-> **대상 독자**: DevOps, Infrastructure 팀
+> **Version**: 2.0
+> **Last Updated**: December 22, 2025
+> **Author**: Sam
+> **Target Audience**: DevOps, Infrastructure Engineers
 
 ---
 
-## AI-Powered Infrastructure Development
+## 1. AI-Powered Infrastructure Development
 
-### Tools
+### 1.1 Development Tools
 
-- **Claude Code**: Terraform, GitHub Actions, Shell scripts, IaC
-- **GitHub Copilot**: 코드 리뷰, 실시간 제안
+```typescript
+interface InfrastructureTools {
+  claudeCode: {
+    purpose: string[];
+    useCases: string[];
+  };
+  githubCopilot: {
+    purpose: string[];
+    useCases: string[];
+  };
+}
+
+const tools: InfrastructureTools = {
+  claudeCode: {
+    purpose: ["Terraform configuration", "GitHub Actions", "Shell scripts", "IaC"],
+    useCases: ["AWS setup", "CI/CD pipelines", "Database migrations", "Monitoring"]
+  },
+  githubCopilot: {
+    purpose: ["Code review", "Real-time suggestions"],
+    useCases: ["Script completion", "Configuration validation", "Syntax correction"]
+  }
+};
+```
+
+### 1.2 Infrastructure Workflow
+
+```mermaid
+graph LR
+    A[Define Requirements] --> B[Write Terraform]
+    B --> C[Plan & Review]
+    C --> D[Apply Infrastructure]
+    D --> E[Configure Monitoring]
+    E --> F[Setup CI/CD]
+```
 
 ---
 
-## Prompts for Common Tasks
+## 2. Common Infrastructure Tasks
 
-### 1. Terraform Configuration
+### 2.1 Terraform Configuration
 
-**Prompt**:
+**Infrastructure Requirements**:
+```typescript
+interface AWSInfrastructure {
+  compute: {
+    ecs: {
+      cluster: string;
+      service: string;
+      taskDefinition: string;
+    };
+  };
+  networking: {
+    vpc: {
+      cidrBlock: string;
+      subnets: {
+        public: number;
+        private: number;
+        azCount: number;
+      };
+    };
+    loadBalancer: string;
+  };
+  database: {
+    rds: {
+      engine: "postgres";
+      version: string;
+      instance: string;
+    };
+    cache: {
+      engine: "redis";
+      version: string;
+      instance: string;
+    };
+  };
+  security: {
+    securityGroups: string[];
+  };
+}
+```
+
+**Infrastructure Architecture**:
+```mermaid
+graph TB
+    A[Internet] --> B[ALB]
+    B --> C[ECS Fargate]
+    C --> D[RDS PostgreSQL]
+    C --> E[ElastiCache Redis]
+
+    subgraph VPC
+        B
+        C
+        D
+        E
+    end
+```
+
+**Prompt Template**:
 ```
 Create Terraform configuration for Sage.ai backend infrastructure:
 
@@ -37,7 +124,7 @@ Region: us-west-2
 Use best practices for production.
 ```
 
-**Expected Output**:
+**Expected Implementation**:
 ```hcl
 # terraform/main.tf
 
@@ -69,14 +156,59 @@ resource "aws_subnet" "public" {
   }
 }
 
-# ... (rest of configuration)
+# Private Subnets
+resource "aws_subnet" "private" {
+  count             = 2
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = "10.0.${count.index + 10}.0/24"
+  availability_zone = data.aws_availability_zones.available.names[count.index]
+
+  tags = {
+    Name = "sage-private-${count.index + 1}"
+  }
+}
+
+# ... (additional resources)
 ```
 
 ---
 
-### 2. GitHub Actions CI/CD
+### 2.2 GitHub Actions CI/CD
 
-**Prompt**:
+**Pipeline Requirements**:
+```typescript
+interface CICDPipeline {
+  trigger: {
+    branch: string;
+    paths: string[];
+  };
+  steps: {
+    checkout: boolean;
+    awsAuth: boolean;
+    build: {
+      dockerfile: string;
+      registry: "ECR";
+    };
+    deploy: {
+      target: "ECS";
+      cluster: string;
+      service: string;
+    };
+  };
+}
+```
+
+**Deployment Flow**:
+```mermaid
+graph LR
+    A[Git Push] --> B[GitHub Actions]
+    B --> C[Build Docker Image]
+    C --> D[Push to ECR]
+    D --> E[Update ECS Service]
+    E --> F[Rolling Deployment]
+```
+
+**Prompt Template**:
 ```
 Create a GitHub Actions workflow for deploying Sage.ai backend to ECS:
 
@@ -91,7 +223,7 @@ Steps:
 Trigger: Push to main branch, paths: apps/backend/**
 ```
 
-**Expected Output**:
+**Expected Implementation**:
 ```yaml
 # .github/workflows/deploy-backend.yml
 name: Deploy Backend to ECS
@@ -142,9 +274,38 @@ jobs:
 
 ---
 
-### 3. Dockerfile Optimization
+### 2.3 Dockerfile Optimization
 
-**Prompt**:
+**Dockerfile Requirements**:
+```typescript
+interface DockerfileSpec {
+  baseImage: "node:20-alpine";
+  stages: {
+    dependencies: {
+      packageManager: "pnpm";
+      prisma: boolean;
+    };
+    build: {
+      compile: boolean;
+    };
+    production: {
+      user: "non-root";
+      healthcheck: boolean;
+      sizeTarget: "<200MB";
+    };
+  };
+}
+```
+
+**Multi-stage Build Flow**:
+```mermaid
+graph LR
+    A[Stage 1: Dependencies] --> B[Stage 2: Build]
+    B --> C[Stage 3: Production]
+    C --> D[Final Image <200MB]
+```
+
+**Prompt Template**:
 ```
 Create an optimized multi-stage Dockerfile for Sage.ai Nest.js backend:
 
@@ -158,7 +319,7 @@ Requirements:
 - Health check endpoint
 ```
 
-**Expected Output**:
+**Expected Implementation**:
 ```dockerfile
 # apps/backend/Dockerfile
 
@@ -226,9 +387,39 @@ CMD ["node", "dist/main.js"]
 
 ---
 
-### 4. Database Migration Script
+### 2.4 Database Migration Script
 
-**Prompt**:
+**Migration Requirements**:
+```typescript
+interface MigrationScript {
+  preChecks: {
+    connectivity: boolean;
+    backup: boolean;
+  };
+  execution: {
+    command: "prisma migrate deploy";
+    rollbackPlan: boolean;
+  };
+  logging: {
+    path: string;
+    level: "info" | "error";
+  };
+}
+```
+
+**Migration Flow**:
+```mermaid
+graph TB
+    A[Check Connectivity] --> B{Connected?}
+    B -->|No| C[Exit with Error]
+    B -->|Yes| D[Create Backup]
+    D --> E[Deploy Migration]
+    E --> F{Success?}
+    F -->|Yes| G[Log Success]
+    F -->|No| H[Rollback Available]
+```
+
+**Prompt Template**:
 ```
 Create a safe Prisma migration deployment script:
 
@@ -241,43 +432,89 @@ Requirements:
 - Use environment variables for DATABASE_URL
 ```
 
-**Expected Output**:
+**Expected Implementation**:
 ```bash
 #!/bin/bash
 # scripts/migrate.sh
 
 set -e  # Exit on error
 
-echo "🔍 Checking database connectivity..."
+LOG_FILE="/var/log/backup.log"
+S3_BUCKET="sage-backups"
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+BACKUP_FILE="backup_${TIMESTAMP}.sql"
+
+log() {
+  echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1" | tee -a $LOG_FILE
+}
+
+log "Checking database connectivity..."
 if ! npx prisma db execute --stdin <<< "SELECT 1" &> /dev/null; then
-  echo "❌ Database connection failed"
+  log "Database connection failed"
   exit 1
 fi
 
-echo "✅ Database connected"
+log "Database connected"
 
-echo "📦 Creating backup..."
+log "Creating backup..."
 BACKUP_FILE="backup_$(date +%Y%m%d_%H%M%S).sql"
 pg_dump $DATABASE_URL > $BACKUP_FILE
-echo "✅ Backup created: $BACKUP_FILE"
+log "Backup created: $BACKUP_FILE"
 
-echo "🚀 Deploying migration..."
+log "Deploying migration..."
 if npx prisma migrate deploy; then
-  echo "✅ Migration deployed successfully"
+  log "Migration deployed successfully"
 else
-  echo "❌ Migration failed. Consider rollback."
-  echo "To rollback, restore from: $BACKUP_FILE"
+  log "Migration failed. Consider rollback."
+  log "To rollback, restore from: $BACKUP_FILE"
   exit 1
 fi
 
-echo "🎉 Migration complete!"
+log "Migration complete!"
 ```
 
 ---
 
-### 5. Monitoring & Alerting
+### 2.5 Monitoring & Alerting
 
-**Prompt**:
+**Monitoring Requirements**:
+```typescript
+interface MonitoringSpec {
+  alarms: {
+    ecsCpu: {
+      threshold: 80;
+      evaluationPeriods: 2;
+      period: 300;
+    };
+    rdsCpu: {
+      threshold: 80;
+      evaluationPeriods: 2;
+    };
+    apiErrorRate: {
+      threshold: 5;
+      period: 60;
+    };
+    responseTime: {
+      metric: "p95";
+      threshold: 2000;
+    };
+  };
+  notifications: {
+    snsTopicName: string;
+  };
+}
+```
+
+**Alert Flow**:
+```mermaid
+graph LR
+    A[CloudWatch Metrics] --> B{Threshold Exceeded?}
+    B -->|Yes| C[CloudWatch Alarm]
+    C --> D[SNS Topic]
+    D --> E[Notification]
+```
+
+**Prompt Template**:
 ```
 Create CloudWatch alarms for Sage.ai backend:
 
@@ -292,7 +529,7 @@ Send alerts to SNS topic: sage-alerts
 Use Terraform.
 ```
 
-**Expected Output**:
+**Expected Implementation**:
 ```hcl
 # terraform/monitoring.tf
 
@@ -366,11 +603,44 @@ resource "aws_cloudwatch_metric_alarm" "api_error_rate_high" {
 
 ---
 
-## Shell Scripts with AI
+## 3. Shell Scripts with AI
 
-### Database Backup Script
+### 3.1 Database Backup Script
 
-**Prompt**:
+**Backup Requirements**:
+```typescript
+interface BackupScript {
+  database: {
+    tool: "pg_dump";
+    compression: "gzip";
+  };
+  storage: {
+    destination: "S3";
+    bucket: string;
+    retention: {
+      days: 7;
+      autoCleanup: boolean;
+    };
+  };
+  logging: {
+    path: string;
+    format: "timestamp + message";
+  };
+}
+```
+
+**Backup Flow**:
+```mermaid
+graph LR
+    A[Start] --> B[Check Connection]
+    B --> C[Create Dump]
+    C --> D[Compress]
+    D --> E[Upload to S3]
+    E --> F[Cleanup Old Backups]
+    F --> G[Success]
+```
+
+**Prompt Template**:
 ```
 Create a bash script to backup PostgreSQL database to S3:
 
@@ -384,7 +654,7 @@ Requirements:
 - Exit codes: 0 (success), 1 (failure)
 ```
 
-**Expected Script**:
+**Expected Implementation**:
 ```bash
 #!/bin/bash
 # scripts/backup-db.sh
@@ -400,23 +670,23 @@ log() {
   echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1" | tee -a $LOG_FILE
 }
 
-log "🔄 Starting database backup..."
+log "Starting database backup..."
 
 # Dump database
-log "📦 Creating database dump..."
+log "Creating database dump..."
 if pg_dump $DATABASE_URL | gzip > /tmp/$BACKUP_FILE; then
-  log "✅ Dump created: /tmp/$BACKUP_FILE"
+  log "Dump created: /tmp/$BACKUP_FILE"
 else
-  log "❌ Dump failed"
+  log "Dump failed"
   exit 1
 fi
 
 # Upload to S3
-log "☁️  Uploading to S3..."
+log "Uploading to S3..."
 if aws s3 cp /tmp/$BACKUP_FILE s3://$S3_BUCKET/$BACKUP_FILE; then
-  log "✅ Uploaded to S3: s3://$S3_BUCKET/$BACKUP_FILE"
+  log "Uploaded to S3: s3://$S3_BUCKET/$BACKUP_FILE"
 else
-  log "❌ Upload failed"
+  log "Upload failed"
   exit 1
 fi
 
@@ -424,7 +694,7 @@ fi
 rm /tmp/$BACKUP_FILE
 
 # Delete old backups (keep last 7)
-log "🧹 Cleaning up old backups..."
+log "Cleaning up old backups..."
 aws s3 ls s3://$S3_BUCKET/ | \
   grep "backup_" | \
   sort -r | \
@@ -432,18 +702,63 @@ aws s3 ls s3://$S3_BUCKET/ | \
   awk '{print $4}' | \
   while read file; do
     aws s3 rm s3://$S3_BUCKET/$file
-    log "🗑️  Deleted old backup: $file"
+    log "Deleted old backup: $file"
   done
 
-log "✅ Backup complete!"
+log "Backup complete!"
 exit 0
 ```
 
 ---
 
-## Docker Compose for Local Development
+## 4. Docker Compose for Local Development
 
-**Prompt**:
+**Local Development Requirements**:
+```typescript
+interface LocalEnvironment {
+  services: {
+    postgres: {
+      version: "16";
+      port: 5432;
+      persistence: boolean;
+    };
+    redis: {
+      version: "7.x";
+      port: 6379;
+    };
+    backend: {
+      framework: "Nest.js";
+      port: 3000;
+      hotReload: boolean;
+    };
+    frontend: {
+      build: "Vite";
+      port: 5173;
+      hotReload: boolean;
+    };
+  };
+  networking: {
+    network: string;
+  };
+}
+```
+
+**Local Architecture**:
+```mermaid
+graph TB
+    A[Frontend :5173] --> B[Backend :3000]
+    B --> C[PostgreSQL :5432]
+    B --> D[Redis :6379]
+
+    subgraph Docker Network
+        A
+        B
+        C
+        D
+    end
+```
+
+**Prompt Template**:
 ```
 Create docker-compose.yml for Sage.ai local development:
 
@@ -457,7 +772,7 @@ Environment variables from .env
 Networks: sage-network
 ```
 
-**Expected Output**:
+**Expected Implementation**:
 ```yaml
 # docker-compose.yml
 version: '3.9'
@@ -532,10 +847,20 @@ networks:
 
 ---
 
-## AI-Powered Debugging
+## 5. AI-Powered Debugging
 
-### Prompt for Log Analysis
+### 5.1 Log Analysis
 
+**Log Analysis Process**:
+```mermaid
+graph LR
+    A[Collect Logs] --> B[Identify Patterns]
+    B --> C[Analyze Root Cause]
+    C --> D[Generate Solution]
+    D --> E[Verify Fix]
+```
+
+**Prompt Template**:
 ```
 Analyze these CloudWatch logs and identify the issue:
 
@@ -552,54 +877,84 @@ Invalid `prisma.chat.findMany()` invocation:
 What's the root cause and how to fix it?
 ```
 
-**AI Response**:
+### 5.2 Expected AI Response
+
+```typescript
+interface DebugResponse {
+  rootCause: {
+    issue: "Database connection pool exhausted";
+    details: [
+      "98/100 connections used",
+      "ECS tasks creating too many connections",
+      "No connection cleanup or reuse"
+    ];
+  };
+  immediateFix: {
+    action: "Increase RDS max_connections";
+    commands: string[];
+  };
+  longTermFix: {
+    solutions: [
+      "Enable PgBouncer (connection pooler)",
+      "Optimize Prisma client instantiation",
+      "Set connection pool size per ECS task"
+    ];
+  };
+}
 ```
-Root Cause:
-- Database connection pool exhausted (98/100 connections)
-- ECS tasks are creating too many connections
-- No connection cleanup or reuse
 
-Immediate Fix:
-1. Increase RDS max_connections (temporary):
-   ```sql
-   ALTER SYSTEM SET max_connections = 200;
-   SELECT pg_reload_conf();
-   ```
+**Fix Implementation**:
+```sql
+-- Immediate Fix: Increase max_connections
+ALTER SYSTEM SET max_connections = 200;
+SELECT pg_reload_conf();
+```
 
-2. Check for connection leaks in code:
-   - Ensure Prisma client is singleton
-   - Use connection pooling
-
-Long-term Fix:
-1. Enable PgBouncer (connection pooler)
-2. Optimize Prisma client instantiation
-3. Set connection pool size per ECS task:
-   ```
-   DATABASE_URL="postgresql://user:pass@host:5432/db?connection_limit=5"
-   ```
+```typescript
+// Long-term Fix: Connection pooling
+DATABASE_URL="postgresql://user:pass@host:5432/db?connection_limit=5"
 ```
 
 ---
 
-## Best Practices
+## 6. Best Practices
 
-### 1. Always Test in Staging
+### 6.1 Infrastructure Management
 
-❌ Bad: `terraform apply` directly in production
-✅ Good: Test in staging environment first
+```typescript
+interface BestPractices {
+  testing: {
+    bad: "terraform apply directly in production";
+    good: "Test in staging environment first";
+  };
+  security: {
+    bad: "Hardcode credentials";
+    good: "Use environment variables, AWS Secrets Manager";
+  };
+  versionControl: {
+    bad: "Manual AWS Console changes";
+    good: "All infrastructure changes via Terraform + Git";
+  };
+}
+```
 
-### 2. Use Variables & Secrets
+### 6.2 Change Management Flow
 
-❌ Bad: Hardcode credentials
-✅ Good: Use environment variables, AWS Secrets Manager
-
-### 3. Version Control IaC
-
-❌ Bad: Manual AWS Console changes
-✅ Good: All infrastructure changes via Terraform + Git
+```mermaid
+graph LR
+    A[Write Terraform] --> B[terraform plan]
+    B --> C[Review Changes]
+    C --> D[Apply to Staging]
+    D --> E{Test Pass?}
+    E -->|Yes| F[Apply to Production]
+    E -->|No| A
+```
 
 ---
 
-**문서 끝**
+**Document Version**: 2.0
+**Last Updated**: December 22, 2025
+**Infrastructure**: AWS ECS + Terraform
+**Maintainer**: Sam (dev@5010.tech)
 
 _"Between the zeros and ones"_

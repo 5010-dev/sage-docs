@@ -1,142 +1,145 @@
 # Sage.ai Backend Specification
 
-> **문서 버전**: 1.0
-> **최종 수정**: 2025년 12월 19일
-> **작성자**: Sam
-> **대상 독자**: Backend 개발자
+> Document Version: 2.0
+> Last Modified: 2025-12-22
+> Author: Sam
+> Target Audience: Backend Developers
 
 ---
 
-## 기술 스택
+## 1. Technical Stack
 
-### Core
+### 1.1 Core Components
 
-| 컴포넌트 | 기술 | 버전 | 선택 이유 |
-|---------|------|------|-----------|
-| **Runtime** | Node.js | 20 LTS | 안정성, 생태계 |
-| **언어** | TypeScript | 5.x | 타입 안정성 |
-| **프레임워크** | Nest.js | 10.x | 모듈러 구조, DI, TypeScript 네이티브 |
-| **ORM** | Prisma | 5.x | 타입 안정성, 직관적 마이그레이션 |
-| **Database** | PostgreSQL | 16 | JSON 지원, 안정성, 확장성 |
-| **Cache** | Redis | 7.x | 세션, 캐싱, BullMQ 백엔드 |
+```typescript
+interface CoreStack {
+  runtime: {
+    name: "Node.js";
+    version: "20 LTS";
+    reason: "Stability and ecosystem";
+  };
+  language: {
+    name: "TypeScript";
+    version: "5.x";
+    reason: "Type safety";
+  };
+  framework: {
+    name: "Nest.js";
+    version: "10.x";
+    reason: "Modular structure, DI, TypeScript native";
+  };
+  orm: {
+    name: "Prisma";
+    version: "5.x";
+    reason: "Type safety, intuitive migrations";
+  };
+  database: {
+    name: "PostgreSQL";
+    version: "16";
+    reason: "JSON support, stability, scalability";
+  };
+  cache: {
+    name: "Redis";
+    version: "7.x";
+    reason: "Sessions, caching, BullMQ backend";
+  };
+}
+```
 
-### Async & Scheduling
+### 1.2 Async & Scheduling
 
-| 컴포넌트 | 기술 | 용도 |
-|---------|------|------|
-| **Job Queue** | BullMQ | 5.x | Memory 추출, 알림 발송 |
-| **Cron Jobs** | @nestjs/schedule | - | 가격 폴링 (15분) |
+```typescript
+interface AsyncComponents {
+  jobQueue: {
+    name: "BullMQ";
+    version: "5.x";
+    purpose: "Memory extraction, notification sending";
+  };
+  cronJobs: {
+    name: "@nestjs/schedule";
+    purpose: "Price polling (15-minute intervals)";
+  };
+}
+```
 
-### External Services
+### 1.3 External Services
 
-| 서비스 | 용도 | API |
-|--------|------|-----|
-| **Anthropic Claude** | AI 멘토링 | @anthropic-ai/sdk |
-| **CoinGecko** | 시장 데이터 | REST API |
-| **Alternative.me** | Fear & Greed Index | REST API |
-| **Discord** | 알림 | Webhook |
+```typescript
+interface ExternalServices {
+  ai: {
+    provider: "Anthropic Claude";
+    api: "@anthropic-ai/sdk";
+  };
+  marketData: {
+    provider: "CoinGecko";
+    type: "REST API";
+  };
+  fearGreed: {
+    provider: "Alternative.me";
+    type: "REST API";
+  };
+  notifications: {
+    provider: "Discord";
+    type: "Webhook";
+  };
+}
+```
 
 ---
 
-## 아키텍처
+## 2. Architecture
 
-### Layered Architecture (Clean Lite)
+### 2.1 Layered Architecture (Clean Lite)
 
+```mermaid
+graph TD
+    A[Presentation Layer] --> B[Application Layer]
+    B --> C[Domain Layer]
+    C --> D[Infrastructure Layer]
+
+    A1[Controllers - HTTP/SSE] --> A
+    B1[Services - Business Logic] --> B
+    C1[Entities, DTOs] --> C
+    D1[Prisma, Redis, External APIs] --> D
 ```
-┌─────────────────────────────────────┐
-│         Presentation Layer          │  ← Controllers (HTTP/SSE)
-├─────────────────────────────────────┤
-│          Application Layer          │  ← Services (Business Logic)
-├─────────────────────────────────────┤
-│           Domain Layer              │  ← Entities, DTOs
-├─────────────────────────────────────┤
-│        Infrastructure Layer         │  ← Prisma, Redis, External APIs
-└─────────────────────────────────────┘
-```
 
-### Folder Structure
+### 2.2 Folder Structure
 
 ```
 src/
-├── main.ts                      # 앱 엔트리포인트
-├── app.module.ts                # 루트 모듈
+├── main.ts                      # App entry point
+├── app.module.ts                # Root module
 │
-├── common/                      # 공통 유틸리티
+├── common/                      # Common utilities
 │   ├── filters/                 # Exception Filters
 │   ├── guards/                  # Auth Guards
 │   ├── interceptors/            # Logging, Transform
 │   ├── pipes/                   # Validation Pipes
 │   └── decorators/              # Custom Decorators
 │
-├── config/                      # 설정
+├── config/                      # Configuration
 │   ├── database.config.ts
 │   ├── redis.config.ts
 │   └── anthropic.config.ts
 │
-├── modules/                     # 기능 모듈
-│   ├── auth/                    # 인증
-│   │   ├── auth.controller.ts
-│   │   ├── auth.service.ts
-│   │   ├── auth.module.ts
-│   │   ├── dto/
-│   │   └── guards/
-│   │
-│   ├── chat/                    # 채팅
-│   │   ├── chat.controller.ts
-│   │   ├── chat.service.ts
-│   │   ├── chat.module.ts
-│   │   ├── dto/
-│   │   └── entities/
-│   │
-│   ├── ai-agents/               # AI 에이전트
-│   │   ├── manager.agent.ts     # 라우팅
-│   │   ├── analyst.agent.ts     # 데이터 수집
-│   │   ├── persona.agent.ts     # 월렛 버핏
-│   │   ├── risk.agent.ts        # 교차 검증
-│   │   ├── orchestrator.service.ts
-│   │   └── ai-agents.module.ts
-│   │
-│   ├── market/                  # 시장 데이터
-│   │   ├── market.controller.ts
-│   │   ├── market.service.ts
-│   │   ├── market.module.ts
-│   │   ├── coingecko.client.ts
-│   │   └── fear-greed.client.ts
-│   │
-│   ├── portfolio/               # 섀도우 포트폴리오
-│   │   ├── portfolio.controller.ts
-│   │   ├── portfolio.service.ts
-│   │   ├── portfolio.module.ts
-│   │   ├── dto/
-│   │   └── entities/
-│   │
-│   ├── notifications/           # 알림
-│   │   ├── notifications.controller.ts
-│   │   ├── notifications.service.ts
-│   │   ├── notifications.module.ts
-│   │   ├── push.service.ts
-│   │   └── discord.service.ts
-│   │
-│   ├── scheduler/               # 주기적 작업
-│   │   ├── price-polling.service.ts
-│   │   ├── market-analyzer.service.ts
-│   │   └── scheduler.module.ts
-│   │
+├── modules/                     # Feature modules
+│   ├── auth/                    # Authentication
+│   ├── chat/                    # Chat functionality
+│   ├── ai-agents/               # AI agents
+│   ├── market/                  # Market data
+│   ├── portfolio/               # Shadow portfolio
+│   ├── notifications/           # Notifications
+│   ├── scheduler/               # Scheduled tasks
 │   └── jobs/                    # Background Jobs
-│       ├── memory-extraction.processor.ts
-│       ├── notification.processor.ts
-│       └── jobs.module.ts
 │
 └── prisma/                      # Prisma Schema & Migrations
-    ├── schema.prisma
-    └── migrations/
 ```
 
 ---
 
-## Database Schema
+## 3. Database Schema
 
-### Users
+### 3.1 Users Table
 
 ```prisma
 model User {
@@ -159,7 +162,7 @@ model User {
 }
 ```
 
-### Chats
+### 3.2 Chats Table
 
 ```prisma
 model Chat {
@@ -177,7 +180,7 @@ model Chat {
 }
 ```
 
-### Messages
+### 3.3 Messages Table
 
 ```prisma
 model Message {
@@ -197,7 +200,7 @@ model Message {
 }
 ```
 
-### ShadowTrades
+### 3.4 Shadow Trades Table
 
 ```prisma
 model ShadowTrade {
@@ -220,7 +223,7 @@ model ShadowTrade {
 }
 ```
 
-### PushSubscriptions
+### 3.5 Push Subscriptions Table
 
 ```prisma
 model PushSubscription {
@@ -238,7 +241,7 @@ model PushSubscription {
 }
 ```
 
-### Notifications
+### 3.6 Notifications Table
 
 ```prisma
 model Notification {
@@ -259,77 +262,82 @@ model Notification {
 
 ---
 
-## API Endpoints
+## 4. API Endpoints
 
-### Authentication
+### 4.1 Authentication Endpoints
 
-```
-POST   /api/auth/google          # Google OAuth callback
-POST   /api/auth/logout          # Logout
-GET    /api/auth/session         # Get current session
-```
-
-### Chat
-
-```
-POST   /api/chats                # Create new chat
-GET    /api/chats                # List user's chats
-GET    /api/chats/:id            # Get chat details
-DELETE /api/chats/:id            # Delete chat
-
-POST   /api/chats/:id/messages   # Send message (SSE response)
-GET    /api/chats/:id/messages   # Get messages (pagination)
+```typescript
+interface AuthEndpoints {
+  googleOAuth: "POST /api/auth/google";
+  logout: "POST /api/auth/logout";
+  getSession: "GET /api/auth/session";
+}
 ```
 
-### Market
+### 4.2 Chat Endpoints
 
-```
-GET    /api/market/prices        # Get current prices (6 coins)
-GET    /api/market/fear-greed    # Get Fear & Greed Index
-GET    /api/market/history/:symbol  # Get price history (24h)
-```
-
-### Portfolio
-
-```
-POST   /api/shadow-trades        # Create shadow trade
-GET    /api/shadow-trades        # List user's trades
-GET    /api/shadow-trades/performance  # Calculate performance
-DELETE /api/shadow-trades/:id    # Delete trade
+```typescript
+interface ChatEndpoints {
+  createChat: "POST /api/chats";
+  listChats: "GET /api/chats";
+  getChatDetails: "GET /api/chats/:id";
+  deleteChat: "DELETE /api/chats/:id";
+  sendMessage: "POST /api/chats/:id/messages"; // SSE response
+  getMessages: "GET /api/chats/:id/messages"; // with pagination
+}
 ```
 
-### Notifications
+### 4.3 Market Endpoints
 
+```typescript
+interface MarketEndpoints {
+  getCurrentPrices: "GET /api/market/prices"; // 6 coins
+  getFearGreed: "GET /api/market/fear-greed";
+  getPriceHistory: "GET /api/market/history/:symbol"; // 24h
+}
 ```
-POST   /api/push/subscribe       # Subscribe to push notifications
-POST   /api/push/unsubscribe     # Unsubscribe
-GET    /api/notifications        # Get notification history
-PATCH  /api/notifications/:id/read  # Mark as read
+
+### 4.4 Portfolio Endpoints
+
+```typescript
+interface PortfolioEndpoints {
+  createTrade: "POST /api/shadow-trades";
+  listTrades: "GET /api/shadow-trades";
+  getPerformance: "GET /api/shadow-trades/performance";
+  deleteTrade: "DELETE /api/shadow-trades/:id";
+}
+```
+
+### 4.5 Notification Endpoints
+
+```typescript
+interface NotificationEndpoints {
+  subscribePush: "POST /api/push/subscribe";
+  unsubscribePush: "POST /api/push/unsubscribe";
+  getNotifications: "GET /api/notifications";
+  markAsRead: "PATCH /api/notifications/:id/read";
+}
 ```
 
 ---
 
-## Multi-Agent System
+## 5. Multi-Agent System
 
-### Agent Architecture
+### 5.1 Agent Architecture Flow
 
-```
-[User Message]
-    ↓
-[Manager Agent] (Haiku 4)
-    │
-    ├─> Intent: market_data    → [Analyst Agent] (Haiku 4)
-    ├─> Intent: advice         → [Analyst + Persona] (Sonnet 4)
-    └─> Intent: general        → [Persona Agent] (Sonnet 4)
-    ↓
-[Risk Agent] (Haiku 4) - Cross-validation
-    ↓
-[Final Response]
+```mermaid
+graph TD
+    A[User Message] --> B[Manager Agent - Haiku 4]
+    B -->|Intent: market_data| C[Analyst Agent - Haiku 4]
+    B -->|Intent: advice| D[Analyst + Persona Agent - Sonnet 4]
+    B -->|Intent: general| E[Persona Agent - Sonnet 4]
+    C --> F[Risk Agent - Haiku 4]
+    D --> F
+    E --> F
+    F --> G[Final Response]
 ```
 
-### Manager Agent (manager.agent.ts)
-
-**Responsibility**: 사용자 의도 파악 및 라우팅
+### 5.2 Manager Agent
 
 ```typescript
 interface ManagerResponse {
@@ -340,61 +348,51 @@ interface ManagerResponse {
   };
   needsMarketData: boolean;
 }
-```
 
-**Example**:
-```
-Input: "비트코인 지금 어때?"
-Output: {
+// Example
+const exampleInput = "비트코인 지금 어때?";
+const exampleOutput: ManagerResponse = {
   intent: "advice",
   entities: { symbols: ["BTC"] },
   needsMarketData: true
-}
+};
 ```
 
-### Analyst Agent (analyst.agent.ts)
+### 5.3 Analyst Agent Tools
 
-**Responsibility**: 시장 데이터 수집 및 팩트 정리
-
-**Tools**:
 ```typescript
-const tools = [
-  {
-    name: "get_price",
-    description: "Get current price and 24h change for a coin",
+interface AnalystTools {
+  getPricetool: {
+    name: "get_price";
+    description: "Get current price and 24h change for a coin";
     input_schema: {
-      type: "object",
+      type: "object";
       properties: {
-        symbol: { type: "string", enum: ["BTC", "ETH", "SOL", "BNB", "DOGE", "XRP"] }
-      },
-      required: ["symbol"]
-    }
-  },
-  {
-    name: "get_fear_greed",
-    description: "Get current Fear & Greed Index (0-100)",
-    input_schema: { type: "object", properties: {} }
-  }
-];
-```
+        symbol: { type: "string"; enum: ["BTC", "ETH", "SOL", "BNB", "DOGE", "XRP"] };
+      };
+      required: ["symbol"];
+    };
+  };
+  getFearGreedTool: {
+    name: "get_fear_greed";
+    description: "Get current Fear & Greed Index (0-100)";
+    input_schema: { type: "object"; properties: {} };
+  };
+}
 
-**Output**:
-```json
-{
-  "facts": {
-    "BTC": { "price": 43250, "change_24h": -5.2 },
-    "fear_greed": 25
-  },
-  "summary": "BTC is at $43,250 (-5.2% in 24h). Market sentiment is 'Extreme Fear' (25/100)."
+interface AnalystOutput {
+  facts: {
+    BTC: { price: 43250; change_24h: -5.2 };
+    fear_greed: 25;
+  };
+  summary: "BTC is at $43,250 (-5.2% in 24h). Market sentiment is 'Extreme Fear' (25/100).";
 }
 ```
 
-### Persona Agent (persona.agent.ts)
+### 5.4 Persona Agent System Prompt
 
-**Responsibility**: 월렛 버핏 페르소나로 응답 생성
-
-**System Prompt**:
-```
+```typescript
+const personaSystemPrompt = `
 You are Wallet Buffett (월렛 버핏), an AI investment mentor inspired by Warren Buffett.
 
 Personality:
@@ -408,94 +406,108 @@ Rules:
 - ALWAYS use conditional language ("~할 수 있다", "~를 고려해볼 만하다")
 - ALWAYS cite data from tools (use get_price, get_fear_greed)
 - NEVER hallucinate numbers - use tools or say "I don't have that data"
-
-Example:
-User: "비트코인 지금 어때?"
-Wallet Buffett: "자네, 비트코인이 현재 $43,250에 거래되고 있네 (24시간 -5.2%).
-시장은 공포에 질렸군 (Fear & Greed 지수 25). 하지만 기억하게,
-남들이 두려워할 때가 바로 기회일세. 장기 관점에서 접근하면 어떻겠나?"
+`;
 ```
 
-### Risk Agent (risk.agent.ts)
+### 5.5 Risk Agent Validation
 
-**Responsibility**: 교차 검증 및 환각 방지
-
-**Checks**:
 ```typescript
 interface RiskCheck {
-  hasHallucination: boolean;      // 숫자가 Tool 데이터와 일치하는가?
-  hasDirectSignal: boolean;        // "지금 사세요" 같은 직접 신호가 있는가?
-  hasBias: boolean;                // 과도한 낙관/비관이 있는가?
+  hasHallucination: boolean;      // Does number match Tool data?
+  hasDirectSignal: boolean;        // Contains "buy now" type signals?
+  hasBias: boolean;                // Excessive optimism/pessimism?
   recommendation: 'approve' | 'revise' | 'reject';
+}
+
+// Example validation
+const validateResponse = (
+  personaResponse: string,
+  factData: AnalystOutput
+): RiskCheck => {
+  // Check for hallucinated prices
+  const mentionedPrice = extractPrice(personaResponse);
+  const actualPrice = factData.facts.BTC.price;
+
+  if (Math.abs(mentionedPrice - actualPrice) > actualPrice * 0.01) {
+    return {
+      hasHallucination: true,
+      hasDirectSignal: false,
+      hasBias: false,
+      recommendation: 'revise'
+    };
+  }
+
+  return {
+    hasHallucination: false,
+    hasDirectSignal: false,
+    hasBias: false,
+    recommendation: 'approve'
+  };
+};
+```
+
+---
+
+## 6. Caching Strategy
+
+### 6.1 Redis Cache Keys
+
+```typescript
+interface CacheKeys {
+  // Market data (TTL: 5 minutes)
+  marketPrice: `market:price:${symbol}`;           // "43250.50"
+  marketFearGreed: `market:fear-greed`;            // "25"
+  marketHistory: `market:history:${symbol}:24h`;   // JSON array
+
+  // User context (TTL: 1 hour)
+  userRecentMessages: `user:${userId}:recent-messages`;  // Last 20 messages
+  userProfile: `user:${userId}:profile`;                 // Inferred profile
+
+  // Rate limiting (TTL: 1 minute)
+  rateLimit: `ratelimit:${userId}:chat`;                 // Request count
 }
 ```
 
-**Example**:
+### 6.2 Cache Invalidation Strategy
+
 ```typescript
-// Persona Agent output
-const personaResponse = "비트코인이 $50,000이네요";
-
-// Risk Agent check
-const riskCheck = {
-  hasHallucination: true,  // Real price: $43,250
-  recommendation: 'revise'
-};
-
-// Trigger re-generation with correct data
+interface CacheInvalidation {
+  marketData: "TTL-based (5 minutes)";
+  userContext: "Update on new message";
+  rateLimit: "TTL-based (1 minute)";
+}
 ```
 
 ---
 
-## Caching Strategy
+## 7. Background Jobs (BullMQ)
 
-### Redis Cache Keys
-
-```typescript
-// Market data (TTL: 5분)
-`market:price:${symbol}`           // "43250.50"
-`market:fear-greed`                // "25"
-`market:history:${symbol}:24h`    // JSON array
-
-// User context (TTL: 1시간)
-`user:${userId}:recent-messages`   // Last 20 messages
-`user:${userId}:profile`           // Inferred profile
-
-// Rate limiting (TTL: 1분)
-`ratelimit:${userId}:chat`         // Request count
-```
-
-### Cache Invalidation
-
-- **Market data**: TTL 기반 (5분)
-- **User context**: 새 메시지 발생 시 갱신
-- **Rate limit**: TTL 기반 (1분)
-
----
-
-## Background Jobs (BullMQ)
-
-### Job Queues
+### 7.1 Job Queue Configuration
 
 ```typescript
-// Memory extraction (낮은 우선순위)
-Queue: 'memory-extraction'
-Processor: 'memory-extraction.processor.ts'
-Trigger: 대화 종료 후 (마지막 메시지 10분 경과)
-
-// Notification (높은 우선순위)
-Queue: 'notifications'
-Processor: 'notification.processor.ts'
-Trigger: 시장 급변 감지 시
-
-// Market analysis (중간 우선순위)
-Queue: 'market-analysis'
-Processor: 'market-analyzer.processor.ts'
-Trigger: 15분마다 (@nestjs/schedule)
+interface JobQueues {
+  memoryExtraction: {
+    name: 'memory-extraction';
+    processor: 'memory-extraction.processor.ts';
+    trigger: '10 minutes after last message';
+    priority: 'low';
+  };
+  notifications: {
+    name: 'notifications';
+    processor: 'notification.processor.ts';
+    trigger: 'Market sudden change detected';
+    priority: 'high';
+  };
+  marketAnalysis: {
+    name: 'market-analysis';
+    processor: 'market-analyzer.processor.ts';
+    trigger: 'Every 15 minutes (@nestjs/schedule)';
+    priority: 'medium';
+  };
+}
 ```
 
-### Memory Extraction Job
-
-**Purpose**: 대화에서 사용자 프로필 추출 및 업데이트
+### 7.2 Memory Extraction Job
 
 ```typescript
 interface MemoryExtractionJob {
@@ -504,15 +516,14 @@ interface MemoryExtractionJob {
   messages: Message[];
 }
 
-// Processor
-async processMemoryExtraction(job: Job<MemoryExtractionJob>) {
+async function processMemoryExtraction(job: Job<MemoryExtractionJob>) {
   const { messages, userId } = job.data;
 
   // Call Haiku 4 to extract profile
-  const profile = await this.extractProfile(messages);
+  const profile = await extractProfile(messages);
 
   // Update user profile
-  await this.prisma.user.update({
+  await prisma.user.update({
     where: { id: userId },
     data: {
       riskProfile: profile.riskProfile,
@@ -522,7 +533,7 @@ async processMemoryExtraction(job: Job<MemoryExtractionJob>) {
 }
 ```
 
-### Notification Job
+### 7.3 Notification Job
 
 ```typescript
 interface NotificationJob {
@@ -535,101 +546,96 @@ interface NotificationJob {
   };
 }
 
-// Processor
-async processNotification(job: Job<NotificationJob>) {
+async function processNotification(job: Job<NotificationJob>) {
   const { type, userId, data } = job.data;
 
   // Send push notification
-  await this.pushService.send(userId, {
+  await pushService.send(userId, {
     title: `${data.symbol} Alert`,
     body: data.message
   });
 
-  // Send Discord webhook
+  // Send Discord webhook if change > 7%
   if (Math.abs(data.change) > 7) {
-    await this.discordService.sendAlert(data);
+    await discordService.sendAlert(data);
   }
 
   // Save to DB
-  await this.prisma.notification.create({ ... });
+  await prisma.notification.create({ ... });
 }
 ```
 
 ---
 
-## Scheduled Tasks
+## 8. Scheduled Tasks
 
-### Price Polling (15분마다)
+### 8.1 Price Polling Implementation
 
 ```typescript
-@Cron('*/15 * * * *')  // Every 15 minutes
-async pollPrices() {
+interface PricePollingConfig {
+  schedule: "*/15 * * * *";  // Every 15 minutes
+  symbols: ["BTC", "ETH", "SOL", "BNB", "DOGE", "XRP"];
+  changeThresholds: {
+    BTC: 5;     // 5% change triggers alert
+    ETH: 7;     // 7% change triggers alert
+    default: 10; // 10% for others
+  };
+}
+
+@Cron('*/15 * * * *')
+async function pollPrices() {
   const symbols = ['BTC', 'ETH', 'SOL', 'BNB', 'DOGE', 'XRP'];
 
   for (const symbol of symbols) {
-    const currentPrice = await this.coingeckoClient.getPrice(symbol);
-    const previousPrice = await this.redis.get(`market:price:${symbol}`);
+    const currentPrice = await coingeckoClient.getPrice(symbol);
+    const previousPrice = await redis.get(`market:price:${symbol}`);
 
     // Cache new price
-    await this.redis.setex(`market:price:${symbol}`, 300, currentPrice);
+    await redis.setex(`market:price:${symbol}`, 300, currentPrice);
 
     // Check for sudden change
     if (previousPrice) {
       const change = ((currentPrice - previousPrice) / previousPrice) * 100;
 
-      if (this.isSuddenChange(symbol, change)) {
+      if (isSuddenChange(symbol, change)) {
         // Trigger notification job
-        await this.notificationQueue.add('market_alert', {
+        await notificationQueue.add('market_alert', {
           type: 'market_alert',
-          data: { symbol, change, message: `${symbol} ${change > 0 ? '급등' : '급락'} ${Math.abs(change).toFixed(2)}%` }
+          data: { symbol, change, message: `${symbol} ${change > 0 ? 'surge' : 'drop'} ${Math.abs(change).toFixed(2)}%` }
         });
-
-        // Generate AI context
-        await this.marketAnalysisQueue.add('analyze', { symbol, change });
       }
     }
   }
-}
-
-private isSuddenChange(symbol: string, change: number): boolean {
-  const thresholds = {
-    'BTC': 5,
-    'ETH': 7,
-    'default': 10
-  };
-  return Math.abs(change) >= (thresholds[symbol] || thresholds.default);
 }
 ```
 
 ---
 
-## Error Handling
+## 9. Error Handling
 
-### Custom Exceptions
+### 9.1 Custom Exceptions
 
 ```typescript
-// common/exceptions/
-
-export class HallucinationDetectedException extends BadRequestException {
+class HallucinationDetectedException extends BadRequestException {
   constructor(actual: number, claimed: number) {
     super(`AI hallucination detected: claimed ${claimed}, actual ${actual}`);
   }
 }
 
-export class RateLimitExceededException extends TooManyRequestsException {
+class RateLimitExceededException extends TooManyRequestsException {
   constructor(limit: number) {
     super(`Rate limit exceeded: ${limit} requests per minute`);
   }
 }
 
-export class TierLimitException extends ForbiddenException {
+class TierLimitException extends ForbiddenException {
   constructor(feature: string, requiredTier: string) {
     super(`Feature '${feature}' requires ${requiredTier} tier`);
   }
 }
 ```
 
-### Global Exception Filter
+### 9.2 Global Exception Filter
 
 ```typescript
 @Catch()
@@ -658,101 +664,60 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
 ---
 
-## Testing Strategy
+## 10. Performance Targets
 
-### Unit Tests (Jest)
-
-**Coverage Target**: 80%+
+### 10.1 Performance Metrics
 
 ```typescript
-// chat.service.spec.ts
-describe('ChatService', () => {
-  let service: ChatService;
-  let prisma: PrismaService;
-
-  beforeEach(async () => {
-    const module = await Test.createTestingModule({
-      providers: [
-        ChatService,
-        { provide: PrismaService, useValue: mockPrisma }
-      ]
-    }).compile();
-
-    service = module.get<ChatService>(ChatService);
-  });
-
-  it('should create a new chat', async () => {
-    const result = await service.createChat('user-123');
-    expect(result.userId).toBe('user-123');
-    expect(result.title).toBe('새 대화');
-  });
-});
-```
-
-### Integration Tests (Supertest)
-
-```typescript
-// chat.e2e-spec.ts
-describe('Chat (e2e)', () => {
-  let app: INestApplication;
-
-  beforeAll(async () => {
-    const moduleFixture = await Test.createTestingModule({
-      imports: [AppModule]
-    }).compile();
-
-    app = moduleFixture.createNestApplication();
-    await app.init();
-  });
-
-  it('/api/chats (POST)', () => {
-    return request(app.getHttpServer())
-      .post('/api/chats')
-      .set('Authorization', 'Bearer valid-token')
-      .expect(201)
-      .expect(res => {
-        expect(res.body).toHaveProperty('id');
-      });
-  });
-});
-```
-
----
-
-## Performance Targets
-
-| 지표 | 목표 | 측정 방법 |
-|------|------|----------|
-| **API 응답 속도** | 95th percentile < 200ms | Sentry Traces |
-| **SSE 첫 토큰** | < 2초 | Custom metric |
-| **Database 쿼리** | < 50ms | Prisma Logging |
-| **캐시 히트율** | > 80% | Redis INFO stats |
-
----
-
-## Security
-
-### Authentication
-
-- **Auth.js** (Google OAuth)
-- Session stored in PostgreSQL or JWT
-- CSRF protection enabled
-
-### Authorization
-
-```typescript
-@UseGuards(AuthGuard, TierGuard)
-@RequireTier('pro')
-async createPortfolio() {
-  // Only Pro/Premium users
+interface PerformanceTargets {
+  apiResponseTime: {
+    metric: "95th percentile";
+    target: "< 200ms";
+    measurement: "Sentry Traces";
+  };
+  sseFirstToken: {
+    metric: "Time to first token";
+    target: "< 2s";
+    measurement: "Custom metric";
+  };
+  databaseQuery: {
+    metric: "Query duration";
+    target: "< 50ms";
+    measurement: "Prisma Logging";
+  };
+  cacheHitRate: {
+    metric: "Hit rate";
+    target: "> 80%";
+    measurement: "Redis INFO stats";
+  };
 }
 ```
 
-### Input Validation
+---
+
+## 11. Security
+
+### 11.1 Authentication & Authorization
 
 ```typescript
-// dto/create-trade.dto.ts
-export class CreateTradeDto {
+interface SecurityConfig {
+  authentication: {
+    provider: "Auth.js";
+    method: "Google OAuth";
+    storage: "PostgreSQL or JWT";
+    csrfProtection: true;
+  };
+  authorization: {
+    guards: ["AuthGuard", "TierGuard"];
+    example: "@RequireTier('pro')";
+  };
+}
+```
+
+### 11.2 Input Validation
+
+```typescript
+class CreateTradeDto {
   @IsIn(['BTC', 'ETH', 'SOL', 'BNB', 'DOGE', 'XRP'])
   symbol: string;
 
@@ -765,52 +730,49 @@ export class CreateTradeDto {
 }
 ```
 
-### Rate Limiting
+### 11.3 Rate Limiting
 
 ```typescript
 @UseGuards(ThrottlerGuard)
 @Throttle(10, 60)  // 10 requests per minute
 async sendMessage() {
-  // ...
+  // Implementation
 }
 ```
 
 ---
 
-## Monitoring
+## 12. Monitoring
 
-### Metrics to Track
+### 12.1 Custom Metrics
 
 ```typescript
-// Custom metrics
-- chat.response_time (histogram)
-- ai.hallucination_rate (counter)
-- market.api_calls (counter)
-- jobs.completed (counter)
-- jobs.failed (counter)
+interface CustomMetrics {
+  chatResponseTime: "histogram";
+  aiHallucinationRate: "counter";
+  marketApiCalls: "counter";
+  jobsCompleted: "counter";
+  jobsFailed: "counter";
+}
 ```
 
-### Alerting Rules
+### 12.2 Alerting Rules
 
-- API 에러율 > 5% (5분)
-- SSE 첫 토큰 > 5초 (1분)
-- Database connection pool > 90%
-- Redis memory > 80%
-- BullMQ queue size > 1000
-
----
-
-**문서 끝**
-
-_"Between the zeros and ones"_
+```typescript
+interface AlertingRules {
+  apiErrorRate: "> 5% for 5 minutes";
+  sseFirstToken: "> 5s for 1 minute";
+  databaseConnectionPool: "> 90%";
+  redisMemory: "> 80%";
+  bullmqQueueSize: "> 1000";
+}
+```
 
 ---
 
-## Appendix
+## Appendix A: Environment Variables
 
-### A. Environment Variables
-
-```env
+```bash
 # Database
 DATABASE_URL="postgresql://user:pass@localhost:5432/sage"
 
@@ -830,33 +792,37 @@ COINGECKO_API_KEY="..."
 DISCORD_WEBHOOK_URL="..."
 ```
 
-### B. Prisma Commands
+## Appendix B: Development Commands
 
 ```bash
-# Generate Prisma Client
-npx prisma generate
+# Development server
+pnpm run start:dev              # Start with watch mode
+pnpm run start:debug            # Start in debug mode
 
-# Create migration
-npx prisma migrate dev --name add_shadow_trades
+# Build
+pnpm run build                  # Production build
+pnpm run start:prod             # Run production build
 
-# Apply migration
-npx prisma migrate deploy
+# Database (Prisma)
+npx prisma generate             # Generate Prisma Client
+npx prisma migrate dev          # Create and apply migration
+npx prisma migrate deploy       # Apply migrations in production
+npx prisma studio               # Open Prisma Studio (DB GUI)
 
-# Open Prisma Studio
-npx prisma studio
+# Testing
+pnpm run test                   # Run unit tests
+pnpm run test:watch             # Run tests in watch mode
+pnpm run test:cov               # Generate coverage report
+pnpm run test:e2e               # Run e2e tests
+
+# Linting
+pnpm run lint                   # Run ESLint
+pnpm run format                 # Format with Prettier
 ```
 
-### C. Development Workflow
+---
 
-```bash
-# Start dev server
-pnpm run start:dev
-
-# Run tests
-pnpm run test
-pnpm run test:e2e
-
-# Lint & format
-pnpm run lint
-pnpm run format
-```
+Document Version: 2.0
+Last Updated: 2025-12-22
+Architecture: Layered + Domain (Clean Lite), TypeScript Fullstack
+Maintainer: Sam (dev@5010.tech)
