@@ -213,7 +213,7 @@ resource "aws_db_instance" "postgres" {
   engine         = "postgres"
   engine_version = "16.1"
 
-  instance_class    = "db.t4g.micro"  # MVP: Free tier
+  instance_class    = "db.t3.micro"  # MVP: Free tier
   allocated_storage = 20               # 20 GB (MVP)
   storage_type      = "gp3"
   storage_encrypted = true
@@ -251,7 +251,7 @@ resource "aws_db_instance" "postgres_replica" {
   identifier          = "sage-postgres-replica"
   replicate_source_db = aws_db_instance.postgres.id
 
-  instance_class = "db.t4g.micro"
+  instance_class = "db.t3.micro"
 }
 ```
 
@@ -268,7 +268,7 @@ resource "aws_elasticache_replication_group" "redis" {
 
   engine         = "redis"
   engine_version = "7.0"
-  node_type      = "cache.t4g.micro"  # MVP: Free tier
+  node_type      = "cache.t3.micro"  # MVP: Free tier
 
   num_cache_clusters = 2  # 1 primary + 1 replica
 
@@ -700,11 +700,11 @@ interface MonthlyCostEstimate {
     cost: "$30";
   };
   rds: {
-    resource: "db.t4g.micro, 20 GB storage";
+    resource: "db.t3.micro, 20 GB storage";
     cost: "$15";
   };
   elastiCache: {
-    resource: "cache.t4g.micro x 2 nodes";
+    resource: "cache.t3.micro x 2 nodes";
     cost: "$20";
   };
   alb: {
@@ -868,14 +868,14 @@ interface ScalingPhases {
   phase1_mvp: {
     mau: "5,000";
     ecs: "2 tasks (0.5 vCPU, 1 GB each)";
-    rds: "db.t4g.micro (1 vCPU, 1 GB)";
-    redis: "cache.t4g.micro x2";
+    rds: "db.t3.micro (1 vCPU, 1 GB)";
+    redis: "cache.t3.micro x2";
   };
   phase2_growth: {
     mau: "50,000";
     ecs: "5-10 tasks (auto-scaling)";
-    rds: "db.t4g.small (2 vCPU, 2 GB) + Read Replica";
-    redis: "cache.t4g.small x2";
+    rds: "db.t3.small (2 vCPU, 2 GB) + Read Replica";
+    redis: "cache.t3.small x2";
   };
   phase3_scale: {
     mau: "100,000+";
