@@ -24,6 +24,7 @@
 **Operations**
 - [Operations Roadmap](Operations-Roadmap)
 - [Live Ops Playbook](Live-Operations-Playbook)
+- [Discord Management](Discord-Management)
 - [Genesis Operations](Genesis-Operations)
 - [Mystery Campaign](Mystery-Campaign)
 
