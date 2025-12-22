@@ -2,43 +2,40 @@
 
 > **AI-powered investment mentor for cryptocurrency investors**
 
+---
+
 ## Quick Navigation
 
 ### Getting Started
-- [Project Overview](Project-Overview)
+- [Project Overview (KR)](Project-Overview-KR)
 - [Architecture Overview](Architecture-Overview)
+- [MVP Definition](MVP-Definition)
 - [MVP Timeline](MVP-Timeline)
+- [MVP Spec (KR)](MVP-Spec-KR)
 
 ### Business & Strategy
 - [Business Plan](Business-Plan)
-- [Market Analysis](Market-Analysis)
-- [GTM Strategy](GTM-Strategy)
+- [Executive Brief](Executive-Brief)
+- [Development Roadmap](Development-Roadmap)
 - [Branding Guide](Branding-Guide)
+- [AI Team Strategy](AI-Team-Strategy)
 
 ### Technical Documentation
 - [Backend Specification](Backend-Specification)
 - [Frontend Specification](Frontend-Specification)
 - [Infrastructure Design](Infrastructure-Design)
-- [Database Schema](Database-Schema)
 - [API Documentation](API-Documentation)
-- [Security & Compliance](Security-Compliance)
-
-### Product Design
-- [Product Specification](Product-Specification)
-- [User Journey Map](User-Journey-Map)
-- [Persona Design](Persona-Design)
-- [UX Design Guide](UX-Design-Guide)
 
 ### Operations
 - [Operations Roadmap](Operations-Roadmap)
-- [Community Management](Community-Management)
 - [Live Operations Playbook](Live-Operations-Playbook)
+- [Genesis Operations](Genesis-Operations)
+- [Mystery Campaign](Mystery-Campaign)
 
-### AI Development
+### AI Development Guides
 - [Backend AI Guide](Backend-AI-Guide)
 - [Frontend AI Guide](Frontend-AI-Guide)
 - [Infrastructure AI Guide](Infrastructure-AI-Guide)
-- [Prompt Engineering Guide](Prompt-Engineering-Guide)
 
 ---
 
@@ -46,26 +43,31 @@
 
 | Component | Technology |
 |-----------|------------|
-| Backend | Django 5.1+ + Django REST Framework |
-| Frontend | Vite 6 + React 19 (Complete SPA) |
-| Architecture | Hexagonal (Ports & Adapters) |
-| ORM | Django ORM (PostgreSQL) |
-| Auth | Django-Allauth (Google OAuth) |
-| AI | Claude 3.5 Sonnet + Haiku |
-| Streaming | Django Channels (SSE) |
-| Async Tasks | Celery + Redis |
+| Backend | Nest.js 10.x + Prisma 5.x |
+| Frontend | Vite 5 + React 18.3 |
+| Architecture | Layered + Domain (Clean Lite) |
+| Auth | Auth.js (@auth/core) |
+| AI | Claude Sonnet 4 + Haiku 4 |
+| Streaming | Nest.js SSE |
+| Async Tasks | BullMQ 5.x + Redis |
 | Infrastructure | ECS Fargate + S3/CloudFront |
 
 ---
 
 ## Project Status
 
-- **Current Phase**: Architecture finalization
-- **MVP Timeline**: 8 weeks
-- **Target Metrics**: 500 MAU (MVP), 10K MAU (2026 Q4)
-- **Architecture**: Django + Hexagonal + Complete Backend/Frontend Separation
+| Item | Value |
+|------|-------|
+| Current Phase | Documentation Complete |
+| MVP Timeline | 3 months |
+| Target Metrics | 500 MAU (MVP), 10K MAU (2026 Q4) |
+| Architecture | TypeScript Fullstack (Nest.js + React) |
 
 ---
 
-**Last Updated**: 2025년 12월 17일
-**Version**: 3.0 - Django Migration
+```
+Document Footer
+├── Last Updated: 2025-12-22
+├── Version: 4.0 - Nest.js + Prisma Stack
+└── Maintainer: Sam (dev@5010.tech)
+```
