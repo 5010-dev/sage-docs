@@ -153,11 +153,7 @@ jobs:
           ---
 
           ## 🔗 Quick Links
-          - 📊 [Project Board](https://github.com/sage-game/projects)
-          - 🏗️ [Main Repository](https://github.com/sage-game/sage)
-          - 💬 Discord (Coming Soon)
-
-          *"Between the zeros and ones"*
+          - 🏗️ [Main Repository](https://github.com/SAGE-AI-Protocol/sage-docs)
           EOF
 
       - name: Commit and Push Changes
