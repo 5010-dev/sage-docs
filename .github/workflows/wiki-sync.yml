@@ -140,9 +140,10 @@ jobs:
 
           ## 🚀 Operations
           - [Operations Roadmap](Operations-Roadmap)
-          - [Mystery Campaign](Mystery-Campaign)
-          - [Genesis Operations](Genesis-Operations)
           - [Live Ops Playbook](Live-Ops-Playbook)
+          - [Discord Management](Discord-Management)
+          - [Genesis Operations](Genesis-Operations)
+          - [Mystery Campaign](Mystery-Campaign)
 
           ## 🤖 AI Guides
           - [Backend AI Guide](Backend-Ai-Guide)
