@@ -40,7 +40,7 @@ The project follows an **AI-Native development approach** with **Clean Architect
 - **Context Management**: Simple 20-message window (no RAG for MVP)
 - **Auth**: Auth.js (@auth/core) with Google OAuth
 - **Streaming**: Nest.js built-in SSE (Server-Sent Events)
-- **Async Jobs**: BullMQ 5.x with Redis (Memory extraction, alert sending)
+- **Async Jobs**: BullMQ 5.x with Valkey (Memory extraction, alert sending)
 - **Scheduling**: @nestjs/schedule (15-minute market polling)
 - **Performance targets**: 2 seconds to first token (streaming), 0.5s context load
 
@@ -76,7 +76,7 @@ The project follows an **AI-Native development approach** with **Clean Architect
 
 1. **Tool Enforcement**: All numerical data MUST come from tools, not LLM generation
 2. **Multi-Agent Cross-Validation**: Analyst (facts) → Persona (interpretation) → Risk (verify)
-3. **Cached Responses**: Redis caching for identical questions (5-minute TTL for market data)
+3. **Cached Responses**: Valkey caching for identical questions (5-minute TTL for market data)
 4. **Target**: <1% hallucination rate (measured by user reports)
 
 ## Common Development Commands

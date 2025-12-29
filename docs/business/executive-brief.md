@@ -205,10 +205,10 @@ Dual Hook GTM
 
 | 영역 | 기술 스택 |
 |------|----------|
-| Backend | Nest.js 10.x + Prisma 5.x + PostgreSQL 16 |
+| Backend | Nest.js 10.x + Prisma 5.x + PostgreSQL 18 |
 | Frontend | React 18.3 + Vite 5 + Tailwind CSS 3.x |
 | AI | Claude Sonnet 4 / Haiku 4 (@anthropic-ai/sdk) |
-| Infrastructure | AWS ECS Fargate + S3/CloudFront + Redis 7.x |
+| Infrastructure | AWS ECS Fargate + S3/CloudFront + Valkey 8.x |
 | Async | BullMQ 5.x + @nestjs/schedule |
 | Monitoring | Sentry + CloudWatch + OpenTelemetry |
 

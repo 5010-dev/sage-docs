@@ -52,8 +52,8 @@
 ├── [ ] 프로젝트 구조 설계
 ├── [ ] AWS 계정 & 인프라 설정
 │   ├── ECS Fargate 클러스터
-│   ├── RDS PostgreSQL 16
-│   ├── ElastiCache Redis 7.x
+│   ├── RDS PostgreSQL 18
+│   ├── ElastiCache Valkey 8.x
 │   └── S3 + CloudFront
 ├── [ ] GitHub Repository & CI/CD
 │   ├── GitHub Actions 워크플로우
@@ -107,7 +107,7 @@ interface Release1Features {
   dataIntegration: {
     coins: ["BTC", "ETH", "SOL", "BNB", "DOGE", "XRP"];
     apis: ["CoinGecko", "Alternative.me Fear & Greed"];
-    caching: "Redis 5분";
+    caching: "Valkey 5분";
   };
 }
 ```
@@ -419,7 +419,7 @@ DeFi 기능
 | 분기 | 리팩토링 주제 |
 |------|-------------|
 | 2026 Q2 | Database 인덱스 최적화, N+1 쿼리 제거 |
-| 2026 Q3 | 멀티 에이전트 성능 튜닝, Redis 캐싱 전략 재검토 |
+| 2026 Q3 | 멀티 에이전트 성능 튜닝, Valkey 캐싱 전략 재검토 |
 | 2026 Q4 | TypeScript strict mode 전환, ESLint 규칙 강화 |
 | 2027 Q1 | Monorepo로 전환 (Nx / Turborepo) |
 
@@ -501,7 +501,7 @@ DeFi 기능
 | 리스크 | 완화 전략 | 책임자 |
 |--------|----------|--------|
 | Claude API 장애 | 캐싱 강화, Rate limit 조정, Anthropic 지원팀 연락 | CTO |
-| 데이터베이스 과부하 | Read Replica, Redis 캐싱 | DevOps |
+| 데이터베이스 과부하 | Read Replica, Valkey 캐싱 | DevOps |
 | 환각 증가 | 멀티 에이전트 재검증, Tool 강제 | AI Engineer |
 
 ### 11.2 비즈니스 리스크

@@ -203,8 +203,8 @@ curl https://api.sage.ai/health
 # Database Connection
 psql $DATABASE_URL -c "SELECT 1"
 
-# Redis Connection
-redis-cli -u $REDIS_URL ping
+# Valkey Connection (Redis-compatible)
+valkey-cli -u $VALKEY_URL ping
 
 # CloudWatch Metrics
 aws cloudwatch get-metric-statistics --namespace AWS/ECS ...
@@ -530,7 +530,7 @@ interface MonitoringSchedule {
 - Check Sentry errors
 - Check ECS task health
 - Check RDS connections
-- Check Redis memory
+- Check Valkey memory
 - Check API response times
 
 ### 4.3 On-Call Rotation

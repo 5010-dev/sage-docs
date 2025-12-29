@@ -36,12 +36,12 @@ interface InfrastructureStack {
   database: {
     service: "AWS RDS PostgreSQL";
     version: "18";
-    reason: "5-year LTS (until 2030), JSON 30% faster, improved query optimizer";
+    reason: "5년 LTS 지원 (2030년까지), JSON 처리 30% 빠름, 쿼리 최적화 개선";
   };
   cache: {
     service: "AWS ElastiCache Valkey";
     version: "8.x";
-    reason: "100% Redis-compatible, Linux Foundation OSS, license stability";
+    reason: "100% Redis 호환, Linux Foundation OSS, 라이센스 안정성";
   };
   storage: {
     service: "AWS S3";
@@ -56,7 +56,7 @@ interface InfrastructureStack {
     tool: "Pulumi";
     version: "3.x";
     language: "TypeScript";
-    reason: "TypeScript fullstack 통일, 타입 안정성, Terraform보다 빠른 반복";
+    reason: "TypeScript 풀스택 통일, 타입 안정성, Terraform보다 빠른 반복";
   };
   cicd: {
     platform: "GitHub Actions";
@@ -138,7 +138,7 @@ resource "aws_ecs_task_definition" "backend" {
       environment = [
         { name = "NODE_ENV", value = "production" },
         { name = "DATABASE_URL", value = "postgresql://..." },
-        { name = "REDIS_URL", value = "redis://..." }
+        { name = "VALKEY_URL", value = "valkey://..." }
       ]
 
       secrets = [
@@ -298,9 +298,9 @@ resource "aws_elasticache_replication_group" "valkey" {
   num_cache_clusters = 2  # 1 primary + 1 replica
 
   port                     = 6379
-  parameter_group_name     = "default.redis7"
+  parameter_group_name     = "default.valkey8"
   subnet_group_name        = aws_elasticache_subnet_group.main.name
-  security_group_ids       = [aws_security_group.redis.id]
+  security_group_ids       = [aws_security_group.valkey.id]
 
   automatic_failover_enabled = true
   at_rest_encryption_enabled = true
@@ -311,7 +311,7 @@ resource "aws_elasticache_replication_group" "valkey" {
   snapshot_retention_limit = 5
 
   tags = {
-    Name        = "sage-redis"
+    Name        = "sage-valkey"
     Environment = "production"
   }
 }
@@ -592,7 +592,7 @@ interface SecurityGroups {
     ingress: "Port 5432 from Backend security group";
     egress: "None";
   };
-  redis: {
+  valkey: {
     ingress: "Port 6379 from Backend security group";
     egress: "None";
   };
@@ -729,7 +729,7 @@ interface CloudWatchAlarms {
     period: "5 minutes";
     action: "SNS notification";
   };
-  redisMemoryHigh: {
+  valkeyMemoryHigh: {
     metric: "DatabaseMemoryUsagePercentage";
     threshold: "80%";
     evaluationPeriods: 1;
@@ -908,7 +908,7 @@ interface BackupStrategy {
     rpo: "Immediate";
     rto: "Immediate";
   };
-  redis: {
+  valkey: {
     frequency: "Daily snapshot";
     retention: "5 days";
     rpo: "24 hours";
@@ -1037,19 +1037,19 @@ interface ScalingPhases {
     mau: "5,000";
     ecs: "2 tasks (0.5 vCPU, 1 GB each)";
     rds: "db.t3.micro (1 vCPU, 1 GB)";
-    redis: "cache.t3.micro x2";
+    valkey: "cache.t3.micro x2";
   };
   phase2_growth: {
     mau: "50,000";
     ecs: "5-10 tasks (auto-scaling)";
     rds: "db.t3.small (2 vCPU, 2 GB) + Read Replica";
-    redis: "cache.t3.small x2";
+    valkey: "cache.t3.small x2";
   };
   phase3_scale: {
     mau: "100,000+";
     ecs: "10-20 tasks";
     rds: "db.r6g.large (2 vCPU, 16 GB) + 2 Read Replicas";
-    redis: "cache.r6g.large x2";
+    valkey: "cache.r6g.large x2";
     multiRegion: "US + Asia";
   };
 }

@@ -16,32 +16,32 @@ interface CoreStack {
   runtime: {
     name: "Node.js";
     version: "20 LTS";
-    reason: "Stability and ecosystem";
+    reason: "안정성과 생태계 성숙도";
   };
   language: {
     name: "TypeScript";
     version: "5.x";
-    reason: "Type safety";
+    reason: "타입 안정성";
   };
   framework: {
     name: "Nest.js";
     version: "10.x";
-    reason: "Modular structure, DI, TypeScript native";
+    reason: "모듈 구조, DI, TypeScript 네이티브";
   };
   orm: {
     name: "Prisma";
     version: "5.x";
-    reason: "Type safety, intuitive migrations";
+    reason: "타입 안정성, 직관적 마이그레이션";
   };
   database: {
     name: "PostgreSQL";
     version: "18";
-    reason: "5-year LTS support (until 2030), JSON performance 30% faster than v16, improved query optimizer, better VACUUM performance";
+    reason: "5년 LTS 지원 (2030년까지), JSON 성능 30% 향상, 쿼리 최적화 개선, VACUUM 성능 향상";
   };
   cache: {
     name: "Valkey";
     version: "8.x";
-    reason: "100% Redis-compatible, Linux Foundation open-source (license stability), community-driven development";
+    reason: "100% Redis 호환, Linux Foundation 오픈소스 (라이센스 안정성), 커뮤니티 주도 개발";
   };
 }
 ```
@@ -100,7 +100,7 @@ graph TD
     A1[Controllers - HTTP/SSE] --> A
     B1[Services - Business Logic] --> B
     C1[Entities, DTOs] --> C
-    D1[Prisma, Redis, External APIs] --> D
+    D1[Prisma, Valkey, External APIs] --> D
 ```
 
 ### 2.2 Architecture Flow Diagrams
@@ -211,7 +211,7 @@ src/
 │
 ├── config/                      # Configuration
 │   ├── database.config.ts
-│   ├── redis.config.ts
+│   ├── valkey.config.ts
 │   └── anthropic.config.ts
 │
 ├── modules/                     # Feature modules
@@ -232,6 +232,12 @@ src/
 ## 3. Database Schema
 
 ### 3.1 Users Table
+
+**선택 근거**:
+- **최소한의 초기 데이터**: 회원가입 시 설문 없이 Google OAuth만으로 시작
+- **대화 기반 프로필 추론**: riskProfile과 interests는 채팅에서 자동 추출
+- **확장 가능한 JSON**: interests를 JSON으로 저장해 유연한 구조 유지
+- **관계 중심 설계**: 채팅, 포트폴리오, 푸시 구독, 동의 관리를 User와 연결
 
 ```prisma
 enum RiskProfile {
@@ -261,12 +267,18 @@ model User {
 }
 ```
 
-**Why RiskProfile ENUM?**
-- Type safety: Prevents invalid values at DB level
-- Better query performance: PostgreSQL optimizes ENUM queries
-- Self-documenting: Clear possible values without external documentation
+**RiskProfile ENUM 선택 근거**:
+- **타입 안정성**: DB 레벨에서 잘못된 값 입력 방지
+- **쿼리 성능**: PostgreSQL이 ENUM 쿼리를 최적화
+- **자기 문서화**: 별도 문서 없이 허용 가능한 값이 명확함
 
 ### 3.2 Chats Table
+
+**선택 근거**:
+- **1:1 대화 구조**: MVP는 사용자와 AI 간 단순 1:1 채팅 (그룹 채팅은 Phase 2)
+- **자동 제목 생성**: 첫 메시지로부터 AI가 채팅 제목 자동 생성
+- **Cascade 삭제**: 채팅 삭제 시 모든 메시지도 함께 삭제
+- **인덱스 최적화**: userId + createdAt으로 사용자별 최신 채팅 조회 최적화
 
 ```prisma
 model Chat {
@@ -285,6 +297,12 @@ model Chat {
 ```
 
 ### 3.3 Messages Table
+
+**선택 근거**:
+- **단순한 role 구조**: user/assistant 구분으로 대화 흐름 명확화
+- **Text 타입**: 긴 AI 응답을 위해 @db.Text 사용 (기본 VARCHAR 제한 회피)
+- **JSON signal**: AI 추천을 유연한 구조로 저장 (action, symbol, confidence)
+- **컨텍스트 최적화**: chatId + createdAt 인덱스로 최근 20개 메시지 빠른 조회
 
 ```prisma
 model Message {
@@ -305,6 +323,12 @@ model Message {
 ```
 
 ### 3.4 Shadow Trades Table
+
+**선택 근거**:
+- **투명한 성과 추적**: AI 추천을 실제로 담았을 때의 수익률 투명 공개
+- **Decimal 타입**: 암호화폐 가격과 수량의 정확한 소수점 처리 (Float 오차 방지)
+- **메시지 참조**: 어떤 대화에서 나온 추천인지 추적 가능
+- **이중 인덱스**: userId로 개인 포트폴리오, symbol로 코인별 집계 최적화
 
 ```prisma
 model ShadowTrade {
@@ -329,6 +353,12 @@ model ShadowTrade {
 
 ### 3.5 Push Subscriptions Table
 
+**선택 근거**:
+- **PWA 푸시 알림**: VAPID 프로토콜 기반 웹 푸시 알림 구현
+- **멀티 디바이스**: 한 사용자가 여러 기기에서 알림 수신 가능
+- **Unique endpoint**: 중복 구독 방지
+- **간단한 구조**: auth + p256dh로 Web Push API 표준 준수
+
 ```prisma
 model PushSubscription {
   id        String   @id @default(uuid())
@@ -346,6 +376,12 @@ model PushSubscription {
 ```
 
 ### 3.6 Notifications Table
+
+**선택 근거**:
+- **브로드캐스트 지원**: userId null로 전체 공지 가능
+- **타입별 분류**: market_alert, portfolio_update, system으로 필터링
+- **유연한 data**: JSON으로 알림별 추가 정보 저장 (symbol, change 등)
+- **읽음 상태**: read 플래그로 안 읽은 알림 관리
 
 ```prisma
 model Notification {
@@ -365,6 +401,12 @@ model Notification {
 ```
 
 ### 3.7 User Consents Table (GDPR Compliance)
+
+**선택 근거**:
+- **GDPR Article 7 준수**: 동의 시점 타임스탬프 기록 필수
+- **감사 추적**: IP/User-Agent로 동의 검증 가능
+- **세분화된 제어**: 마케팅/알림/데이터 처리 개별 동의 관리
+- **확장 가능성**: 새로운 동의 유형 추가 용이
 
 ```prisma
 model UserConsent {
@@ -388,12 +430,6 @@ model UserConsent {
   @@index([userId])
 }
 ```
-
-**Why UserConsent Table?**
-- GDPR Article 7: Proof of consent with timestamp
-- Audit trail: IP/User-Agent for consent verification
-- Granular control: Separate marketing/notifications/data processing
-- Future-proof: Easy to add new consent types
 
 ---
 
@@ -725,10 +761,10 @@ async function pollPrices() {
 
   for (const symbol of symbols) {
     const currentPrice = await coingeckoClient.getPrice(symbol);
-    const previousPrice = await redis.get(`market:price:${symbol}`);
+    const previousPrice = await valkey.get(`market:price:${symbol}`);
 
     // Cache new price
-    await redis.setex(`market:price:${symbol}`, 300, currentPrice);
+    await valkey.setex(`market:price:${symbol}`, 300, currentPrice);
 
     // Check for sudden change
     if (previousPrice) {
@@ -825,7 +861,7 @@ interface PerformanceTargets {
   cacheHitRate: {
     metric: "Hit rate";
     target: "> 80%";
-    measurement: "Redis INFO stats";
+    measurement: "Valkey INFO stats";
   };
 }
 ```
@@ -900,7 +936,7 @@ interface AlertingRules {
   apiErrorRate: "> 5% for 5 minutes";
   sseFirstToken: "> 5s for 1 minute";
   databaseConnectionPool: "> 90%";
-  redisMemory: "> 80%";
+  valkeyMemory: "> 80%";
   bullmqQueueSize: "> 1000";
 }
 ```
@@ -913,8 +949,8 @@ interface AlertingRules {
 # Database
 DATABASE_URL="postgresql://user:pass@localhost:5432/sage"
 
-# Redis
-REDIS_URL="redis://localhost:6379"
+# Valkey (Redis-compatible)
+VALKEY_URL="valkey://localhost:6379"
 
 # Anthropic
 ANTHROPIC_API_KEY="sk-ant-..."

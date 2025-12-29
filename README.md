@@ -87,10 +87,10 @@
 | **인증** | Auth.js (@auth/core) with Google OAuth |
 | **AI** | Claude Sonnet 4 + Haiku 4 (@anthropic-ai/sdk) |
 | **실시간** | Nest.js 내장 SSE (Server-Sent Events) |
-| **Database** | PostgreSQL 16 (RDS) + Redis 7.x (ElastiCache) |
+| **Database** | PostgreSQL 18 (RDS) + Valkey 8.x (ElastiCache) |
 | **상태 관리** | Zustand 4.x (클라이언트) + TanStack Query 5.x (서버) |
 | **Infrastructure** | ECS Fargate + S3/CloudFront |
-| **비동기 작업** | BullMQ 5.x + Redis (Memory 추출, 알림 발송) |
+| **비동기 작업** | BullMQ 5.x + Valkey (Memory 추출, 알림 발송) |
 | **스케줄링** | @nestjs/schedule (15분 가격 폴링) |
 | **모니터링** | Sentry + CloudWatch + OpenTelemetry |
 
@@ -182,7 +182,7 @@
 ### 확장성 설계
 
 - ECS Fargate: 1만 유저까지 안정적
-- Redis 캐싱: API 비용 절감 (시장 데이터 5분, AI 코멘트 5분)
+- Valkey 캐싱: API 비용 절감 (시장 데이터 5분, AI 코멘트 5분)
 - S3 + CloudFront: Sites 정적 호스팅
 
 ---

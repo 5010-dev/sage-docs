@@ -301,7 +301,7 @@ interface MoatAnalysis {
 | 항목 | 금액 | 비고 |
 |------|------|------|
 | 인건비 | $30,000 | 개발자 2명 x 3개월 |
-| 인프라 비용 | $3,000 | AWS (ECS, RDS, Redis, S3) |
+| 인프라 비용 | $3,000 | AWS (ECS, RDS, Valkey, S3) |
 | AI API 비용 | $5,000 | Claude API (Sonnet 4 + Haiku 4) |
 | 외부 API | $1,000 | CoinGecko Pro |
 | 기타 | $3,000 | 도메인, 디자인, 마케팅 |

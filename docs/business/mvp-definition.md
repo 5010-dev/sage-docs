@@ -150,7 +150,7 @@ interface MVPStack {
   backend: {
     framework: "Nest.js 10.x";
     orm: "Prisma 5.x";
-    database: "PostgreSQL 16 + Redis 7.x";
+    database: "PostgreSQL 18 + Valkey 8.x";
     async: "BullMQ 5.x";
   };
   frontend: {

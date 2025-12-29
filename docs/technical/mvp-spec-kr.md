@@ -40,7 +40,7 @@ Sage.ai MVP
 | AI 대화 시작 | 사용자가 먼저 | AI들이 먼저 떠들기 시작 |
 | 온보딩 | 없음 (대화로 파악) | 없음 |
 | 채팅 컨텍스트 | 최근 20개 메시지만 | RAG + pgvector 장기 기억 |
-| 캐싱 | Redis 단순 캐싱 | Semantic Caching |
+| 캐싱 | Valkey 단순 캐싱 | Semantic Caching |
 | 분석 | 15분 Cron 전체 | 이벤트 기반 트리거 |
 | 알림 | 순차 발송 + 딥링크 | SNS+SQS Fan-out |
 | 보안 | Regex 필터 | + LLM Guardrail |
@@ -329,8 +329,8 @@ MVP 기술 스택
 │   └── @anthropic-ai/sdk (스트리밍)
 │
 ├── Database
-│   ├── PostgreSQL 16 (RDS)
-│   └── Redis 7.x (ElastiCache)
+│   ├── PostgreSQL 18 (RDS)
+│   └── Valkey 8.x (ElastiCache)
 │
 ├── Infrastructure
 │   ├── ECS Fargate (백엔드)
@@ -359,7 +359,7 @@ MVP 기술 스택
 | Charts | Recharts | 2.x | React 친화적 차트 |
 | ORM | Prisma | 5.x | 타입 안전, 직관적 마이그레이션 |
 | Auth | Auth.js | @auth/core | Google OAuth 쉬움 |
-| Queue | BullMQ | 5.x | Redis 기반 비동기 작업 |
+| Queue | BullMQ | 5.x | Valkey 기반 비동기 작업 |
 | AI SDK | @anthropic-ai/sdk | latest | Claude 직접 통합, SSE 스트리밍 |
 
 ---
@@ -384,7 +384,7 @@ MVP Architecture
 │   ┌──────────────┬──────────────┬──────────────┬─────┴────┐
 │   │              │              │              │          │
 │   v              v              v              v          v
-│ [PostgreSQL]  [Redis]     [Claude API]   [CoinGecko]   [Alternative.me]
+│ [PostgreSQL]  [Valkey]    [Claude API]   [CoinGecko]   [Alternative.me]
 │   (RDS)     (ElastiCache)  (Sonnet 4)                  (Fear&Greed)
 │                            (Haiku 4)
 │
@@ -409,7 +409,7 @@ MVP Architecture
 │   ├── 2. 컨텍스트 로드
 │   │   └── 최근 20개 메시지 조회
 │   │
-│   ├── 3. 시장 데이터 조회 (Redis 캐시 또는 API)
+│   ├── 3. 시장 데이터 조회 (Valkey 캐시 또는 API)
 │   │   ├── 가격: BTC $67,500 (+2.3%)
 │   │   ├── Fear & Greed: 58 (탐욕)
 │   │   └── 뉴스: "SEC ETF 관련..."
@@ -441,7 +441,7 @@ MVP Architecture
 │
 ├── Lambda: 시장 분석
 │   ├── 1. 현재가 조회 (6종)
-│   ├── 2. 이전가와 비교 (Redis)
+│   ├── 2. 이전가와 비교 (Valkey)
 │   ├── 3. 변동 체크
 │   │   ├── BTC: +/-5% -> 트리거
 │   │   ├── ETH: +/-7% -> 트리거
@@ -976,12 +976,12 @@ Week 1: 프로젝트 셋업 + 인프라
 │
 ├── Day 3 (수): AWS 인프라
 │   ├── RDS PostgreSQL 생성 (db.t3.micro)
-│   ├── ElastiCache Redis 생성 (cache.t3.micro)
+│   ├── ElastiCache Valkey 생성 (cache.t3.micro)
 │   └── 보안그룹 설정
 │
 ├── Day 4 (목): ORM + 캐시 연결
 │   ├── Prisma 5.x ORM 설정
-│   ├── ioredis 설정
+│   ├── Valkey 클라이언트 설정
 │   └── 연결 테스트
 │
 ├── Day 5 (금): DB 스키마 v1
@@ -989,7 +989,7 @@ Week 1: 프로젝트 셋업 + 인프라
 │   ├── chats, messages 테이블
 │   └── 마이그레이션 실행
 │
-└── [산출물]: Nest.js + React + DB + Redis 연결 완료
+└── [산출물]: Nest.js + React + DB + Valkey 연결 완료
 
 
 Week 2: 인증 + 바이럴/랜딩 사이트
@@ -1084,7 +1084,7 @@ Week 4: 채팅 고도화 + 시장 데이터
 │
 ├── Day 2 (화): 시장 데이터 연동
 │   ├── CoinGecko API (가격 6종)
-│   ├── Redis 5분 캐싱
+│   ├── Valkey 5분 캐싱
 │   └── 프롬프트에 가격 주입
 │
 ├── Day 3 (수): 유저 프로필 추론
@@ -1148,12 +1148,12 @@ Week 6: 분석 스킬
 ├── Day 1 (월): 뉴스 API
 │   ├── CryptoPanic 연동
 │   ├── 코인별 뉴스 필터
-│   └── Redis 10분 캐싱
+│   └── Valkey 10분 캐싱
 │
 ├── Day 2 (화): Fear & Greed
 │   ├── Alternative.me 연동
 │   ├── 프롬프트 통합
-│   └── Redis 30분 캐싱
+│   └── Valkey 30분 캐싱
 │
 ├── Day 3 (수): "왜 떨어졌어?" 처리
 │   ├── 하락 이유 분석
@@ -1555,7 +1555,7 @@ Sage.ai 랜딩 구조
 | 이벤트 기반 트리거 | 15분 Cron -> 가격 변동 시에만 분석 | 중간 |
 | LLM Guardrail | Regex + Claude Haiku 2중 방어 | 낮음 |
 | SNS+SQS Fan-out | 대규모 알림 발송 | 유저 1만명+ |
-| Redis Circuit Breaker | 분산 환경 장애 전파 차단 | 트래픽 증가 시 |
+| Valkey Circuit Breaker | 분산 환경 장애 전파 차단 | 트래픽 증가 시 |
 
 ### 11.2 기능 확장
 
@@ -1596,7 +1596,7 @@ MVP (12주)                         Phase 2
 
 | 주차 | 목표 | 완료 기준 | 체크 |
 |------|------|-----------|------|
-| W1 | 프로젝트 셋업 | Nest.js + React + DB + Redis 연결 | [ ] |
+| W1 | 프로젝트 셋업 | Nest.js + React + DB + Valkey 연결 | [ ] |
 | W2 | 인증 + 사이트 | 로그인 + WhyBitcoinFallen + 랜딩 | [ ] |
 | W3 | 채팅 기본 | 월렛 버핏 스트리밍 대화 | [ ] |
 | W4 | 채팅 고도화 | 시장 데이터 + 프로필 추론 | [ ] |
@@ -1615,8 +1615,8 @@ MVP (12주)                         Phase 2
 # Database
 DATABASE_URL="postgresql://..."
 
-# Redis
-REDIS_URL="redis://..."
+# Valkey
+VALKEY_URL="valkey://..."
 
 # Auth
 NEXTAUTH_SECRET="..."

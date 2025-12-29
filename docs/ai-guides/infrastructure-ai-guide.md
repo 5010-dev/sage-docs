@@ -814,8 +814,8 @@ interface LocalEnvironment {
       port: 5432;
       persistence: boolean;
     };
-    redis: {
-      version: "7.x";
+    valkey: {
+      version: "8.x";
       port: 6379;
     };
     backend: {
@@ -840,7 +840,7 @@ interface LocalEnvironment {
 graph TB
     A[Frontend :5173] --> B[Backend :3000]
     B --> C[PostgreSQL :5432]
-    B --> D[Redis :6379]
+    B --> D[Valkey :6379]
 
     subgraph Docker Network
         A
@@ -855,8 +855,8 @@ graph TB
 Create docker-compose.yml for Sage.ai local development:
 
 Services:
-- PostgreSQL 16 (port 5432, persistent volume)
-- Redis 7.x (port 6379)
+- PostgreSQL 18 (port 5432, persistent volume)
+- Valkey 8.x (port 6379)
 - Backend (Nest.js, port 3000, hot reload)
 - Frontend (Vite, port 5173, hot reload)
 
