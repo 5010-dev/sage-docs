@@ -16,8 +16,8 @@
 |---------|------|------|-----------|
 | 프레임워크 | Nest.js | 10.x | 모듈러 구조, TypeScript 네이티브, 멀티 에이전트 병렬 처리 |
 | ORM | Prisma | 5.x | 타입 안정성, 직관적 마이그레이션, 높은 생산성 |
-| 데이터베이스 | PostgreSQL | 16 | 안정성, JSON 지원, 확장성 |
-| 캐시 | Redis | 7.x | 세션, 캐싱, BullMQ 백엔드 |
+| 데이터베이스 | PostgreSQL | 18 | 5년 LTS 지원, JSON 처리 30% 향상, 쿼리 최적화 개선 |
+| 캐시 | Valkey | 8.x | Redis 100% 호환, Linux Foundation OSS (라이센스 안정성) |
 | 비동기 작업 | BullMQ | 5.x | Memory 추출, 재시도, 분산 처리 |
 | 실시간 | SSE (Nest.js 내장) | - | 종목 띠 업데이트, 경량 구현 |
 | 스케줄링 | @nestjs/schedule | - | 주기적 가격 폴링 |
@@ -69,9 +69,9 @@
 |---------|------|-----------|
 | 컨테이너 | AWS ECS Fargate | 관리형, 오토스케일링 |
 | 정적 파일 | S3 + CloudFront | CDN, 프론트엔드 배포 |
-| 데이터베이스 | RDS (PostgreSQL) | 관리형 DB |
-| 캐시 | ElastiCache (Redis) | 관리형 Redis |
-| IaC | Terraform | 인프라 코드화 |
+| 데이터베이스 | RDS (PostgreSQL 18) | 관리형 DB |
+| 캐시 | ElastiCache (Valkey 8.x) | 관리형 Valkey (Redis 호환) |
+| IaC | Pulumi | TypeScript 기반 IaC, 풀스택 타입 통일, Terraform보다 빠른 반복 |
 
 ---
 
@@ -88,9 +88,9 @@
 
 | 컴포넌트 | 기술 | 용도 |
 |---------|------|------|
-| 에러 트래킹 | Sentry | 프론트/백엔드 에러 수집 |
-| 로그 | CloudWatch Logs | 서버 로그 |
-| 분산 추적 | OpenTelemetry | 멀티 에이전트 디버깅 |
+| 에러 트래킹 | Sentry | 프론트/백엔드 에러 수집, 스택트레이스 UI |
+| 로그/메트릭 | CloudWatch | 서버 로그, 커스텀 메트릭 (응답시간, 토큰 사용량, 큐 크기) |
+| 팀 알림 | Discord Webhooks | 에러/성능/비즈니스 메트릭별 채널 분류 알림 |
 
 ---
 
@@ -137,4 +137,7 @@
 
 ---
 
-*최종 수정: 2025년 12월*
+---
+
+**Last Updated**: 2025년 12월 26일
+**Version**: 5.0 - PostgreSQL 18 + Valkey + Pulumi Stack

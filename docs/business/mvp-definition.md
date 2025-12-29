@@ -1,7 +1,7 @@
 # Sage.ai MVP Definition
 
-> **문서 버전**: 2.0
-> **최종 수정**: 2025년 12월 22일
+> **문서 버전**: 3.0
+> **최종 수정**: 2025년 12월 26일
 > **작성자**: Sam
 > **대상 독자**: 전체 팀 (개발, 기획, 마케팅)
 
@@ -411,9 +411,161 @@ interface QualityCriteria {
 
 ---
 
-## 10. Release Plan
+## 10. 개발 로드맵 & 분석 전략
 
-### 10.1 Release Stages
+### 10.1 개발 로드맵 조정 (v3.0)
+
+**핵심 변경사항:**
+- Month 1: 백엔드 개발 제외, 마케팅 랜딩만 집중
+- Month 2: 핵심 개발 + 내부 배포 (공개 X)
+- Month 3: 베타 테스터 10-20명 피드백 수집 후 공개
+
+#### Month 1: 마케팅 준비 (백엔드 제외)
+
+| 작업 | 결과물 |
+|------|--------|
+| WhyBitcoinFallen.com 개발 | Vite + React SPA |
+| Sage.ai 랜딩 페이지 개발 | Vite + React SPA |
+
+**선택 근거:**
+- 백엔드 없이도 마케팅 사이트 먼저 오픈 가능
+- 초기 관심 유저 수집 (Waitlist)
+- Month 2에 집중 개발하여 기술 부채 최소화
+
+#### Month 2: 핵심 개발 + 내부 배포 (비공개)
+
+| 작업 | 결과물 |
+|------|--------|
+| Pulumi 인프라 셋업 | ECS, RDS PostgreSQL 18, Valkey 8.x 배포 |
+| Backend 핵심 기능 | Nest.js + Prisma + AI 에이전트 시스템 |
+| Frontend 핵심 기능 | Chat, Portfolio, Notifications |
+| 내부 배포 | 팀 내부 테스트 (공개 X) |
+
+**선택 근거:**
+- 2주 집중 개발로 기술 부채 방지
+- 내부 배포만 진행 (공개 X) → 안정성 우선
+- TypeScript 풀스택으로 빠른 반복 가능
+
+#### Month 3: 베타 테스트 + 공개
+
+| 작업 | 결과물 |
+|------|--------|
+| 베타 테스터 10-20명 모집 | Discord 커뮤니티 |
+| Closed Beta 진행 (2주) | 실사용 피드백 수집 |
+| 피드백 반영 | 주요 버그 수정, UX 개선 |
+| Public Launch | 정식 오픈 |
+
+**선택 근거:**
+- 소규모 베타 테스터로 빠른 피드백 루프
+- 2주 충분한 사용 데이터 수집 가능
+- 주요 버그 사전 발견 및 수정
+
+### 10.2 사용자 분석 전략 (상세)
+
+**기존 문제점:**
+- 단순 MAU, DAU 등 KPI만 추적 → 행동 이해 부족
+- Phase 2 진행 기준 모호
+
+**개선 방향:**
+- 상세한 사용자 행동 분석
+- GA4 커스텀 이벤트 설계
+- Phase 2 진행 기준 명확화
+
+#### 10.2.1 GA4 커스텀 이벤트 설계
+
+```typescript
+interface CustomEvents {
+  // 채팅 관련
+  chat_message_sent: {
+    user_id: string;
+    chat_id: string;
+    message_length: number;
+    has_coin_mention: boolean; // BTC, ETH 등 언급 여부
+  };
+  chat_response_received: {
+    user_id: string;
+    chat_id: string;
+    response_time_ms: number;
+    agent_type: "manager" | "analyst" | "persona" | "risk";
+  };
+
+  // 포트폴리오 관련
+  shadow_trade_added: {
+    user_id: string;
+    symbol: string;
+    action: "buy" | "sell";
+    from_ai_signal: boolean; // AI 추천에서 바로 담기 vs 수동
+  };
+  portfolio_viewed: {
+    user_id: string;
+    performance_pct: number; // 현재 수익률
+  };
+
+  // 알림 관련
+  notification_received: {
+    user_id: string;
+    type: "market_alert" | "portfolio_update";
+    channel: "push" | "discord";
+  };
+  notification_clicked: {
+    user_id: string;
+    deeplink_context: string;
+  };
+
+  // 유료 전환
+  upgrade_button_clicked: {
+    user_id: string;
+    from_page: string;
+    tier: "pro" | "premium";
+  };
+}
+```
+
+#### 10.2.2 행동 분석 지표
+
+| 지표 | 정의 | 목표 | 측정 방법 |
+|------|------|------|----------|
+| **D1 리텐션** | 가입 다음 날 재방문율 | 50%+ | GA4 Cohort Analysis |
+| **D7 리텐션** | 가입 7일 후 재방문율 | 30%+ | GA4 Cohort Analysis |
+| **메시지당 토큰 사용량** | 평균 응답 길이 | 500-1000 tokens | CloudWatch Custom Metric |
+| **포트폴리오 전환율** | 채팅 → 포트폴리오 담기 | 20%+ | GA4 Funnel Analysis |
+| **알림 클릭률** | 알림 수신 → 앱 재방문 | 40%+ | GA4 Event Tracking |
+| **세션당 메시지 수** | 한 세션에 몇 번 대화? | 5+ | GA4 Custom Dimension |
+
+#### 10.2.3 Phase 2 진행 기준
+
+```typescript
+interface Phase2Criteria {
+  must_have: {
+    d7_retention: ">30%";
+    hallucination_rate: "<1%";
+    nps: ">40";
+  };
+  nice_to_have: {
+    mau: ">500";
+    portfolio_conversion: ">20%";
+    notification_ctr: ">40%";
+  };
+  decision: "must_have 모두 충족 시 Phase 2 진행";
+}
+```
+
+**Phase 2 진행 판단 프로세스:**
+1. Month 3 말 데이터 수집
+2. D7 리텐션, 환각률, NPS 확인
+3. **모두 목표 달성 시** → Phase 2 진행 (유료 플랜, 멀티 페르소나)
+4. **하나라도 미달 시** → Pivot 검토
+
+#### 10.2.4 Pivot 시나리오
+
+| 문제 | 지표 | 조치 |
+|------|------|------|
+| **환각률 높음** | >5% | AI 에이전트 시스템 재설계, Tool 강제 사용 강화 |
+| **낮은 리텐션** | D7 <20% | 알림 시스템 강화, 콘텐츠 품질 개선 |
+| **낮은 NPS** | <30 | 사용자 인터뷰, 페르소나 톤 조정 |
+| **포트폴리오 미사용** | <10% | UI/UX 개선, 온보딩 강화 |
+
+### 10.3 Release Stages
 
 ```mermaid
 graph LR
@@ -514,6 +666,20 @@ interface Glossary {
   SSE: "Server-Sent Events - 서버 전송 이벤트";
 }
 ```
+
+---
+
+**문서 버전**: 3.0
+**최종 수정**: 2025년 12월 26일
+**Maintainer**: Sam (dev@5010.tech)
+
+### Changelog
+
+**v3.0 (2025-12-26)**:
+- 개발 로드맵 조정: Month 1 마케팅만, Month 2 핵심 개발 + 내부 배포
+- 사용자 분석 전략 상세화: GA4 커스텀 이벤트, 행동 분석 지표
+- Phase 2 진행 기준 명확화: D7 리텐션 30%, 환각률 <1%, NPS 40+
+- Pivot 시나리오 추가: 환각률 높음/낮은 리텐션/낮은 NPS별 대응
 
 ---
 

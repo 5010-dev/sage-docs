@@ -1,9 +1,9 @@
 # Backend Development AI Guide
 
-> **Version**: 2.0
-> **Last Updated**: December 22, 2025
+> **Version**: 3.0
+> **Last Updated**: December 26, 2025
 > **Author**: Sam
-> **Target Audience**: Backend Developers
+> **Target Audience**: Backend Developers, Claude Code
 
 ---
 
@@ -82,7 +82,24 @@ Requirements:
 - Unit tests (Jest)
 - Follow existing patterns in src/modules/chat
 
+Tech Stack:
+- PostgreSQL 18 (5-year LTS, JSON 30% faster)
+- Valkey 8.x for caching (Redis-compatible)
+
 Prisma Schema:
+enum RiskProfile {
+  CONSERVATIVE
+  MODERATE
+  AGGRESSIVE
+}
+
+model User {
+  id          String       @id @default(uuid())
+  email       String       @unique
+  riskProfile RiskProfile? // Use ENUM for type safety
+  createdAt   DateTime     @default(now())
+}
+
 model ShadowTrade {
   id        String   @id @default(uuid())
   userId    String
@@ -90,6 +107,8 @@ model ShadowTrade {
   action    String
   price     Decimal
   createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
 }
 ```
 
@@ -118,6 +137,7 @@ graph TB
     D --> F[Process Facts]
     E --> F
     F --> G[Structured Response]
+    G --> H[Cache in Valkey]
 ```
 
 **Prompt Template**:
@@ -125,6 +145,10 @@ graph TB
 Implement the Analyst Agent for Sage.ai multi-agent system:
 
 Agent Purpose: Fetch and analyze market data
+
+Tech Stack:
+- PostgreSQL 18: Store user conversations and context
+- Valkey 8.x: Cache market data (5-minute TTL for prices, 30-minute for Fear & Greed)
 
 Tools to use:
 1. get_price(symbol: string) → { price: number, change24h: number }
@@ -136,6 +160,7 @@ Requirements:
 - Force tool use (tool_choice: "required")
 - Return structured facts (JSON)
 - Handle tool errors gracefully
+- Cache responses in Valkey to reduce API calls
 
 Example input: "What's happening with Bitcoin?"
 Example output: { facts: { BTC: { price: 43250, change_24h: -5.2 }, fear_greed: 25 }, summary: "..." }
@@ -145,6 +170,8 @@ Example output: { facts: { BTC: { price: 43250, change_24h: -5.2 }, fear_greed: 
 ```typescript
 // ai-agents/analyst.agent.ts
 import Anthropic from '@anthropic-ai/sdk';
+import { Injectable } from '@nestjs/common';
+import { CacheService } from '../cache/cache.service'; // Valkey wrapper
 
 interface AnalystResponse {
   facts: MarketFacts;
@@ -159,14 +186,20 @@ interface MarketFacts {
   fear_greed?: number;
 }
 
+@Injectable()
 export class AnalystAgent {
   private client: Anthropic;
 
-  constructor() {
+  constructor(private cacheService: CacheService) {
     this.client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   }
 
   async analyze(query: string): Promise<AnalystResponse> {
+    // Check Valkey cache first
+    const cacheKey = `analyst:${query}`;
+    const cached = await this.cacheService.get<AnalystResponse>(cacheKey);
+    if (cached) return cached;
+
     const response = await this.client.messages.create({
       model: 'claude-haiku-4-20250303',
       max_tokens: 500,
@@ -193,7 +226,12 @@ export class AnalystAgent {
     });
 
     // Process tool calls and return facts
-    // ...
+    const result: AnalystResponse = { /* ... */ };
+
+    // Cache for 5 minutes (market data TTL)
+    await this.cacheService.set(cacheKey, result, 300);
+
+    return result;
   }
 }
 ```
@@ -418,6 +456,9 @@ graph LR
 ```
 Optimize this Prisma query that has N+1 problem:
 
+Database: PostgreSQL 18 (improved query optimizer)
+Cache: Valkey 8.x (for frequent queries)
+
 async getChatsWithMessageCount(userId: string) {
   const chats = await this.prisma.chat.findMany({
     where: { userId }
@@ -432,14 +473,21 @@ async getChatsWithMessageCount(userId: string) {
   return chats;
 }
 
-Rewrite using Prisma's include/select to avoid N+1.
+Requirements:
+1. Rewrite using Prisma's include/select to avoid N+1
+2. Add Valkey caching for user's chat list (30-second TTL)
+3. Leverage PostgreSQL 18's improved JSON aggregation if needed
 ```
 
 **Optimized Implementation**:
 ```typescript
-// Solution 1: Using _count
+// Solution 1: Using _count with Valkey cache
 async getChatsWithMessageCount(userId: string) {
-  return this.prisma.chat.findMany({
+  const cacheKey = `chats:${userId}`;
+  const cached = await this.cacheService.get(cacheKey);
+  if (cached) return cached;
+
+  const chats = await this.prisma.chat.findMany({
     where: { userId },
     include: {
       _count: {
@@ -447,11 +495,19 @@ async getChatsWithMessageCount(userId: string) {
       }
     }
   });
+
+  // Cache for 30 seconds
+  await this.cacheService.set(cacheKey, chats, 30);
+  return chats;
 }
 
-// Solution 2: Using select for specific fields
+// Solution 2: Using select for specific fields (better performance)
 async getChatsWithMessageCount(userId: string) {
-  return this.prisma.chat.findMany({
+  const cacheKey = `chats:${userId}`;
+  const cached = await this.cacheService.get(cacheKey);
+  if (cached) return cached;
+
+  const chats = await this.prisma.chat.findMany({
     where: { userId },
     select: {
       id: true,
@@ -462,6 +518,30 @@ async getChatsWithMessageCount(userId: string) {
       }
     }
   });
+
+  // Cache for 30 seconds
+  await this.cacheService.set(cacheKey, chats, 30);
+  return chats;
+}
+
+// Solution 3: PostgreSQL 18 JSON aggregation (for complex cases)
+async getChatsWithDetails(userId: string) {
+  // PostgreSQL 18's improved JSON processing (30% faster than v16)
+  return this.prisma.$queryRaw`
+    SELECT
+      c.id,
+      c.title,
+      c.created_at,
+      COUNT(m.id) as message_count,
+      json_agg(
+        json_build_object('content', m.content, 'createdAt', m.created_at)
+        ORDER BY m.created_at DESC
+      ) FILTER (WHERE m.id IS NOT NULL) as recent_messages
+    FROM chats c
+    LEFT JOIN messages m ON c.id = m.chat_id
+    WHERE c.user_id = ${userId}
+    GROUP BY c.id
+  `;
 }
 ```
 
@@ -662,9 +742,165 @@ Prompt 4: "Optimize this query"
 
 ---
 
-**Document Version**: 2.0
-**Last Updated**: December 22, 2025
+## 6. PostgreSQL 18 & Valkey Best Practices
+
+### 6.1 Why PostgreSQL 18?
+
+**선택 근거**:
+- **5-year LTS support**: 2030년까지 장기 지원 보장
+- **JSON processing 30% faster**: 시장 데이터 처리 성능 향상
+- **Improved query optimizer**: 복잡한 JOIN 성능 개선
+
+**Migration from PostgreSQL 16**:
+```typescript
+// Leverage new JSON features
+interface MarketDataQuery {
+  old: "JSON_EXTRACT(data, '$.price')";  // PostgreSQL 16
+  new: "data->'price'";                   // PostgreSQL 18 (faster)
+}
+
+// Use improved aggregation
+const marketSummary = await prisma.$queryRaw`
+  SELECT
+    symbol,
+    json_build_object(
+      'avg_price', AVG(price),
+      'max_price', MAX(price),
+      'min_price', MIN(price)
+    ) as stats
+  FROM shadow_trades
+  WHERE created_at > NOW() - INTERVAL '24 hours'
+  GROUP BY symbol
+`;
+```
+
+### 6.2 Why Valkey 8.x?
+
+**선택 근거**:
+- **100% Redis-compatible**: 기존 Redis 코드 그대로 사용 가능
+- **Linux Foundation OSS**: 라이센스 안정성 (BSD 3-Clause vs Redis SSPL)
+- **Active development**: Redis 7.x 기능 + 성능 개선
+
+**Common Cache Patterns**:
+```typescript
+// ai-agents/cache.service.ts
+import { Injectable } from '@nestjs/common';
+import { createClient } from 'valkey';
+
+@Injectable()
+export class CacheService {
+  private client = createClient({
+    url: process.env.VALKEY_URL
+  });
+
+  // Market data: 5-minute TTL
+  async cacheMarketData(symbol: string, data: any) {
+    await this.client.setEx(`market:${symbol}`, 300, JSON.stringify(data));
+  }
+
+  // User chat list: 30-second TTL
+  async cacheUserChats(userId: string, chats: any[]) {
+    await this.client.setEx(`chats:${userId}`, 30, JSON.stringify(chats));
+  }
+
+  // Fear & Greed Index: 30-minute TTL
+  async cacheFearGreed(data: any) {
+    await this.client.setEx('market:fear_greed', 1800, JSON.stringify(data));
+  }
+}
+```
+
+### 6.3 RiskProfile ENUM Pattern
+
+**선택 근거**:
+- **Database-level type safety**: 런타임 에러 방지
+- **Clear constraints**: 허용된 값만 입력 가능
+- **Performance**: String보다 메모리 효율적
+
+**Implementation**:
+```prisma
+// prisma/schema.prisma
+enum RiskProfile {
+  CONSERVATIVE
+  MODERATE
+  AGGRESSIVE
+}
+
+model User {
+  id          String       @id @default(uuid())
+  email       String       @unique
+  riskProfile RiskProfile? // Can be null initially
+  createdAt   DateTime     @default(now())
+}
+```
+
+```typescript
+// modules/user/user.service.ts
+import { RiskProfile } from '@prisma/client';
+
+async updateRiskProfile(userId: string, profile: RiskProfile) {
+  return this.prisma.user.update({
+    where: { id: userId },
+    data: { riskProfile: profile }  // TypeScript ensures valid enum value
+  });
+}
+```
+
+### 6.4 UserConsent Table Pattern
+
+**선택 근거**:
+- **GDPR Article 7 compliance**: 동의 이력 추적 필수
+- **Audit trail**: IP, User-Agent 기록으로 법적 증빙
+- **Granular control**: 마케팅/푸시/AI 분석 개별 동의
+
+**Implementation**:
+```prisma
+model UserConsent {
+  id                String   @id @default(uuid())
+  userId            String
+  marketingEmails   Boolean  @default(false)
+  pushNotifications Boolean  @default(false)
+  dataCollection    Boolean  @default(true)  // Required for service
+  aiAnalysis        Boolean  @default(true)  // Profile inference
+  ipAddress         String?
+  userAgent         String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+}
+```
+
+```typescript
+// modules/consent/consent.service.ts
+async recordConsent(userId: string, dto: ConsentDto, req: Request) {
+  return this.prisma.userConsent.create({
+    data: {
+      userId,
+      ...dto,
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent']
+    }
+  });
+}
+
+// Check consent before sending marketing email
+async canSendMarketing(userId: string): Promise<boolean> {
+  const consent = await this.prisma.userConsent.findFirst({
+    where: { userId },
+    orderBy: { createdAt: 'desc' }
+  });
+
+  return consent?.marketingEmails ?? false;
+}
+```
+
+---
+
+**Document Version**: 3.0
+**Last Updated**: December 26, 2025
 **Architecture**: Nest.js + Prisma Stack
+**Tech Stack**: PostgreSQL 18, Valkey 8.x
 **Maintainer**: Sam (dev@5010.tech)
 
 _"Between the zeros and ones"_

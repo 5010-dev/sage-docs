@@ -1,7 +1,7 @@
 # Sage.ai Infrastructure Specification
 
-> Document Version: 2.0
-> Last Modified: 2025-12-22
+> Document Version: 3.0
+> Last Modified: 2025-12-26
 > Author: Sam
 > Target Audience: DevOps, Infrastructure Team
 
@@ -17,8 +17,8 @@ graph TD
     B --> C[S3 Frontend Static Files]
     A --> D[Application Load Balancer]
     D --> E[ECS Fargate Backend]
-    E --> F[RDS PostgreSQL 16]
-    E --> G[ElastiCache Redis 7.x]
+    E --> F[RDS PostgreSQL 18]
+    E --> G[ElastiCache Valkey 8.x]
     E --> H[External APIs]
     H --> I[Anthropic Claude]
     H --> J[CoinGecko]
@@ -35,11 +35,13 @@ interface InfrastructureStack {
   };
   database: {
     service: "AWS RDS PostgreSQL";
-    version: "16";
+    version: "18";
+    reason: "5-year LTS (until 2030), JSON 30% faster, improved query optimizer";
   };
   cache: {
-    service: "AWS ElastiCache Redis";
-    version: "7.x";
+    service: "AWS ElastiCache Valkey";
+    version: "8.x";
+    reason: "100% Redis-compatible, Linux Foundation OSS, license stability";
   };
   storage: {
     service: "AWS S3";
@@ -51,8 +53,10 @@ interface InfrastructureStack {
     service: "AWS ALB";
   };
   iac: {
-    tool: "Terraform";
-    version: "1.6+";
+    tool: "Pulumi";
+    version: "3.x";
+    language: "TypeScript";
+    reason: "TypeScript fullstack 통일, 타입 안정성, Terraform보다 빠른 반복";
   };
   cicd: {
     platform: "GitHub Actions";
@@ -65,6 +69,27 @@ interface InfrastructureStack {
   };
 }
 ```
+
+---
+
+## 1.3 Pulumi vs Terraform 선택 근거
+
+**Pulumi를 선택한 이유:**
+
+| 항목 | Pulumi (TypeScript) | Terraform (HCL) |
+|------|---------------------|-----------------|
+| **언어 통일** | Backend/Frontend/IaC 모두 TypeScript | HCL은 별도 학습 필요 |
+| **타입 안정성** | IDE 자동완성, 컴파일 타임 검증 | 런타임 에러 가능성 |
+| **재사용성** | TypeScript 함수/클래스로 추상화 가능 | 모듈 시스템 제한적 |
+| **개발 속도** | Vite처럼 빠른 반복 (`pulumi up`) | Plan/Apply 2단계 필수 |
+| **팀 학습곡선** | 기존 TypeScript 지식 활용 | 새로운 DSL 학습 |
+| **디버깅** | TypeScript 디버거 사용 가능 | HCL 디버깅 어려움 |
+
+**Trade-off:**
+- Terraform: 더 성숙한 생태계, 더 많은 레퍼런스
+- Pulumi: 더 빠른 개발, TypeScript 풀스택 일관성
+
+**결론**: MVP 3개월 개발 속도와 TypeScript 풀스택 일관성을 위해 Pulumi 선택
 
 ---
 
@@ -211,7 +236,7 @@ resource "aws_appautoscaling_policy" "backend_cpu" {
 resource "aws_db_instance" "postgres" {
   identifier     = "sage-postgres"
   engine         = "postgres"
-  engine_version = "16.1"
+  engine_version = "18.1"
 
   instance_class    = "db.t3.micro"  # MVP: Free tier
   allocated_storage = 20               # 20 GB (MVP)
@@ -259,15 +284,15 @@ resource "aws_db_instance" "postgres_replica" {
 
 ## 4. Cache Layer
 
-### 4.1 ElastiCache Redis Cluster
+### 4.1 ElastiCache Valkey Cluster (Redis-Compatible)
 
 ```hcl
-resource "aws_elasticache_replication_group" "redis" {
-  replication_group_id       = "sage-redis"
-  replication_group_description = "Sage.ai Redis cluster"
+resource "aws_elasticache_replication_group" "valkey" {
+  replication_group_id       = "sage-valkey"
+  replication_group_description = "Sage.ai Valkey cluster (Redis-compatible)"
 
-  engine         = "redis"
-  engine_version = "7.0"
+  engine         = "valkey"
+  engine_version = "8.0"
   node_type      = "cache.t3.micro"  # MVP: Free tier
 
   num_cache_clusters = 2  # 1 primary + 1 replica
@@ -450,24 +475,67 @@ resource "aws_lb_listener" "https" {
 
 ## 7. Networking
 
-### 7.1 VPC Configuration
+### 7.1 VPC Configuration (상세 다이어그램)
 
 ```mermaid
-graph TD
-    A[VPC 10.0.0.0/16] --> B[Public Subnet 1<br/>10.0.0.0/24]
-    A --> C[Public Subnet 2<br/>10.0.1.0/24]
-    A --> D[Private Subnet 1<br/>10.0.10.0/24]
-    A --> E[Private Subnet 2<br/>10.0.11.0/24]
+graph TB
+    subgraph VPC["VPC (10.0.0.0/16)"]
+        subgraph PublicSubnets["Public Subnets (AZ-a, AZ-b)"]
+            PubSub1["Public Subnet 1<br/>10.0.0.0/24<br/>(us-west-2a)"]
+            PubSub2["Public Subnet 2<br/>10.0.1.0/24<br/>(us-west-2b)"]
+            ALB["Application Load Balancer<br/>(443, 80)"]
+            NAT1["NAT Gateway 1"]
+            NAT2["NAT Gateway 2"]
+        end
 
-    B --> F[Internet Gateway]
-    C --> F
+        subgraph PrivateSubnets["Private Subnets (AZ-a, AZ-b)"]
+            PrivSub1["Private Subnet 1<br/>10.0.10.0/24<br/>(us-west-2a)"]
+            PrivSub2["Private Subnet 2<br/>10.0.11.0/24<br/>(us-west-2b)"]
+            ECS1["ECS Task 1<br/>(Backend)"]
+            ECS2["ECS Task 2<br/>(Backend)"]
+        end
 
-    D --> G[NAT Gateway 1]
-    E --> H[NAT Gateway 2]
+        subgraph DatabaseSubnets["Database Subnets (AZ-a, AZ-b)"]
+            DBSub1["DB Subnet 1<br/>10.0.20.0/24<br/>(us-west-2a)"]
+            DBSub2["DB Subnet 2<br/>10.0.21.0/24<br/>(us-west-2b)"]
+            RDS["RDS PostgreSQL 18<br/>(Primary)"]
+            Valkey["ElastiCache Valkey 8.x<br/>(Primary + Replica)"]
+        end
+    end
 
-    G --> F
-    H --> F
+    Internet["Internet"] --> IGW["Internet Gateway"]
+    IGW --> PubSub1
+    IGW --> PubSub2
+
+    PubSub1 --> NAT1
+    PubSub2 --> NAT2
+    PubSub1 --> ALB
+    PubSub2 --> ALB
+
+    ALB --> ECS1
+    ALB --> ECS2
+
+    PrivSub1 --> NAT1
+    PrivSub2 --> NAT2
+    PrivSub1 --> ECS1
+    PrivSub2 --> ECS2
+
+    ECS1 --> RDS
+    ECS2 --> RDS
+    ECS1 --> Valkey
+    ECS2 --> Valkey
+
+    DBSub1 --> RDS
+    DBSub2 --> RDS
+    DBSub1 --> Valkey
+    DBSub2 --> Valkey
 ```
+
+**VPC 설계 원칙:**
+- **다중 AZ**: 고가용성을 위해 2개 AZ 사용 (us-west-2a, us-west-2b)
+- **3-Tier 서브넷**: Public (ALB, NAT) / Private (ECS) / Database (RDS, Valkey)
+- **보안 계층화**: 인터넷 → Public → Private → Database (점진적 보안 강화)
+- **NAT Gateway 이중화**: 각 AZ마다 NAT Gateway (단일 장애점 제거)
 
 ```hcl
 resource "aws_vpc" "main" {
@@ -687,6 +755,75 @@ Sentry.init({
 });
 ```
 
+### 9.3 Discord 알림 전략
+
+**채널별 분류:**
+
+```typescript
+interface DiscordChannels {
+  errors: {
+    webhook: "https://discord.com/api/webhooks/.../errors";
+    triggers: [
+      "Sentry error rate > 5% for 5 minutes",
+      "ECS task health check failed",
+      "Database connection pool > 90%"
+    ];
+    severity: "🔴 CRITICAL";
+  };
+  performance: {
+    webhook: "https://discord.com/api/webhooks/.../performance";
+    triggers: [
+      "API response time P95 > 500ms for 10 minutes",
+      "SSE first token > 5s",
+      "Valkey memory > 80%"
+    ];
+    severity: "🟠 WARNING";
+  };
+  businessMetrics: {
+    webhook: "https://discord.com/api/webhooks/.../business";
+    triggers: [
+      "Daily active users milestone reached",
+      "Shadow portfolio performance update",
+      "Market alert sent to users"
+    ];
+    severity: "🟢 INFO";
+  };
+}
+```
+
+**Discord 메시지 포맷:**
+
+```typescript
+// 예시: 에러 알림
+async function sendErrorAlert(error: Error, context: any) {
+  await axios.post(DISCORD_ERROR_WEBHOOK, {
+    embeds: [{
+      title: "🔴 Production Error Detected",
+      color: 0xFF0000,
+      fields: [
+        { name: "Error", value: error.message, inline: false },
+        { name: "Service", value: "ECS Backend", inline: true },
+        { name: "Environment", value: "production", inline: true },
+        { name: "Timestamp", value: new Date().toISOString(), inline: false },
+        { name: "Sentry Link", value: `https://sentry.io/.../${error.id}`, inline: false }
+      ]
+    }]
+  });
+}
+```
+
+**커스텀 메트릭 → Discord:**
+
+```typescript
+// CloudWatch Custom Metric → Lambda → Discord
+interface CustomMetrics {
+  chatResponseTime: "histogram → Discord if P95 > 500ms";
+  tokenUsage: "counter → Discord daily summary";
+  hallucinationRate: "counter → Discord if rate > 1%";
+  queueSize: "gauge → Discord if size > 1000";
+}
+```
+
 ---
 
 ## 10. Cost Optimization
@@ -857,6 +994,37 @@ resource "aws_secretsmanager_secret_version" "anthropic_key" {
 }
 ```
 
+### 12.3 API Key 관리 전략
+
+**중앙화된 API Key 관리:**
+
+```typescript
+// API Key 저장소 구조
+interface APIKeyStore {
+  anthropic: {
+    storage: "AWS Secrets Manager";
+    rotation: "Manual (Phase 2: Automatic)";
+    access: "ECS Task Role only";
+  };
+  coingecko: {
+    storage: "AWS Secrets Manager";
+    rotation: "Manual";
+    rateLimit: "50 calls/minute";
+  };
+  discord: {
+    storage: "AWS Secrets Manager";
+    type: "Webhook URL";
+    channels: ["#errors", "#performance", "#business-metrics"];
+  };
+}
+```
+
+**보안 원칙:**
+1. **최소 권한**: ECS Task Role만 접근 가능
+2. **감사 로그**: CloudTrail로 모든 Secret 접근 기록
+3. **암호화**: KMS로 암호화된 상태로 저장
+4. **버전 관리**: Secret 변경 시 이전 버전 7일 유지
+
 ---
 
 ## 13. Scaling Strategy
@@ -932,7 +1100,18 @@ export TF_VAR_db_password="..."
 
 ---
 
-Document Version: 2.0
-Last Updated: 2025-12-22
-Infrastructure: AWS ECS Fargate + RDS + ElastiCache
-Maintainer: Sam (dev@5010.tech)
+**Document Version**: 3.0
+**Last Updated**: 2025-12-26
+**Infrastructure**: AWS ECS Fargate + RDS PostgreSQL 18 + ElastiCache Valkey 8.x
+**IaC**: Pulumi (TypeScript)
+**Maintainer**: Sam (dev@5010.tech)
+
+### Changelog
+
+**v3.0 (2025-12-26)**:
+- IaC 도구 변경: Terraform → Pulumi (TypeScript 풀스택 통일)
+- PostgreSQL 16 → 18: 5-year LTS, JSON 30% 성능 향상
+- Redis 7.x → Valkey 8.x: 라이센스 안정성, Linux Foundation 프로젝트
+- VPC 다이어그램 상세화: 3-Tier 서브넷 구조 (Public/Private/Database)
+- API Key 관리 전략 추가: AWS Secrets Manager 중앙화
+- Discord 알림 시스템 추가: 에러/성능/비즈니스 메트릭별 채널 분류

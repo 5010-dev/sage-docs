@@ -1,9 +1,9 @@
 # Frontend Development AI Guide
 
-> **Version**: 2.0
-> **Last Updated**: December 22, 2025
+> **Version**: 3.0
+> **Last Updated**: December 26, 2025
 > **Author**: Sam
-> **Target Audience**: Frontend Developers
+> **Target Audience**: Frontend Developers, Claude Code
 
 ---
 
@@ -268,18 +268,27 @@ interface StreamingChatSpec {
     typingIndicator: boolean;
     autoScroll: boolean;
     errorHandling: boolean;
+    reconnection: {
+      enabled: true;
+      strategy: "Exponential backoff";
+      maxRetries: 3;
+      timeout: 30000; // 30 seconds
+    };
   };
 }
 ```
 
-**Streaming Flow**:
+**Streaming Flow with Reconnection**:
 ```mermaid
-graph LR
+graph TB
     A[User Sends Message] --> B[Open EventSource]
     B --> C{Receive Event}
     C -->|token| D[Append to UI]
     C -->|done| E[Close Connection]
-    C -->|error| F[Handle Error]
+    C -->|error| F{Retry Count < 3?}
+    F -->|Yes| G[Wait Exponentially]
+    G --> B
+    F -->|No| H[Show Error]
     D --> C
 ```
 
@@ -294,6 +303,11 @@ Requirements:
 - Auto-scroll to bottom
 - Handle connection errors
 - Use Zustand for temporary streaming state
+- Implement reconnection logic:
+  * Exponential backoff: 1s → 2s → 4s
+  * Maximum 3 retry attempts
+  * 30-second timeout
+  * User-friendly error message after max retries
 
 UI:
 ┌──────────────────────────────┐
@@ -311,33 +325,74 @@ import { useStreamingStore } from '@/store/streaming.store';
 export function ChatWindow({ chatId }: { chatId: string }) {
   const { streamingMessage, setStreamingMessage, clearStreamingMessage } = useStreamingStore();
   const [isStreaming, setIsStreaming] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
 
-  const sendMessage = async (content: string) => {
+  // Reconnection state
+  const reconnectAttemptsRef = useRef(0);
+  const maxReconnectAttempts = 3;
+  const reconnectDelayRef = useRef(1000); // Start with 1s
+  const timeoutIdRef = useRef<number | null>(null);
+
+  const connectSSE = (content: string) => {
     clearStreamingMessage();
     setIsStreaming(true);
+    setError(null);
 
     const url = `/api/chats/${chatId}/messages?message=${encodeURIComponent(content)}`;
     eventSourceRef.current = new EventSource(url);
+
+    // Timeout for 30 seconds
+    timeoutIdRef.current = window.setTimeout(() => {
+      eventSourceRef.current?.close();
+      handleReconnect(content);
+    }, 30000);
 
     eventSourceRef.current.onmessage = (event) => {
       const data = JSON.parse(event.data);
 
       if (data.type === 'token') {
         setStreamingMessage((prev) => prev + data.content);
+        reconnectAttemptsRef.current = 0; // Reset on successful message
+        reconnectDelayRef.current = 1000;
       } else if (data.type === 'done') {
         setIsStreaming(false);
         clearStreamingMessage();
+        if (timeoutIdRef.current) clearTimeout(timeoutIdRef.current);
         eventSourceRef.current?.close();
       }
     };
 
     eventSourceRef.current.onerror = () => {
-      setIsStreaming(false);
-      clearStreamingMessage();
+      if (timeoutIdRef.current) clearTimeout(timeoutIdRef.current);
       eventSourceRef.current?.close();
+      handleReconnect(content);
     };
+  };
+
+  const handleReconnect = (content: string) => {
+    if (reconnectAttemptsRef.current >= maxReconnectAttempts) {
+      setIsStreaming(false);
+      setError('연결에 실패했습니다. 다시 시도해주세요.');
+      clearStreamingMessage();
+      return;
+    }
+
+    reconnectAttemptsRef.current += 1;
+
+    // Exponential backoff: 1s → 2s → 4s
+    setTimeout(() => {
+      connectSSE(content);
+    }, reconnectDelayRef.current);
+
+    reconnectDelayRef.current *= 2;
+  };
+
+  const sendMessage = (content: string) => {
+    reconnectAttemptsRef.current = 0;
+    reconnectDelayRef.current = 1000;
+    connectSSE(content);
   };
 
   // Auto-scroll
@@ -345,11 +400,26 @@ export function ChatWindow({ chatId }: { chatId: string }) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [streamingMessage]);
 
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutIdRef.current) clearTimeout(timeoutIdRef.current);
+      eventSourceRef.current?.close();
+    };
+  }, []);
+
   return (
     <div className="flex flex-col h-screen">
       <div className="flex-1 overflow-y-auto p-4">
         {/* Static messages */}
         {/* ... */}
+
+        {/* Error message */}
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+            {error}
+          </div>
+        )}
 
         {/* Streaming message */}
         {streamingMessage && (
@@ -832,9 +902,188 @@ graph LR
 
 ---
 
-**Document Version**: 2.0
-**Last Updated**: December 22, 2025
+## 6. Feature-Based Architecture & PWA Best Practices
+
+### 6.1 Why Feature-Based Structure?
+
+**선택 근거**:
+- **확장성**: 각 기능이 자체 포함됨 (컴포넌트, 훅, 스토어, 타입)
+- **코로케이션**: 관련 코드가 함께 위치해 파일 전환 최소화
+- **팀 자율성**: 여러 개발자가 독립적으로 기능별 작업 가능
+- **명확한 경계**: 기능 간 의존성 파악 쉬움, 결합도 낮음
+
+**Directory Structure**:
+```
+src/
+├── features/
+│   ├── chat/
+│   │   ├── components/
+│   │   │   ├── ChatWindow.tsx
+│   │   │   ├── MessageList.tsx
+│   │   │   └── MessageInput.tsx
+│   │   ├── hooks/
+│   │   │   ├── useChat.ts
+│   │   │   └── useSSE.ts
+│   │   ├── store/
+│   │   │   └── chat.store.ts
+│   │   ├── types/
+│   │   │   └── chat.types.ts
+│   │   └── api/
+│   │       └── chat.api.ts
+│   ├── portfolio/
+│   │   ├── components/
+│   │   ├── hooks/
+│   │   └── store/
+│   └── alerts/
+│       ├── components/
+│       ├── hooks/
+│       └── store/
+├── shared/
+│   ├── components/
+│   ├── hooks/
+│   └── utils/
+└── App.tsx
+```
+
+### 6.2 SSE Reconnection Pattern
+
+**선택 근거**:
+- **안정성**: 네트워크 불안정 환경에서도 사용자 경험 유지
+- **Exponential backoff**: 서버 부하 방지 (1s → 2s → 4s)
+- **Max retries**: 무한 재시도 방지 (3회 제한)
+- **30-second timeout**: 긴 응답 대기 방지
+
+**Implementation Pattern**:
+```typescript
+// features/chat/hooks/useSSE.ts
+export function useSSE() {
+  const reconnectAttemptsRef = useRef(0);
+  const maxReconnectAttempts = 3;
+  const reconnectDelayRef = useRef(1000); // Start with 1s
+
+  const handleReconnect = (content: string) => {
+    if (reconnectAttemptsRef.current >= maxReconnectAttempts) {
+      setError('연결에 실패했습니다.');
+      return;
+    }
+
+    reconnectAttemptsRef.current += 1;
+    setTimeout(() => {
+      connectSSE(content);
+    }, reconnectDelayRef.current);
+
+    reconnectDelayRef.current *= 2; // Exponential backoff
+  };
+}
+```
+
+### 6.3 Deeplink Backend Validation
+
+**선택 근거**:
+- **보안**: Frontend에서 deeplink context 생성 시 조작 가능성
+- **데이터 일관성**: Backend DB에 저장된 context만 허용
+- **TTL 관리**: 24시간 후 자동 만료로 무효 링크 방지
+
+**Flow**:
+```mermaid
+graph LR
+    A[Backend: Create Context] --> B[Store in DB with TTL]
+    B --> C[Generate Deeplink with contextId]
+    C --> D[User Opens Link]
+    D --> E[Frontend: Extract contextId]
+    E --> F[Backend: Validate contextId]
+    F --> G{Valid?}
+    G -->|Yes| H[Load Context]
+    G -->|No| I[Show Error]
+```
+
+**Implementation**:
+```typescript
+// features/alerts/hooks/useDeeplink.ts
+export function useDeeplink() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const contextId = params.get('contextId');
+
+    if (contextId) {
+      // Backend validation
+      axios.get(`/api/deeplink/${contextId}`)
+        .then(({ data }) => {
+          navigate(`/chat/${data.chatId}`, {
+            state: { initialMessage: data.message }
+          });
+        })
+        .catch(() => {
+          // Invalid or expired contextId
+          navigate('/');
+        });
+    }
+  }, []);
+}
+```
+
+### 6.4 PWA Push Notifications
+
+**선택 근거**:
+- **실시간 알림**: 시장 변동성 즉시 전달 (15분 크론과 연동)
+- **재방문 유도**: 푸시를 통한 사용자 재참여
+- **Native 느낌**: 모바일 앱처럼 동작
+
+**Service Worker Registration**:
+```typescript
+// src/service-worker.ts
+self.addEventListener('push', (event) => {
+  const data = event.data?.json();
+
+  event.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: '/icon-192.png',
+      badge: '/badge-72.png',
+      data: {
+        url: data.url // Deeplink URL
+      }
+    })
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    clients.openWindow(event.notification.data.url)
+  );
+});
+```
+
+**Subscription Flow**:
+```typescript
+// features/alerts/hooks/usePushNotification.ts
+export function usePushNotification() {
+  const subscribe = async () => {
+    const registration = await navigator.serviceWorker.ready;
+    const subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+    });
+
+    // Send subscription to backend
+    await axios.post('/api/push/subscribe', {
+      subscription
+    });
+  };
+
+  return { subscribe };
+}
+```
+
+---
+
+**Document Version**: 3.0
+**Last Updated**: December 26, 2025
 **Stack**: React 18.3 + Vite 5 + TypeScript
+**Architecture**: Feature-Based Structure
 **Maintainer**: Sam (dev@5010.tech)
 
 _"Between the zeros and ones"_

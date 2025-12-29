@@ -1,9 +1,9 @@
 # Infrastructure & DevOps AI Guide
 
-> **Version**: 2.0
-> **Last Updated**: December 22, 2025
+> **Version**: 3.0
+> **Last Updated**: December 26, 2025
 > **Author**: Sam
-> **Target Audience**: DevOps, Infrastructure Engineers
+> **Target Audience**: DevOps, Infrastructure Engineers, Claude Code
 
 ---
 
@@ -25,7 +25,7 @@ interface InfrastructureTools {
 
 const tools: InfrastructureTools = {
   claudeCode: {
-    purpose: ["Terraform configuration", "GitHub Actions", "Shell scripts", "IaC"],
+    purpose: ["Pulumi configuration (TypeScript)", "GitHub Actions", "Shell scripts", "IaC"],
     useCases: ["AWS setup", "CI/CD pipelines", "Database migrations", "Monitoring"]
   },
   githubCopilot: {
@@ -39,18 +39,24 @@ const tools: InfrastructureTools = {
 
 ```mermaid
 graph LR
-    A[Define Requirements] --> B[Write Terraform]
-    B --> C[Plan & Review]
-    C --> D[Apply Infrastructure]
+    A[Define Requirements] --> B[Write Pulumi TypeScript]
+    B --> C[pulumi preview]
+    C --> D[pulumi up]
     D --> E[Configure Monitoring]
     E --> F[Setup CI/CD]
 ```
+
+**선택 근거: Pulumi vs Terraform**
+- **TypeScript 통일**: Backend/Frontend/IaC 모두 동일 언어
+- **타입 안정성**: IDE 자동완성, 컴파일 타임 검증
+- **빠른 반복**: `pulumi up` 한 번에 preview + apply (Terraform은 plan/apply 2단계)
+- **Lambda 통합**: TypeScript Lambda를 인라인으로 IaC에 정의 가능
 
 ---
 
 ## 2. Common Infrastructure Tasks
 
-### 2.1 Terraform Configuration
+### 2.1 Pulumi Configuration (TypeScript)
 
 **Infrastructure Requirements**:
 ```typescript
@@ -66,9 +72,10 @@ interface AWSInfrastructure {
     vpc: {
       cidrBlock: string;
       subnets: {
-        public: number;
-        private: number;
-        azCount: number;
+        public: number;   // 2 subnets
+        private: number;  // 2 subnets
+        database: number; // 2 subnets (isolated)
+        azCount: number;  // 2 AZs
       };
     };
     loadBalancer: string;
@@ -76,99 +83,184 @@ interface AWSInfrastructure {
   database: {
     rds: {
       engine: "postgres";
-      version: string;
+      version: "18";      // PostgreSQL 18
       instance: string;
     };
     cache: {
-      engine: "redis";
-      version: string;
+      engine: "valkey";   // Valkey 8.x (Redis-compatible)
+      version: "8.0";
       instance: string;
     };
   };
   security: {
     securityGroups: string[];
+    secretsManager: {
+      anthropicApiKey: string;
+      discordWebhook: string;
+    };
   };
 }
 ```
 
-**Infrastructure Architecture**:
+**Infrastructure Architecture (3-Tier VPC)**:
 ```mermaid
 graph TB
-    A[Internet] --> B[ALB]
-    B --> C[ECS Fargate]
-    C --> D[RDS PostgreSQL]
-    C --> E[ElastiCache Redis]
-
-    subgraph VPC
-        B
-        C
-        D
-        E
+    subgraph Internet
+        A[User]
     end
+
+    subgraph Public_Subnet[Public Subnet - 10.0.1.0/24, 10.0.2.0/24]
+        B[ALB]
+        C[NAT Gateway]
+    end
+
+    subgraph Private_Subnet[Private Subnet - 10.0.11.0/24, 10.0.12.0/24]
+        D[ECS Fargate]
+    end
+
+    subgraph Database_Subnet[Database Subnet - 10.0.21.0/24, 10.0.22.0/24]
+        E[RDS PostgreSQL 18]
+        F[Valkey 8.x]
+    end
+
+    A --> B
+    B --> D
+    D --> C
+    D --> E
+    D --> F
 ```
 
 **Prompt Template**:
 ```
-Create Terraform configuration for Sage.ai backend infrastructure:
+Create Pulumi TypeScript configuration for Sage.ai backend infrastructure:
 
 Requirements:
 - AWS ECS Fargate cluster
 - Application Load Balancer (ALB)
-- RDS PostgreSQL 16
-- ElastiCache Redis 7.x
-- VPC with 2 public + 2 private subnets (2 AZs)
-- Security groups (ALB, ECS, RDS, Redis)
+- RDS PostgreSQL 18 (5-year LTS, JSON 30% faster)
+- Valkey 8.x cluster (Redis-compatible, Linux Foundation OSS)
+- VPC 3-tier architecture:
+  * Public subnets (10.0.1.0/24, 10.0.2.0/24) - ALB, NAT Gateway
+  * Private subnets (10.0.11.0/24, 10.0.12.0/24) - ECS tasks
+  * Database subnets (10.0.21.0/24, 10.0.22.0/24) - RDS, Valkey
+- Security groups with least privilege
+- AWS Secrets Manager for API keys (Anthropic, Discord webhook)
+- Discord alert integration (3 webhooks: errors, performance, business)
 - Output: ALB DNS name
 
 Region: us-west-2
-Use best practices for production.
+Use TypeScript for type safety.
 ```
 
 **Expected Implementation**:
-```hcl
-# terraform/main.tf
+```typescript
+// infra/index.ts
+import * as pulumi from "@pulumi/pulumi";
+import * as aws from "@pulumi/aws";
 
-provider "aws" {
-  region = "us-west-2"
-}
+const config = new pulumi.Config();
+const region = "us-west-2";
 
-# VPC
-resource "aws_vpc" "main" {
-  cidr_block           = "10.0.0.0/16"
-  enable_dns_hostnames = true
-  enable_dns_support   = true
+// VPC
+const vpc = new aws.ec2.Vpc("sage-vpc", {
+  cidrBlock: "10.0.0.0/16",
+  enableDnsHostnames: true,
+  enableDnsSupport: true,
+  tags: { Name: "sage-vpc" },
+});
 
-  tags = {
-    Name = "sage-vpc"
-  }
-}
+// Public Subnets (ALB, NAT Gateway)
+const publicSubnets = ["10.0.1.0/24", "10.0.2.0/24"].map((cidr, i) =>
+  new aws.ec2.Subnet(`sage-public-${i + 1}`, {
+    vpcId: vpc.id,
+    cidrBlock: cidr,
+    availabilityZone: `us-west-2${String.fromCharCode(97 + i)}`, // us-west-2a, us-west-2b
+    mapPublicIpOnLaunch: true,
+    tags: { Name: `sage-public-${i + 1}`, Tier: "Public" },
+  })
+);
 
-# Public Subnets
-resource "aws_subnet" "public" {
-  count             = 2
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = "10.0.${count.index}.0/24"
-  availability_zone = data.aws_availability_zones.available.names[count.index]
-  map_public_ip_on_launch = true
+// Private Subnets (ECS Tasks)
+const privateSubnets = ["10.0.11.0/24", "10.0.12.0/24"].map((cidr, i) =>
+  new aws.ec2.Subnet(`sage-private-${i + 1}`, {
+    vpcId: vpc.id,
+    cidrBlock: cidr,
+    availabilityZone: `us-west-2${String.fromCharCode(97 + i)}`,
+    tags: { Name: `sage-private-${i + 1}`, Tier: "Private" },
+  })
+);
 
-  tags = {
-    Name = "sage-public-${count.index + 1}"
-  }
-}
+// Database Subnets (RDS, Valkey)
+const dbSubnets = ["10.0.21.0/24", "10.0.22.0/24"].map((cidr, i) =>
+  new aws.ec2.Subnet(`sage-db-${i + 1}`, {
+    vpcId: vpc.id,
+    cidrBlock: cidr,
+    availabilityZone: `us-west-2${String.fromCharCode(97 + i)}`,
+    tags: { Name: `sage-db-${i + 1}`, Tier: "Database" },
+  })
+);
 
-# Private Subnets
-resource "aws_subnet" "private" {
-  count             = 2
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = "10.0.${count.index + 10}.0/24"
-  availability_zone = data.aws_availability_zones.available.names[count.index]
+// RDS PostgreSQL 18
+const dbSubnetGroup = new aws.rds.SubnetGroup("sage-db-subnet", {
+  subnetIds: dbSubnets.map(s => s.id),
+  tags: { Name: "sage-db-subnet" },
+});
 
-  tags = {
-    Name = "sage-private-${count.index + 1}"
-  }
-}
+const rds = new aws.rds.Instance("sage-postgres", {
+  engine: "postgres",
+  engineVersion: "18",
+  instanceClass: "db.t3.micro",
+  allocatedStorage: 20,
+  dbName: "sage",
+  username: "sage_admin",
+  password: config.requireSecret("dbPassword"),
+  dbSubnetGroupName: dbSubnetGroup.name,
+  skipFinalSnapshot: true,
+  tags: { Name: "sage-postgres-18" },
+});
 
-# ... (additional resources)
+// Valkey 8.x (ElastiCache)
+const cacheSubnetGroup = new aws.elasticache.SubnetGroup("sage-cache-subnet", {
+  subnetIds: dbSubnets.map(s => s.id),
+  tags: { Name: "sage-cache-subnet" },
+});
+
+const valkey = new aws.elasticache.Cluster("sage-valkey", {
+  engine: "valkey",
+  engineVersion: "8.0",
+  nodeType: "cache.t3.micro",
+  numCacheNodes: 1,
+  subnetGroupName: cacheSubnetGroup.name,
+  tags: { Name: "sage-valkey-8" },
+});
+
+// AWS Secrets Manager - Anthropic API Key
+const anthropicSecret = new aws.secretsmanager.Secret("anthropic-api-key", {
+  name: "sage/anthropic-api-key",
+  description: "Anthropic Claude API key for Sage.ai",
+});
+
+// Discord Webhooks
+const discordErrorsSecret = new aws.secretsmanager.Secret("discord-errors", {
+  name: "sage/discord-webhook-errors",
+  description: "Discord webhook for error alerts",
+});
+
+const discordPerfSecret = new aws.secretsmanager.Secret("discord-performance", {
+  name: "sage/discord-webhook-performance",
+  description: "Discord webhook for performance alerts",
+});
+
+const discordBusinessSecret = new aws.secretsmanager.Secret("discord-business", {
+  name: "sage/discord-webhook-business",
+  description: "Discord webhook for business metrics",
+});
+
+// Exports
+export const vpcId = vpc.id;
+export const albDns = ""; // Will be created in ECS setup
+export const rdsEndpoint = rds.endpoint;
+export const valkeyEndpoint = valkey.cacheNodes[0].address;
 ```
 
 ---
@@ -779,7 +871,7 @@ version: '3.9'
 
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:18-alpine
     container_name: sage-postgres
     environment:
       POSTGRES_USER: sage
@@ -792,9 +884,9 @@ services:
     networks:
       - sage-network
 
-  redis:
-    image: redis:7-alpine
-    container_name: sage-redis
+  valkey:
+    image: valkey/valkey:8-alpine
+    container_name: sage-valkey
     ports:
       - "6379:6379"
     networks:
@@ -807,7 +899,7 @@ services:
     container_name: sage-backend
     environment:
       - DATABASE_URL=postgresql://sage:sage_dev_password@postgres:5432/sage
-      - REDIS_URL=redis://redis:6379
+      - VALKEY_URL=valkey://valkey:6379
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
     ports:
       - "3000:3000"
@@ -816,7 +908,7 @@ services:
       - /app/node_modules
     depends_on:
       - postgres
-      - redis
+      - valkey
     networks:
       - sage-network
     command: pnpm run start:dev
@@ -952,9 +1044,156 @@ graph LR
 
 ---
 
-**Document Version**: 2.0
-**Last Updated**: December 22, 2025
-**Infrastructure**: AWS ECS + Terraform
+---
+
+## 7. PostgreSQL 18 & Valkey Best Practices
+
+### 7.1 Why PostgreSQL 18 for Infrastructure?
+
+**선택 근거**:
+- **5-year LTS support**: 2030년까지 장기 지원 (운영 안정성)
+- **JSON processing 30% faster**: Market data 저장/조회 성능 향상
+- **Improved query optimizer**: N+1 query 자동 최적화 향상
+- **Security updates**: CVE 대응 장기 지원
+
+**RDS Configuration**:
+```typescript
+// Pulumi - RDS PostgreSQL 18
+const rds = new aws.rds.Instance("sage-postgres", {
+  engine: "postgres",
+  engineVersion: "18",
+  instanceClass: "db.t3.micro",  // MVP: 1 vCPU, 1GB RAM
+  allocatedStorage: 20,           // 20GB SSD
+  maxAllocatedStorage: 100,       // Auto-scaling up to 100GB
+  multiAz: false,                 // MVP: Single AZ (Phase 2: Multi-AZ)
+  backupRetentionPeriod: 7,       // 7-day backup
+  preferredBackupWindow: "03:00-04:00",  // UTC 3-4AM (Korea 12-1PM)
+  tags: { Name: "sage-postgres-18", Version: "18" },
+});
+```
+
+### 7.2 Why Valkey 8.x for Caching?
+
+**선택 근거**:
+- **100% Redis-compatible**: 기존 Redis 클라이언트 라이브러리 그대로 사용
+- **Linux Foundation OSS**: 라이센스 안정성 (BSD 3-Clause vs Redis SSPL)
+- **Active development**: Redis Labs 이탈 후 커뮤니티 주도 개발
+- **AWS ElastiCache 지원**: 2024년 11월부터 공식 지원
+
+**ElastiCache Configuration**:
+```typescript
+// Pulumi - Valkey 8.x
+const valkey = new aws.elasticache.Cluster("sage-valkey", {
+  engine: "valkey",
+  engineVersion: "8.0",
+  nodeType: "cache.t3.micro",  // MVP: 0.5GB RAM
+  numCacheNodes: 1,             // MVP: Single node (Phase 2: Replication)
+  subnetGroupName: cacheSubnetGroup.name,
+  securityGroupIds: [cacheSecurityGroup.id],
+  tags: { Name: "sage-valkey-8" },
+});
+
+// Cache TTL Strategy
+const cacheTTL = {
+  marketPrice: 300,       // 5 minutes
+  fearGreed: 1800,        // 30 minutes
+  userChatList: 30,       // 30 seconds
+  aiResponse: 300,        // 5 minutes (identical queries)
+};
+```
+
+### 7.3 Discord Alert Strategy
+
+**선택 근거**:
+- **Channel 분리**: 에러/성능/비즈니스 메트릭 분리 → 노이즈 감소
+- **즉각 대응**: CloudWatch Alarm → SNS → Lambda → Discord Webhook
+- **비용 효율**: Email SNS보다 Discord가 무료, 실시간성 우수
+
+**Lambda Function for Discord Alerts**:
+```typescript
+// infra/discord-alert.ts (Pulumi inline Lambda)
+import * as aws from "@pulumi/aws";
+
+const discordAlertLambda = new aws.lambda.CallbackFunction("discord-alert", {
+  callback: async (event: any) => {
+    const message = JSON.parse(event.Records[0].Sns.Message);
+    const severity = message.AlarmName.includes("error") ? "🔴 CRITICAL"
+                   : message.AlarmName.includes("cpu") ? "🟠 WARNING"
+                   : "🟢 INFO";
+
+    const webhookUrl = message.AlarmName.includes("error")
+      ? process.env.DISCORD_WEBHOOK_ERRORS
+      : message.AlarmName.includes("cpu")
+      ? process.env.DISCORD_WEBHOOK_PERFORMANCE
+      : process.env.DISCORD_WEBHOOK_BUSINESS;
+
+    await fetch(webhookUrl!, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        content: `${severity} ${message.AlarmName}`,
+        embeds: [{
+          title: message.AlarmDescription,
+          description: `Threshold: ${message.Trigger.Threshold}`,
+          color: severity === "🔴 CRITICAL" ? 0xff0000 : 0xffa500,
+        }]
+      })
+    });
+  },
+  environment: {
+    variables: {
+      DISCORD_WEBHOOK_ERRORS: discordErrorsSecret.arn,
+      DISCORD_WEBHOOK_PERFORMANCE: discordPerfSecret.arn,
+      DISCORD_WEBHOOK_BUSINESS: discordBusinessSecret.arn,
+    }
+  }
+});
+```
+
+### 7.4 AWS Secrets Manager Pattern
+
+**선택 근거**:
+- **ECS Task Role 통합**: IAM Role 기반 접근 (credential 노출 방지)
+- **자동 rotation 지원**: Phase 2에서 API key 자동 갱신
+- **Audit trail**: CloudTrail로 접근 기록 추적
+
+**ECS Task Definition with Secrets**:
+```typescript
+// Pulumi - ECS Task with Secrets Manager
+const taskDefinition = new aws.ecs.TaskDefinition("sage-backend-task", {
+  family: "sage-backend",
+  containerDefinitions: pulumi.interpolate`[{
+    "name": "sage-backend",
+    "image": "${ecrRepository.repositoryUrl}:latest",
+    "secrets": [
+      {
+        "name": "ANTHROPIC_API_KEY",
+        "valueFrom": "${anthropicSecret.arn}"
+      },
+      {
+        "name": "DISCORD_WEBHOOK_ERRORS",
+        "valueFrom": "${discordErrorsSecret.arn}"
+      }
+    ],
+    "logConfiguration": {
+      "logDriver": "awslogs",
+      "options": {
+        "awslogs-group": "/ecs/sage-backend",
+        "awslogs-region": "us-west-2"
+      }
+    }
+  }]`,
+  executionRoleArn: taskExecutionRole.arn,  // Secrets Manager 접근 권한
+  taskRoleArn: taskRole.arn,
+});
+```
+
+---
+
+**Document Version**: 3.0
+**Last Updated**: December 26, 2025
+**Infrastructure**: AWS ECS + Pulumi (TypeScript)
+**Tech Stack**: PostgreSQL 18, Valkey 8.x
 **Maintainer**: Sam (dev@5010.tech)
 
 _"Between the zeros and ones"_

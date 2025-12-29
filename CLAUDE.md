@@ -62,12 +62,13 @@ The project follows an **AI-Native development approach** with **Clean Architect
 - **Branch mapping**: dev branch → dev environment, main → prod
 - **Backend**: ECS Fargate + Node.js (Nest.js)
 - **Frontend**: S3 + CloudFront (static hosting for 3 SPAs)
-- **Database**: PostgreSQL 16 RDS (db.t3.micro for MVP)
-- **Cache**: Redis 7.x ElastiCache (cache.t3.micro for MVP)
+- **Database**: PostgreSQL 18 RDS (db.t3.micro for MVP)
+- **Cache**: Valkey 8.x ElastiCache (cache.t3.micro for MVP)
 - **Serverless**: Lambda for market analysis (15-minute cron)
 - **Progressive scaling**: ECS → 10K users, then consider EKS if needed
 - **CI/CD**: GitHub Actions (separate pipelines for backend/frontend)
-- **IaC**: Terraform (infrastructure as code)
+- **IaC**: Pulumi (TypeScript-based infrastructure as code)
+- **Monitoring**: Sentry (error tracking) + CloudWatch (logs/metrics) + Discord alerts
 
 ### Hallucination Prevention System
 
@@ -185,19 +186,19 @@ Documentation references these external systems:
 - **Claude API**: Anthropic Claude Sonnet 4 / Haiku 4 (no other LLMs for MVP)
 - **@anthropic-ai/sdk**: TypeScript SDK for direct integration
 - **Nest.js SSE**: Built-in Server-Sent Events for real-time Claude responses
-- **AWS Infrastructure**: ECS Fargate, RDS PostgreSQL, ElastiCache Redis, Lambda, S3/CloudFront
+- **AWS Infrastructure**: ECS Fargate, RDS PostgreSQL 18, ElastiCache Valkey 8.x, Lambda, S3/CloudFront
 
 ### Market Data
 - **CoinGecko API**: Price data for 6 cryptocurrencies (BTC, ETH, SOL, BNB, DOGE, XRP)
   - Rate limit: 50 calls/minute
-  - Caching: Redis 5-minute TTL
+  - Caching: Valkey 5-minute TTL
 - **Alternative.me**: Fear & Greed Index
   - Rate limit: Unlimited
-  - Caching: Redis 30-minute TTL
+  - Caching: Valkey 30-minute TTL
 
 ### Auth & Notifications
 - **Auth.js (@auth/core)**: Google OAuth integration
-- **Discord Webhooks**: #market-alerts channel for community notifications
+- **Discord Webhooks**: 3 channels for alerts (#errors, #performance, #business-metrics)
 - **Web Push API**: PWA push notifications (VAPID protocol)
 
 ## Important Notes
@@ -236,20 +237,20 @@ Documentation references these external systems:
 | **Frontend** | React + Vite | 18.3 + 5.x | Fast HMR, modern |
 | **State** | Zustand + TanStack Query | 4.x + 5.x | Simple + powerful |
 | **AI** | Claude Sonnet 4 + Haiku 4 | - | Best reasoning + cost |
-| **DB** | PostgreSQL | 16 | Reliable, JSON support |
-| **Cache** | Redis | 7.x | Fast, versatile |
+| **DB** | PostgreSQL | 18 | 5-year LTS, JSON 30% faster |
+| **Cache** | Valkey | 8.x | Redis-compatible, OSS stable |
 | **Queue** | BullMQ | 5.x | Reliable background jobs |
 
 ### Infrastructure
 
 - **Container**: AWS ECS Fargate
 - **Static**: S3 + CloudFront
-- **IaC**: Terraform
-- **Monitoring**: Sentry + CloudWatch + OpenTelemetry
+- **IaC**: Pulumi (TypeScript)
+- **Monitoring**: Sentry + CloudWatch + Discord
 
 ---
 
-**Last Updated**: 2025년 12월 19일
-**Version**: 4.0 - Nest.js + Prisma Stack
+**Last Updated**: 2025년 12월 26일
+**Version**: 5.0 - PostgreSQL 18 + Valkey + Pulumi Stack
 **Architecture**: Layered + Domain (Clean Lite), TypeScript Fullstack
 **Maintainer**: Sam (dev@5010.tech)

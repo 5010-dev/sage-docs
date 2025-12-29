@@ -1,7 +1,7 @@
 # Sage.ai Backend Specification
 
-> Document Version: 2.0
-> Last Modified: 2025-12-22
+> Document Version: 3.0
+> Last Modified: 2025-12-26
 > Author: Sam
 > Target Audience: Backend Developers
 
@@ -35,13 +35,13 @@ interface CoreStack {
   };
   database: {
     name: "PostgreSQL";
-    version: "16";
-    reason: "JSON support, stability, scalability";
+    version: "18";
+    reason: "5-year LTS support (until 2030), JSON performance 30% faster than v16, improved query optimizer, better VACUUM performance";
   };
   cache: {
-    name: "Redis";
-    version: "7.x";
-    reason: "Sessions, caching, BullMQ backend";
+    name: "Valkey";
+    version: "8.x";
+    reason: "100% Redis-compatible, Linux Foundation open-source (license stability), community-driven development";
   };
 }
 ```
@@ -103,7 +103,99 @@ graph TD
     D1[Prisma, Redis, External APIs] --> D
 ```
 
-### 2.2 Folder Structure
+### 2.2 Architecture Flow Diagrams
+
+#### 2.2.1 User Registration Flow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Frontend
+    participant Backend
+    participant Auth.js
+    participant Google
+    participant DB
+
+    User->>Frontend: Click "Google Login"
+    Frontend->>Backend: POST /api/auth/google
+    Backend->>Auth.js: initiate OAuth flow
+    Auth.js->>Google: Redirect to Google OAuth
+    Google->>User: Show consent screen
+    User->>Google: Grant permission
+    Google->>Auth.js: Return authorization code
+    Auth.js->>Google: Exchange code for tokens
+    Google->>Auth.js: Return user profile
+    Auth.js->>DB: Upsert user (email, name, image)
+    DB->>Backend: Create UserConsent record (defaults)
+    Backend->>Frontend: Set session cookie
+    Frontend->>User: Redirect to /chat
+```
+
+#### 2.2.2 Chat Message Flow (Multi-Agent)
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Frontend
+    participant ChatController
+    participant ManagerAgent
+    participant AnalystAgent
+    participant PersonaAgent
+    participant RiskAgent
+    participant Valkey
+    participant DB
+
+    User->>Frontend: Send message "BTC 지금 어때?"
+    Frontend->>ChatController: POST /api/chats/:id/messages (SSE)
+    ChatController->>Valkey: Get recent 20 messages
+    ChatController->>ManagerAgent: Analyze intent (Haiku 4)
+    ManagerAgent-->>ChatController: {intent: "advice", needsMarketData: true}
+
+    ChatController->>AnalystAgent: Fetch BTC price + F&G (Haiku 4)
+    AnalystAgent->>Valkey: Check cache (market:price:BTC)
+    Valkey-->>AnalystAgent: $43,250 (cached)
+    AnalystAgent-->>ChatController: {facts: {BTC: 43250, fg: 25}}
+
+    ChatController->>PersonaAgent: Generate response (Sonnet 4)
+    PersonaAgent-->>ChatController: "자네, BTC가 $43,250일세..."
+
+    ChatController->>RiskAgent: Validate response (Haiku 4)
+    RiskAgent-->>ChatController: {recommendation: "approve"}
+
+    ChatController->>DB: Save user message + assistant message
+    ChatController->>Frontend: SSE stream response
+    Frontend->>User: Display streaming response
+```
+
+#### 2.2.3 Market Analysis Cron Job Flow
+
+```mermaid
+sequenceDiagram
+    participant Cron
+    participant MarketService
+    participant CoinGecko
+    participant Valkey
+    participant NotificationQueue
+    participant BullMQ
+    participant Discord
+    participant PWA
+
+    Cron->>MarketService: Trigger every 15 minutes
+    MarketService->>Valkey: Get previous prices
+    MarketService->>CoinGecko: Fetch current prices (6 coins)
+    CoinGecko-->>MarketService: {BTC: 43250, ETH: 2100, ...}
+    MarketService->>Valkey: Cache new prices (TTL: 5min)
+
+    alt Sudden change detected (>5% for BTC)
+        MarketService->>NotificationQueue: Add job {symbol: "BTC", change: -7.2}
+        NotificationQueue->>BullMQ: Process notification job
+        BullMQ->>Discord: POST webhook (market-alerts channel)
+        BullMQ->>PWA: Send push to subscribed users
+        BullMQ->>Valkey: Save notification to DB
+    end
+```
+
+### 2.3 Folder Structure
 
 ```
 src/
@@ -142,25 +234,37 @@ src/
 ### 3.1 Users Table
 
 ```prisma
+enum RiskProfile {
+  CONSERVATIVE
+  MODERATE
+  AGGRESSIVE
+}
+
 model User {
-  id            String    @id @default(uuid())
-  email         String    @unique
+  id            String       @id @default(uuid())
+  email         String       @unique
   name          String?
   image         String?
-  tier          String    @default("free")  // free, pro, premium
+  tier          String       @default("free")  // free, pro, premium
 
   // Preferences (inferred from chat)
-  riskProfile   String?   // conservative, moderate, aggressive
-  interests     Json?     // ["BTC", "ETH"]
+  riskProfile   RiskProfile? // ENUM for type safety
+  interests     Json?        // ["BTC", "ETH"]
 
   chats         Chat[]
   shadowTrades  ShadowTrade[]
   pushSubscriptions PushSubscription[]
+  consents      UserConsent[]
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
 ```
+
+**Why RiskProfile ENUM?**
+- Type safety: Prevents invalid values at DB level
+- Better query performance: PostgreSQL optimizes ENUM queries
+- Self-documenting: Clear possible values without external documentation
 
 ### 3.2 Chats Table
 
@@ -259,6 +363,37 @@ model Notification {
   @@index([userId, sentAt])
 }
 ```
+
+### 3.7 User Consents Table (GDPR Compliance)
+
+```prisma
+model UserConsent {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Consent types
+  marketingEmails    Boolean  @default(false)
+  pushNotifications  Boolean  @default(false)
+  dataCollection     Boolean  @default(true)  // Required for service
+  aiAnalysis         Boolean  @default(true)  // Profile inference
+
+  // Audit trail
+  ipAddress  String?
+  userAgent  String?
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([userId])
+}
+```
+
+**Why UserConsent Table?**
+- GDPR Article 7: Proof of consent with timestamp
+- Audit trail: IP/User-Agent for consent verification
+- Granular control: Separate marketing/notifications/data processing
+- Future-proof: Easy to add new consent types
 
 ---
 
@@ -450,7 +585,9 @@ const validateResponse = (
 
 ## 6. Caching Strategy
 
-### 6.1 Redis Cache Keys
+### 6.1 Valkey Cache Keys
+
+**Note**: Valkey is 100% Redis-compatible, so all Redis clients and commands work identically.
 
 ```typescript
 interface CacheKeys {
@@ -822,7 +959,19 @@ pnpm run format                 # Format with Prettier
 
 ---
 
-Document Version: 2.0
-Last Updated: 2025-12-22
-Architecture: Layered + Domain (Clean Lite), TypeScript Fullstack
-Maintainer: Sam (dev@5010.tech)
+---
+
+**Document Version**: 3.0
+**Last Updated**: 2025-12-26
+**Architecture**: Layered + Domain (Clean Lite), TypeScript Fullstack
+**Tech Stack**: Nest.js 10.x + Prisma 5.x + PostgreSQL 18 + Valkey 8.x
+**Maintainer**: Sam (dev@5010.tech)
+
+### Changelog
+
+**v3.0 (2025-12-26)**:
+- PostgreSQL 16 → 18: 5-year LTS, JSON 30% faster, query optimizer improvements
+- Redis 7.x → Valkey 8.x: License stability, Linux Foundation backing
+- Added RiskProfile ENUM type for type safety
+- Added UserConsent table for GDPR compliance
+- Added architecture flow diagrams (Registration, Chat, Market Analysis)
