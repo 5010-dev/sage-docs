@@ -1,272 +1,97 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Constitution for Claude Code working with Sage.ai documentation.
 
-## Project Overview
+## Identity
 
-**Sage.ai** is an AI-powered investment mentor platform for cryptocurrency investors. The platform provides personalized AI mentoring through conversational interface with Warren Buffett philosophy, powered by Claude Sonnet 4.
+You are working on **Sage.ai** - an AI investment mentor platform.
+- This is a **documentation-only** repository. There is no executable code.
+- All specs are for a product **not yet built**.
 
-This repository (`sage-docs`) contains all technical specifications, business documentation, and AI development guides for the platform.
+## Source of Truth (Priority Order)
 
-**Key Differentiators**:
-- **Wallet Buffett AI Mentor**: Claude Sonnet 4-based Agent Pipeline
-- **Shadow Portfolio**: Transparent performance tracking (Target: Benchmark +3%p, Hit Rate 72.3%)
-- **Proactive Analysis**: Real-time WebSocket monitoring with PWA Push + Discord notifications
-- **Conversational Onboarding**: No surveys - profile inferred from natural conversation
+When documents conflict, follow this hierarchy:
 
-## Terminology
+1. **This file (CLAUDE.md)** - Overrides everything
+2. **docs/technical/** - Backend, frontend, infrastructure specs
+3. **docs/product/** - Product requirements
+4. **docs/business/** - Business context (informational, not prescriptive)
 
-| 용어 | 정의 | 예시 |
-|------|------|------|
-| **페르소나 (Persona)** | 대화 주체. 캐릭터 + LLM 조합 | 월렛 버핏(Claude), 사토시 현자(GPT), 알파 헌터(Gemini) |
-| **에이전트 (Agent)** | 페르소나 내부의 기능 단위 | Manager, Analyst, Persona, Risk |
-| **에이전트 파이프라인 (Agent Pipeline)** | 단일 페르소나 내에서 에이전트들이 순차 처리하는 흐름 | Manager → Analyst → Persona → Risk |
-| **멀티 페르소나** | 여러 LLM 기반 캐릭터들이 협업 (Phase 2+) | 월렛 버핏 + 사토시 현자 + 알파 헌터 토론 |
+If you find contradictions, **ask the user** before proceeding.
 
-**MVP**: 월렛 버핏(Claude) 페르소나 1개만 사용
-**Phase 2+**: 다른 LLM 기반 페르소나 추가 (ChatGPT, Gemini 등)
+## Terminology (MUST Use Correctly)
+
+| Term | Definition | Wrong Usage |
+|------|------------|-------------|
+| **Persona** | Character + LLM combination | ❌ "multi-agent" for personas |
+| **Agent** | Functional unit within ONE persona | ❌ Agent = Persona |
+| **Agent Pipeline** | Manager → Analyst → Persona → Risk | ❌ "multi-agent system" |
+| **Multi-Persona** | Multiple LLMs (Claude + GPT + Gemini) | ❌ Using in MVP context |
+
+## MUST Do
+
+- **Reference specs**: Always check `docs/technical/` before answering architecture questions
+- **Preserve consistency**: When editing one doc, check related docs for conflicts
+- **Use exact versions**: Nest.js 10.x, Prisma 5.x, PostgreSQL 18, Valkey 8.x
+- **Keep performance numbers**: 2s first token, 0.5s context load, <1% hallucination
+- **Link, don't duplicate**: Point to spec docs instead of copying content
+
+## MUST NOT Do
+
+- **Don't invent features**: If not in `docs/product/product-spec.md`, it doesn't exist
+- **Don't add RAG/vector DB**: MVP uses 20-message window only
+- **Don't suggest EKS**: MVP uses ECS Fargate only
+- **Don't mix personas in MVP**: Only Wallet Buffett (Claude) exists in MVP
+- **Don't create code files**: This repo has documentation only
+- **Don't change performance targets**: They are hard requirements, not suggestions
+
+## Out of Scope (REFUSE These)
+
+Refuse and explain why if asked to:
+
+- Write implementation code (→ "This is a docs-only repo")
+- Add features not in product spec (→ "Check docs/product/product-spec.md first")
+- Use technologies not in tech stack (→ "See docs/technical/backend-spec.md Section 1")
+- Discuss Phase 2+ features as if they're MVP (→ "That's Phase 2+, MVP scope is in docs/business/mvp-definition.md")
+
+## When Uncertain
+
+1. **Check the spec first**: Read the relevant doc before answering
+2. **Ask if conflicting**: "I found X in doc A but Y in doc B. Which is correct?"
+3. **Don't guess numbers**: If a metric isn't documented, say so
 
 ## Repository Structure
 
-This is a **documentation-only repository** with markdown files organized by purpose:
-
-- `docs/business/` - Business plan, MVP definition, AI team strategy, market analysis
-- `docs/technical/` - System architecture for backend (Nest.js), frontend (React), infrastructure (AWS)
-- `docs/operations/` - GTM strategy, viral campaign, community management, live operations
-- `docs/ai-guides/` - AI-native development patterns for Claude Code
-
-## Key Architecture Decisions
-
-The project follows an **AI-Native development approach** with **Clean Architecture Lite**:
-
-### Backend Architecture (Nest.js + Prisma)
-
-- **Framework**: Nest.js 10.x (TypeScript native, modular structure)
-- **ORM**: Prisma 5.x (type-safe, intuitive migrations)
-- **Architecture Pattern**: Layered + Domain (Clean Lite)
-- **AI System**: Agent Pipeline (월렛 버핏 페르소나)
-  - **Manager Agent**: Haiku 4 - Routes user intent
-  - **Analyst Agent**: Haiku 4 - Fetches facts (price, news, sentiment)
-  - **Persona Agent**: Sonnet 4 - Warren Buffett philosophy interpretation
-  - **Risk Agent**: Haiku 4 - Cross-validation, hallucination prevention
-  - *Phase 2+: 다른 LLM 기반 페르소나 추가 (GPT, Gemini)*
-- **Context Management**: Simple 20-message window (no RAG for MVP)
-- **Auth**: Auth.js (@auth/core) with Google OAuth
-- **Streaming**: Nest.js built-in SSE (Server-Sent Events)
-- **Async Jobs**: BullMQ 5.x with Valkey (Memory extraction, alert sending)
-- **Scheduling**: @nestjs/schedule (15-minute market polling)
-- **Performance targets**: 2 seconds to first token (streaming), 0.5s context load
-
-### Frontend Architecture (Complete Separation)
-
-- **Build Tool**: Vite 5 (all 3 frontend apps)
-- **Framework**: React 18.3 + TypeScript
-- **Apps**: Main App + Landing + WhyBitcoinFallen (all SPAs)
-- **State Management**:
-  - Server State: TanStack Query 5.x (caching, real-time sync)
-  - UI State: Zustand 4.x (lightweight, simple)
-- **Streaming**: EventSource (SSE) for Claude chat
-- **PWA**: Service Worker for push notifications + deep linking
-- **Performance targets**: <2s page load, 60 FPS UI
-
-### Infrastructure Architecture
-
-- **Environment strategy**: dev + prod (no staging)
-- **Branch mapping**: dev branch → dev environment, main → prod
-- **Backend**: ECS Fargate + Node.js (Nest.js)
-- **Frontend**: S3 + CloudFront (static hosting for 3 SPAs)
-- **Database**: PostgreSQL 18 RDS (db.t3.micro for MVP)
-- **Cache**: Valkey 8.x ElastiCache (cache.t3.micro for MVP)
-- **Serverless**: Lambda for market analysis (15-minute cron)
-- **Progressive scaling**: ECS → 10K users, then consider EKS if needed
-- **CI/CD**: GitHub Actions (separate pipelines for backend/frontend)
-- **IaC**: Pulumi (TypeScript-based infrastructure as code)
-- **Monitoring**: Sentry (error tracking) + CloudWatch (logs/metrics) + Discord alerts
-
-### Hallucination Prevention System
-
-**Critical difference from typical LLM apps**: Zero tolerance for factual errors
-
-1. **Tool Enforcement**: All numerical data MUST come from tools, not LLM generation
-2. **Multi-Agent Cross-Validation**: Analyst (facts) → Persona (interpretation) → Risk (verify)
-3. **Cached Responses**: Valkey caching for identical questions (5-minute TTL for market data)
-4. **Target**: <1% hallucination rate (measured by user reports)
-
-## Common Development Commands
-
-### Backend (Nest.js)
-
-```bash
-# Development server
-pnpm run start:dev              # Start with watch mode
-pnpm run start:debug            # Start in debug mode
-
-# Build
-pnpm run build                  # Production build
-pnpm run start:prod             # Run production build
-
-# Database (Prisma)
-npx prisma generate             # Generate Prisma Client
-npx prisma migrate dev          # Create and apply migration
-npx prisma migrate deploy       # Apply migrations in production
-npx prisma studio               # Open Prisma Studio (DB GUI)
-npx prisma db seed              # Run seed script
-
-# Testing
-pnpm run test                   # Run unit tests
-pnpm run test:watch             # Run tests in watch mode
-pnpm run test:cov               # Generate coverage report
-pnpm run test:e2e               # Run e2e tests
-
-# Linting
-pnpm run lint                   # Run ESLint
-pnpm run format                 # Format with Prettier
+```
+docs/
+├── business/      # Context only - not prescriptive
+├── technical/     # AUTHORITATIVE for implementation
+├── product/       # AUTHORITATIVE for features
+├── operations/    # GTM, campaigns
+└── ai-guides/     # Claude Code patterns
 ```
 
-### Frontend (Vite + React)
+## Key Documents
 
-```bash
-# Development
-cd apps/frontend-app
-pnpm dev                        # Start dev server
+| Purpose | Document |
+|---------|----------|
+| MVP Scope | `docs/business/mvp-definition.md` |
+| Features | `docs/product/product-spec.md` |
+| Backend | `docs/technical/backend-spec.md` |
+| Frontend | `docs/technical/frontend-spec.md` |
+| Infrastructure | `docs/technical/infrastructure-spec.md` |
+| Roadmap | `docs/business/development-roadmap.md` |
 
-# Build
-pnpm build                      # Production build
-pnpm preview                    # Preview production build
+## Quick Checks
 
-# Type checking
-pnpm type-check                 # Run TypeScript compiler check
-```
+Before making changes, verify:
 
-### Documentation Management
-
-```bash
-# Check all markdown links
-markdown-link-check docs/**/*.md
-
-# Validate markdown syntax
-markdownlint docs/**/*.md
-
-# Find TODO items
-grep -r "TODO\|FIXME" docs/ --include="*.md"
-```
-
-## AI Development Context
-
-When working on this documentation:
-
-1. **Technical Accuracy**: All specifications are production-ready, not theoretical
-2. **Implementation Guidance**: Code examples should be copy-pasteable
-3. **Performance Focus**: Specific numbers (2s, 0.5s) are hard requirements
-4. **No Genesis Features**: Sage.ai has equal access for all users
-5. **Conversational Onboarding**: No upfront surveys - profile inferred from chat
-6. **Context Simplicity**: 20-message window only (no RAG, no summarization for MVP)
-
-## File Relationships
-
-Key document dependencies to understand when editing:
-
-- `MVP_technical_paper.md` → Core technology stack reference
-- `docs/business/mvp-definition.md` → Defines MVP scope (3-month timeline)
-- `docs/business/business-plan.md` → Business model and GTM strategy
-- `docs/business/branding-guide.md` → Brand identity and messaging
-- `docs/technical/backend-spec.md` → Nest.js architecture reference
-- `docs/product/product-spec.md` → Defines 3 core features (Chat, Portfolio, Alerts)
-- `docs/ai-guides/backend-ai-guide.md` → Claude Code prompts for implementation
-
-## Documentation Standards
-
-When updating documentation:
-
-1. **Version control**: Update version numbers and dates at document end
-2. **Cross-references**: Use relative links: `[Backend Spec](../technical/backend-spec.md)`
-3. **Code examples**: All TypeScript/React code must be production-ready
-4. **Performance metrics**: Always include numbers (not "fast" but "2 seconds")
-5. **Technology accuracy**: Use correct versions (Nest.js 10.x, Prisma 5.x, etc.)
-
-## Project Status
-
-- **Current Phase**: Documentation complete, ready for implementation
-- **MVP Timeline**: 3 months (Month 1: Infrastructure, Month 2: Core features, Month 3: Polish & Launch)
-- **Target Metrics**: 500 MAU (MVP), 5K MAU (Q1 2026), 10K MAU (Q4 2026)
-- **No Code**: This repository contains only documentation - implementation in `sage-platform` repository (to be created)
-
-## External Dependencies
-
-Documentation references these external systems:
-
-### AI & Infrastructure
-- **Claude API**: Anthropic Claude Sonnet 4 / Haiku 4 (no other LLMs for MVP)
-- **@anthropic-ai/sdk**: TypeScript SDK for direct integration
-- **Nest.js SSE**: Built-in Server-Sent Events for real-time Claude responses
-- **AWS Infrastructure**: ECS Fargate, RDS PostgreSQL 18, ElastiCache Valkey 8.x, Lambda, S3/CloudFront
-
-### Market Data
-- **Binance WebSocket** (Primary): Real-time price data for 6 cryptocurrencies (BTC, ETH, SOL, BNB, DOGE, XRP)
-  - Rate limit: Unlimited
-  - Caching: Valkey 5-minute TTL
-- **Gate.io WebSocket** (Fallback): Auto-switch when Binance disconnects
-  - Rate limit: Unlimited
-  - Caching: Valkey 5-minute TTL
-- **Alternative.me**: Fear & Greed Index
-  - Rate limit: Unlimited
-  - Caching: Valkey 30-minute TTL
-
-### Auth & Notifications
-- **Auth.js (@auth/core)**: Google OAuth integration
-- **Discord Webhooks**: 3 channels for alerts (#errors, #performance, #business-metrics)
-- **Web Push API**: PWA push notifications (VAPID protocol)
-
-## Important Notes
-
-- This is purely documentation - no executable code in this repository
-- All architectural decisions prioritize **rapid MVP development** with **clean architecture**:
-  - Complete backend/frontend separation (Nest.js + React SPA)
-  - Layered + Domain architecture for maintainability
-  - Prisma ORM for type-safe database access
-  - 20-message context window (no RAG for MVP)
-  - ECS Fargate (not EKS)
-- Performance targets are **hard requirements**, not aspirational:
-  - 2 seconds to first token
-  - <1% hallucination rate
-  - 0.5 seconds context load
-- The **3-month MVP timeline** is achievable with TypeScript fullstack approach:
-  - Month 1: Nest.js + Prisma setup is rapid with TypeScript
-  - Month 2: @anthropic-ai/sdk integration is straightforward
-  - Month 3: BullMQ for async jobs, @nestjs/schedule for cron
-- **Trade-offs accepted for speed**:
-  - Monorepo complexity: Considered Turborepo but keeping simple for MVP
-  - Type safety: Full TypeScript stack (backend + frontend)
-  - Deployment: Separate backend/frontend pipelines (ECS Fargate + S3/CloudFront)
-- **Dual Hook GTM** is critical:
-  - WhyBitcoinFallen.com must launch Month 1
-  - Sage.ai landing must convert at 10%+
-
-## Technology Stack Summary
-
-### Core Stack
-
-| Component | Technology | Version | Why |
-|-----------|-----------|---------|-----|
-| **Backend** | Nest.js | 10.x | TypeScript native, modular |
-| **ORM** | Prisma | 5.x | Type-safe, intuitive |
-| **Frontend** | React + Vite | 18.3 + 5.x | Fast HMR, modern |
-| **State** | Zustand + TanStack Query | 4.x + 5.x | Simple + powerful |
-| **AI** | Claude Sonnet 4 + Haiku 4 | - | Best reasoning + cost |
-| **DB** | PostgreSQL | 18 | 5-year LTS, JSON 30% faster |
-| **Cache** | Valkey | 8.x | Redis-compatible, OSS stable |
-| **Queue** | BullMQ | 5.x | Reliable background jobs |
-
-### Infrastructure
-
-- **Container**: AWS ECS Fargate
-- **Static**: S3 + CloudFront
-- **IaC**: Pulumi (TypeScript)
-- **Monitoring**: Sentry + CloudWatch + Discord
+- [ ] Does this align with MVP scope? (`docs/business/mvp-definition.md`)
+- [ ] Is this feature defined? (`docs/product/product-spec.md`)
+- [ ] Does the tech stack match? (`docs/technical/backend-spec.md` Section 1)
+- [ ] Are performance numbers preserved?
+- [ ] Did I update related documents?
 
 ---
 
-**Last Updated**: 2025년 12월 26일
-**Version**: 5.0 - PostgreSQL 18 + Valkey + Pulumi Stack
-**Architecture**: Layered + Domain (Clean Lite), TypeScript Fullstack
-**Maintainer**: Sam (dev@5010.tech)
+**Last Updated**: 2025-12-30
