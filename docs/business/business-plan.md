@@ -303,9 +303,9 @@ interface MoatAnalysis {
 | 인건비 | $30,000 | 개발자 2명 x 3개월 |
 | 인프라 비용 | $3,000 | AWS (ECS, RDS, Valkey, S3) |
 | AI API 비용 | $5,000 | Claude API (Sonnet 4 + Haiku 4) |
-| 외부 API | $1,000 | CoinGecko Pro |
+| 외부 API | $0 | Binance/Gate.io WebSocket (무료) |
 | 기타 | $3,000 | 도메인, 디자인, 마케팅 |
-| **총계** | **$42,000** | 3개월 MVP 개발 |
+| **총계** | **$41,000** | 3개월 MVP 개발 |
 
 ### 10.2 운영 비용 (월간, 안정화 후)
 
@@ -313,16 +313,16 @@ interface MoatAnalysis {
 |------|------|------|
 | 인프라 | $500 | AWS |
 | AI API | $2,000 | Claude API (MAU 5K 기준) |
-| 외부 API | $200 | CoinGecko, CryptoPanic |
+| 외부 API | $0 | Binance/Gate.io WebSocket (무료) |
 | 모니터링 | $100 | Sentry, CloudWatch |
-| **총계** | **$2,800/월** |  |
+| **총계** | **$2,600/월** |  |
 
 ### 10.3 손익분기점 (BEP)
 
 ```
 손익분기점 분석
-├── 월 고정비: $2,800
-├── 필요 유료 구독자: 140명 (Pro $19.99 기준)
+├── 월 고정비: $2,600
+├── 필요 유료 구독자: 130명 (Pro $19.99 기준)
 └── 예상 달성 시점: Q3 2026
 ```
 
@@ -409,7 +409,8 @@ interface MoatAnalysis {
 
 ### B. 참고 자료
 
-- CoinGecko: https://www.coingecko.com
+- Binance WebSocket API: https://binance-docs.github.io/apidocs/spot/en/#websocket-market-streams
+- Gate.io WebSocket API: https://www.gate.io/docs/developers/apiv4/ws/en/
 - Anthropic Claude: https://www.anthropic.com
 - Market Research: Statista, Allied Market Research
 

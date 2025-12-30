@@ -115,7 +115,7 @@ graph LR
 1. Validates user input (symbol, action, price)
 2. Checks user tier (max 3 portfolios for Pro)
 3. Saves to database via Prisma
-4. Returns created trade with current price from CoinGecko
+4. Returns created trade with current price from WebSocket cache
 Use existing patterns from src/modules/market"
 ```
 

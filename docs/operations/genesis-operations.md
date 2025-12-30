@@ -294,7 +294,7 @@ That's Wallet Buffett (월렛 버핏)
 [Robot] Powered by Claude Sonnet 4
 
 We built a multi-agent system that:
-- Fetches real-time data (CoinGecko, Fear & Greed)
+- Fetches real-time data (Binance/Gate.io WebSocket, Fear & Greed)
 - Cross-validates every number
 - Gives you insights, not just information
 

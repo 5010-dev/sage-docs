@@ -58,7 +58,7 @@
 
 | 용도 | 서비스 | 비고 |
 |------|--------|------|
-| 시장 데이터 | CoinGecko API | 무료 티어 (MVP 충분) |
+| 시장 데이터 | Binance/Gate.io WebSocket | 실시간 가격, 무료 |
 | 공포탐욕지수 | Alternative.me API | Fear & Greed Index |
 
 ---
@@ -132,7 +132,7 @@
 |------|--------|
 | ECS Fargate | EKS (트래픽 증가 시) |
 | BullMQ | Temporal (워크플로우 복잡화 시) |
-| CoinGecko | Binance WebSocket (실시간 필요 시) |
+| Binance/Gate.io WS | 추가 거래소 (시장 커버리지 확대 시) |
 | 단일 리전 | 멀티 리전 (글로벌 확장 시) |
 
 ---

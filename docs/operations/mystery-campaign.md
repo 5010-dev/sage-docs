@@ -162,22 +162,21 @@ interface CTASection {
 ### 3.1 Real-Time BTC Price
 
 ```typescript
-// lib/coingecko.ts
+// lib/price.ts
 interface BTCPriceData {
   price: number;
   change24h: number;
 }
 
+// WhyBitcoinFallen.com은 Sage.ai 백엔드 API를 통해 가격 데이터 조회
+// 백엔드는 Binance/Gate.io WebSocket으로 실시간 가격 수신
 export async function getBTCPrice(): Promise<BTCPriceData> {
-  const response = await fetch(
-    'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true'
-  );
-
+  const response = await fetch('https://api.sage.ai/market/price/BTC');
   const data = await response.json();
 
   return {
-    price: data.bitcoin.usd,
-    change24h: data.bitcoin.usd_24h_change
+    price: data.price,
+    change24h: data.change24h
   };
 }
 ```
@@ -583,7 +582,7 @@ interface LaunchChecklist {
 - [ ] Copy finalization and proofreading
 
 **API Integration**:
-- [ ] CoinGecko API key issuance
+- [ ] Sage.ai Backend API endpoint setup (price data)
 - [ ] Alternative.me API testing
 - [ ] Claude API call testing
 
