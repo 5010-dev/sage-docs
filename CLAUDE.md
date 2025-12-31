@@ -1,12 +1,14 @@
 # CLAUDE.md
 
-Constitution for Claude Code working with Sage.ai documentation.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+Constitution for Claude Code working with Sage.ai.
 
 ## Identity
 
 You are working on **Sage.ai** - an AI investment mentor platform.
-- This is a **documentation-only** repository. There is no executable code.
-- All specs are for a product **not yet built**.
+- This is a **monorepo** containing documentation, backend, frontend, and infrastructure.
+- Follow specs in `docs/technical/` when implementing features.
 
 ## Source of Truth (Priority Order)
 
@@ -19,6 +21,38 @@ When documents conflict, follow this hierarchy:
 
 If you find contradictions, **ask the user** before proceeding.
 
+## Repository Structure
+
+```
+sage/
+├── docs/              # Specifications (AUTHORITATIVE)
+│   ├── business/      # Context only - not prescriptive
+│   ├── technical/     # Backend, frontend, infrastructure specs
+│   ├── product/       # Product requirements
+│   ├── operations/    # GTM, campaigns
+│   └── ai-guides/     # Claude Code patterns
+├── wiki/              # GitHub Wiki sync (do not edit directly)
+├── apps/
+│   ├── backend/       # Nest.js 10.x + Prisma 5.x
+│   └── frontend/      # React 18.3 + Vite 5
+├── packages/          # Shared code (types, utils)
+└── infra/             # IaC (Terraform/CDK)
+```
+
+**Note**: Some documents have Korean versions (suffix `-kr`). The English version is authoritative.
+
+## Tech Stack (MUST Use Exactly)
+
+| Layer | Technology |
+|-------|------------|
+| Backend | Nest.js 10.x, Prisma 5.x, TypeScript |
+| Frontend | React 18.3, Vite 5, TypeScript, Zustand 4.x, TanStack Query 5.x |
+| Database | PostgreSQL 18, Valkey 8.x |
+| AI | Claude Sonnet 4, Claude Haiku 4 (@anthropic-ai/sdk) |
+| Auth | Auth.js (@auth/core) with Google OAuth |
+| Infra | ECS Fargate, S3/CloudFront, RDS, ElastiCache |
+| Package Manager | pnpm |
+
 ## Terminology (MUST Use Correctly)
 
 | Term | Definition | Wrong Usage |
@@ -30,11 +64,11 @@ If you find contradictions, **ask the user** before proceeding.
 
 ## MUST Do
 
-- **Reference specs**: Always check `docs/technical/` before answering architecture questions
+- **Reference specs**: Always check `docs/technical/` before implementing
 - **Preserve consistency**: When editing one doc, check related docs for conflicts
 - **Use exact versions**: Nest.js 10.x, Prisma 5.x, PostgreSQL 18, Valkey 8.x
 - **Keep performance numbers**: 2s first token, 0.5s context load, <1% hallucination
-- **Link, don't duplicate**: Point to spec docs instead of copying content
+- **Follow existing patterns**: Check existing code before creating new patterns
 
 ## MUST NOT Do
 
@@ -42,33 +76,31 @@ If you find contradictions, **ask the user** before proceeding.
 - **Don't add RAG/vector DB**: MVP uses 20-message window only
 - **Don't suggest EKS**: MVP uses ECS Fargate only
 - **Don't mix personas in MVP**: Only Wallet Buffett (Claude) exists in MVP
-- **Don't create code files**: This repo has documentation only
 - **Don't change performance targets**: They are hard requirements, not suggestions
 
-## Out of Scope (REFUSE These)
+## Commands
 
-Refuse and explain why if asked to:
+```bash
+# Install dependencies
+pnpm install
 
-- Write implementation code (→ "This is a docs-only repo")
-- Add features not in product spec (→ "Check docs/product/product-spec.md first")
-- Use technologies not in tech stack (→ "See docs/technical/backend-spec.md Section 1")
-- Discuss Phase 2+ features as if they're MVP (→ "That's Phase 2+, MVP scope is in docs/business/mvp-definition.md")
+# Development
+pnpm dev              # Run all apps
+pnpm dev:backend      # Run backend only
+pnpm dev:frontend     # Run frontend only
 
-## When Uncertain
+# Build
+pnpm build            # Build all
+pnpm build:backend    # Build backend only
+pnpm build:frontend   # Build frontend only
 
-1. **Check the spec first**: Read the relevant doc before answering
-2. **Ask if conflicting**: "I found X in doc A but Y in doc B. Which is correct?"
-3. **Don't guess numbers**: If a metric isn't documented, say so
+# Test
+pnpm test             # Run all tests
+pnpm test:backend     # Run backend tests
+pnpm test:frontend    # Run frontend tests
 
-## Repository Structure
-
-```
-docs/
-├── business/      # Context only - not prescriptive
-├── technical/     # AUTHORITATIVE for implementation
-├── product/       # AUTHORITATIVE for features
-├── operations/    # GTM, campaigns
-└── ai-guides/     # Claude Code patterns
+# Lint
+pnpm lint             # Lint all
 ```
 
 ## Key Documents
@@ -88,10 +120,10 @@ Before making changes, verify:
 
 - [ ] Does this align with MVP scope? (`docs/business/mvp-definition.md`)
 - [ ] Is this feature defined? (`docs/product/product-spec.md`)
-- [ ] Does the tech stack match? (`docs/technical/backend-spec.md` Section 1)
+- [ ] Does the tech stack match? (see Tech Stack section above)
 - [ ] Are performance numbers preserved?
-- [ ] Did I update related documents?
+- [ ] Did I follow existing patterns?
 
 ---
 
-**Last Updated**: 2025-12-30
+**Last Updated**: 2025-12-31

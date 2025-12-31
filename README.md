@@ -57,13 +57,34 @@
 
 ### 서비스 구성 (MVP)
 
-- **WhyBitcoinFallen.com** - 바이럴 마케팅 사이트
-- **Sage.ai 랜딩** - 서비스 소개 페이지
-- **Sage.ai 앱** - 메인 AI 멘토링 플랫폼
+| 서비스 | 레포 | 배포 |
+|--------|------|------|
+| **WhyBitcoinFallen.com** | 별도 레포 | Vercel |
+| **Sage.ai 랜딩** | 별도 레포 | Vercel |
+| **Sage.ai 앱** | `sage/apps/frontend` | CloudFront |
+| **API** | `sage/apps/backend` | ECS Fargate |
 
 ---
 
 ## 프로젝트 구조
+
+### 모노레포 구조
+
+```
+sage/
+├── apps/
+│   ├── backend/           # Nest.js 10.x + Prisma 5.x
+│   └── frontend/          # React 18.3 + Vite 5
+├── packages/              # 공유 코드 (타입, 유틸)
+├── infra/                 # IaC (Terraform/CDK)
+├── docs/                  # 명세서 (단일 진실 공급원)
+│   ├── business/          # 사업 계획, GTM
+│   ├── technical/         # 백엔드/프론트엔드/인프라 스펙
+│   ├── product/           # 제품 요구사항
+│   ├── operations/        # 운영 가이드
+│   └── ai-guides/         # AI 개발 가이드
+└── wiki/                  # GitHub Wiki 동기화
+```
 
 ### 비즈니스 & 전략
 
@@ -281,4 +302,4 @@ _"자네, 시장이 공포에 질렸을 때가 바로 기회일세."_ - 월렛 �
 **Built with**: Nest.js 10.x + Prisma 5.x, React 18.3 + Vite 5, Tailwind CSS 3.x, Claude Sonnet 4 & Haiku 4
 **Architecture**: Layered + Domain (Clean Lite), TypeScript Fullstack
 **Target**: 3개월 MVP 완성, 2026년 MAU 10K+
-**Version**: 4.0 (2025년 12월 19일) - Nest.js + Prisma Stack
+**Version**: 4.1 (2025년 12월 31일) - Monorepo 전환
