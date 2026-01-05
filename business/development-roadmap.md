@@ -28,10 +28,10 @@
 
 | Phase | 시기 | 핵심 가치 | 목표 |
 |-------|------|----------|------|
-| MVP | 2026 Q1 | PMF 검증 | MAU 2,000 |
-| Scale | 2026 Q2-Q3 | 글로벌 확장 | MAU 15,000 |
-| Monetize | 2026 Q4 | 수익화 | MRR $9,000 |
-| Ecosystem | 2027+ | 생태계 | MAU 500,000 |
+| MVP | 2026 Q1 | PMF 검증 | MAU 800-1,200 (30% 주간 retention) |
+| Scale | 2026 Q2-Q3 | 유기적 확산 | MAU 3,000-5,000 (25% retention) |
+| Monetize | 2026 Q4 | 수익화 검증 | MAU 8,000-12,000, MRR $1,200-2,000 |
+| Ecosystem | 2027+ | 생태계 | MAU 30,000+ (시장 반응에 따라) |
 
 ---
 
@@ -185,11 +185,11 @@ interface MarketAlertConfig {
 ```
 
 **런칭 정보**:
-- D-Day: Week 12 월요일
+- D-Day: 2026년 3월 23일 (월요일)
 - 전략: WhyBitcoinFallen.com + Product Hunt + Reddit
-- 목표: 첫 100명 가입, Discord 200+ members
+- 목표: 첫 달 100-150명 가입, Discord 50-80 members
 
-**마일스톤**: MVP 공식 런칭 + MAU 2,000+
+**마일스톤**: MVP 공식 런칭 + Q1 말 (3월 31일) MAU 800-1,200 (retention 30%+)
 
 ### 2.5 점진적 출시의 장점
 
@@ -220,13 +220,14 @@ interface MarketAlertConfig {
 | 지표 | 목표 | 측정 방법 |
 |------|------|----------|
 | 베타 테스터 | 10-20명 | 직접 모집 |
-| WhyBitcoinFallen 방문자 | 일 1,000+ | Google Analytics |
-| Sage.ai MAU | 2,000+ | 활성 사용자 수 |
+| WhyBitcoinFallen 방문자 | 일 200-400 | Google Analytics |
+| Sage.ai MAU | 800-1,200 | 활성 사용자 수 |
+| 주간 Retention | 30%+ | Cohort 분석 |
 | 환각률 | <1% | 사용자 신고 / 전체 응답 |
-| Shadow Portfolio 추적 | 10+ 트레이드 | DB 기록 |
+| Shadow Portfolio 추적 | 5-10 트레이드 | DB 기록 |
 | NPS | 40+ | 베타 테스터 설문 |
 | 응답 속도 | 2초 이내 | Sentry Traces |
-| 가동률 | 99%+ | CloudWatch Uptime |
+| 가동률 | 95%+ | CloudWatch Uptime |
 
 ---
 
@@ -346,7 +347,7 @@ interface PersonaConfig {
 └── [ ] 그룹 채팅 UI (3개 아바타)
 ```
 
-**마일스톤**: MAU 20,000 + 4개 언어 런칭
+**마일스톤**: MAU 3,000-5,000 + 4개 언어 런칭 (오가닉 성장 검증)
 
 ### 3.3 Q3 (7-9월): 지표 개선 & 유료화
 
@@ -386,7 +387,7 @@ interface RAGConfig {
 - 10개 추가 (총 16개)
 - ADA, DOT, AVAX, MATIC, LINK, UNI, ATOM, LTC, XLM, ALGO
 
-**마일스톤**: MAU 40,000 + 유료 구독자 500명 + MRR $10,000
+**마일스톤**: MAU 8,000-12,000 + 유료 구독자 80-120명 + MRR $1,200-2,000 (전환율 1-1.5%)
 
 ---
 
@@ -435,7 +436,7 @@ Discord 서버 구조
 └── #general-chat
 ```
 
-**마일스톤**: MAU 30,000 + MRR $9,000 + Discord DAU 1,000
+**마일스톤**: MAU 15,000-20,000 + MRR $2,500-4,000 + Discord DAU 300-500 (커뮤니티 형성 확인)
 
 ---
 
@@ -504,10 +505,10 @@ DeFi 기능
 
 | 분기 | MAU | 인프라 |
 |------|-----|--------|
-| Q1 | 5,000 | ECS Fargate (2 tasks) |
-| Q2 | 20,000 | ECS Fargate (5 tasks) + Auto Scaling |
-| Q3 | 40,000 | ECS Fargate (10 tasks) + CloudFront 최적화 |
-| Q4 | 100,000 | ECS Fargate (20 tasks) + Multi-Region 고려 |
+| Q1 | 800-1,200 | ECS Fargate (2 tasks) |
+| Q2 | 3,000-5,000 | ECS Fargate (3-4 tasks) + Auto Scaling |
+| Q3 | 8,000-12,000 | ECS Fargate (5-6 tasks) + CloudFront 최적화 |
+| Q4 | 15,000-20,000 | ECS Fargate (8-10 tasks) + Read Replica 고려 |
 
 ### 7.2 2027년 이후
 
@@ -552,12 +553,13 @@ DeFi 기능
 
 | 지표 | Q1 | Q2 | Q3 | Q4 |
 |------|----|----|----|----|
-| MAU | 5K | 20K | 40K | 100K |
-| 유료 구독자 | 50 | 200 | 500 | 1,500 |
-| MRR | $1K | $4K | $10K | $30K |
-| ARR | $12K | $48K | $120K | $360K |
-| NPS | 40+ | 45+ | 50+ | 55+ |
-| Churn Rate | <10% | <7% | <5% | <5% |
+| MAU | 800-1.2K | 3-5K | 8-12K | 15-20K |
+| 주간 Retention | 30%+ | 25%+ | 25%+ | 25%+ |
+| 유료 구독자 | 8-15 | 30-60 | 80-120 | 150-250 |
+| MRR | $150-300 | $600-1.2K | $1.2-2K | $2.5-4K |
+| ARR | $1.8-3.6K | $7.2-14.4K | $14.4-24K | $30-48K |
+| NPS | 40+ | 40+ | 45+ | 45+ |
+| Monthly Churn | <15% | <10% | <8% | <7% |
 
 ---
 
@@ -585,7 +587,7 @@ DeFi 기능
 
 ### 12.1 2026년 목표 요약
 
-**"3개월 MVP → 1년 안에 MAU 30,000 달성"**
+**"3개월 MVP → 1년 안에 PMF 검증 및 지속 가능한 성장 기반 확보 (MAU 15,000-20,000)"**
 
 ### 12.2 핵심 마일스톤
 

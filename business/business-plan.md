@@ -154,12 +154,12 @@ Sage.ai 핵심 기능
 
 ```typescript
 interface RevenueProjection {
-  mau: 10000;
-  conversionRate: "5%";
-  paidSubscribers: 500;
-  arpu: "$25/월";
-  monthlyMRR: "$12,500";
-  annualARR: "$150,000";
+  mau: "15,000-20,000";
+  conversionRate: "1-1.5%";
+  paidSubscribers: "150-250";
+  arpu: "$16-18/월";
+  monthlyMRR: "$2,500-4,000";
+  annualARR: "$30,000-48,000";
 }
 ```
 
@@ -277,20 +277,21 @@ interface MoatAnalysis {
 
 | 분기 | 핵심 목표 | 마일스톤 | KPI |
 |------|-----------|----------|-----|
-| Q1 | MVP 검증 | Beta 런칭, 초기 마케팅 | WhyBitcoinFallen 월 10K+, Sage.ai MAU 2K+ |
-| Q2 | 글로벌 확장 | 멀티 채팅, 4개 언어 | MAU 5K+ |
-| Q3 | 지표 개선 | 유료 구독 런칭, ICO 준비 | MAU 15K+, 유료 225+ |
-| Q4 | ICO 본격화 | 토큰 상장, 생태계 확장 | MAU 30K+ |
+| Q1 | PMF 검증 | Beta 런칭, retention 검증 | WhyBitcoinFallen 일 200-400, Sage.ai MAU 800-1.2K, 주간 retention 30%+ |
+| Q2 | 유기적 확산 | 멀티 페르소나, 4개 언어 | MAU 3-5K, retention 25%+ |
+| Q3 | 수익화 검증 | 유료 구독 런칭 | MAU 8-12K, 유료 80-120명 |
+| Q4 | 커뮤니티 형성 | Discord 활성화, 생태계 기반 | MAU 15-20K, MRR $2.5-4K |
 
 ### 9.2 2026년 말 목표
 
 | 지표 | 목표 |
 |------|------|
-| WhyBitcoinFallen.com 월 방문자 | 100,000+ |
-| Sage.ai MAU | 30,000+ |
-| 유료 구독자 | 450+ (전환율 1.5%) |
-| Discord DAU | 1,000+ |
-| Shadow Portfolio ROI | 벤치마크 +3%p |
+| WhyBitcoinFallen.com 일 방문자 | 500-800 |
+| Sage.ai MAU | 15,000-20,000 |
+| 유료 구독자 | 150-250 (전환율 1-1.5%) |
+| MRR | $2,500-4,000 |
+| Discord DAU | 300-500 |
+| Shadow Portfolio ROI | 벤치마크 +3%p (검증 필요) |
 
 ---
 
@@ -321,9 +322,10 @@ interface MoatAnalysis {
 
 ```
 손익분기점 분석
-├── 월 고정비: $2,600
-├── 필요 유료 구독자: 130명 (Pro $19.99 기준)
-└── 예상 달성 시점: Q3 2026
+├── 월 운영 비용: $2,600
+├── 필요 유료 구독자: 130-160명
+└── 예상 달성 시점: 2026 Q4 또는 2027 Q1
+└── 주의: 인건비 포함 시 달성 시점 훨씬 지연됨
 ```
 
 ---

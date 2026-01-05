@@ -7,39 +7,85 @@ Constitution for Claude Code working with Sage.ai.
 ## Identity
 
 You are working on **Sage.ai** - an AI investment mentor platform.
-- This is a **monorepo** containing documentation, backend, frontend, and infrastructure.
-- Follow specs in `docs/technical/` when implementing features.
+- This is the **sage-docs** repository - Single Source of Truth for all documentation.
+- Code repositories (frontend, backend, infra) reference these specs.
+- Follow specs in `specs/` when implementing features.
+
+## Multi-Repository Structure
+
+Sage.ai is organized across 4 independent repositories:
+
+### 1. sage-docs (THIS REPOSITORY)
+- **Purpose**: Documentation and specifications
+- **Repository**: `https://github.com/5010-dev/sage-docs`
+- **Role**: Single Source of Truth
+
+### 2. sage-frontend
+- **Purpose**: React web application
+- **Repository**: `https://github.com/5010-dev/sage-frontend`
+- **Deployment**: AWS Amplify
+
+### 3. sage-backend
+- **Purpose**: Nest.js API server
+- **Repository**: `https://github.com/5010-dev/sage-backend`
+- **Deployment**: AWS ECS Fargate
+
+### 4. sage-infra
+- **Purpose**: Infrastructure as Code (Pulumi)
+- **Repository**: `https://github.com/5010-dev/sage-infra`
+- **Deployment**: Pulumi CLI
 
 ## Source of Truth (Priority Order)
 
 When documents conflict, follow this hierarchy:
 
 1. **This file (CLAUDE.md)** - Overrides everything
-2. **docs/technical/** - Backend, frontend, infrastructure specs
-3. **docs/product/** - Product requirements
-4. **docs/business/** - Business context (informational, not prescriptive)
+2. **specs/** - Technical specifications (backend, frontend, infrastructure)
+3. **product/** - Product requirements
+4. **business/** - Business context (informational, not prescriptive)
 
 If you find contradictions, **ask the user** before proceeding.
 
-## Repository Structure
+## Repository Structure (sage-docs)
 
 ```
-sage/
-├── docs/              # Specifications (AUTHORITATIVE)
-│   ├── business/      # Context only - not prescriptive
-│   ├── technical/     # Backend, frontend, infrastructure specs
-│   ├── product/       # Product requirements
-│   ├── operations/    # GTM, campaigns
-│   └── ai-guides/     # Claude Code patterns
-├── wiki/              # GitHub Wiki sync (do not edit directly)
-├── apps/
-│   ├── backend/       # Nest.js 10.x + Prisma 5.x
-│   └── frontend/      # React 18.3 + Vite 5
-├── packages/          # Shared code (types, utils)
-└── infra/             # IaC (Terraform/CDK)
+sage-docs/
+├── specs/             # Technical specifications (AUTHORITATIVE)
+│   ├── backend-spec.md
+│   ├── frontend-spec.md
+│   └── infrastructure-spec.md
+├── architecture/      # System architecture documentation
+│   └── system-overview.md
+├── business/          # Business context (not prescriptive)
+│   ├── mvp-definition.md
+│   ├── business-plan.md
+│   └── development-roadmap.md
+├── product/           # Product requirements
+│   └── product-spec.md
+├── operations/        # GTM, campaigns
+│   └── operations-roadmap.md
+├── docs/              # Legacy docs (to be migrated)
+│   ├── technical/
+│   ├── ai-guides/
+│   └── ...
+├── wiki/              # GitHub Wiki sync (auto-generated)
+├── CLAUDE.md          # This file
+└── README.md          # Links to all repositories
 ```
 
 **Note**: Some documents have Korean versions (suffix `-kr`). The English version is authoritative.
+
+## Documentation Synchronization
+
+Code repositories contain **local copies** of relevant specs for quick reference:
+- `sage-frontend/docs/frontend-spec.md` (copied from `specs/frontend-spec.md`)
+- `sage-backend/docs/backend-spec.md` (copied from `specs/backend-spec.md`)
+- `sage-infra/docs/infrastructure-spec.md` (copied from `specs/infrastructure-spec.md`)
+
+**When updating specs**:
+1. Update in `sage-docs/specs/` (Source of Truth)
+2. Copy to relevant code repository
+3. Commit with message: "Sync [spec] from sage-docs@[commit]"
 
 ## Tech Stack (MUST Use Exactly)
 
@@ -78,52 +124,62 @@ sage/
 - **Don't mix personas in MVP**: Only Wallet Buffett (Claude) exists in MVP
 - **Don't change performance targets**: They are hard requirements, not suggestions
 
-## Commands
-
-```bash
-# Install dependencies
-pnpm install
-
-# Development
-pnpm dev              # Run all apps
-pnpm dev:backend      # Run backend only
-pnpm dev:frontend     # Run frontend only
-
-# Build
-pnpm build            # Build all
-pnpm build:backend    # Build backend only
-pnpm build:frontend   # Build frontend only
-
-# Test
-pnpm test             # Run all tests
-pnpm test:backend     # Run backend tests
-pnpm test:frontend    # Run frontend tests
-
-# Lint
-pnpm lint             # Lint all
-```
-
-## Key Documents
+## Key Documents (sage-docs)
 
 | Purpose | Document |
 |---------|----------|
-| MVP Scope | `docs/business/mvp-definition.md` |
-| Features | `docs/product/product-spec.md` |
-| Backend | `docs/technical/backend-spec.md` |
-| Frontend | `docs/technical/frontend-spec.md` |
-| Infrastructure | `docs/technical/infrastructure-spec.md` |
-| Roadmap | `docs/business/development-roadmap.md` |
+| System Overview | `architecture/system-overview.md` |
+| MVP Scope | `business/mvp-definition.md` |
+| Features | `product/product-spec.md` |
+| Backend Spec | `specs/backend-spec.md` |
+| Frontend Spec | `specs/frontend-spec.md` |
+| Infrastructure Spec | `specs/infrastructure-spec.md` |
+| Roadmap | `business/development-roadmap.md` |
+
+## Commands (in Code Repositories)
+
+### Frontend (sage-frontend)
+```bash
+pnpm install          # Install dependencies
+pnpm dev              # Run dev server
+pnpm build            # Build for production
+pnpm preview          # Preview production build
+pnpm lint             # Lint code
+pnpm test             # Run tests
+```
+
+### Backend (sage-backend)
+```bash
+pnpm install          # Install dependencies
+pnpm dev              # Run dev server
+pnpm build            # Build for production
+pnpm start:prod       # Start production server
+pnpm lint             # Lint code
+pnpm test             # Run tests
+pnpm prisma:migrate   # Run database migrations
+pnpm prisma:generate  # Generate Prisma Client
+```
+
+### Infrastructure (sage-infra)
+```bash
+pnpm install          # Install dependencies
+pulumi preview        # Preview infrastructure changes
+pulumi up             # Apply infrastructure changes
+pulumi destroy        # Destroy infrastructure
+```
 
 ## Quick Checks
 
 Before making changes, verify:
 
-- [ ] Does this align with MVP scope? (`docs/business/mvp-definition.md`)
-- [ ] Is this feature defined? (`docs/product/product-spec.md`)
+- [ ] Does this align with MVP scope? (`business/mvp-definition.md`)
+- [ ] Is this feature defined? (`product/product-spec.md`)
 - [ ] Does the tech stack match? (see Tech Stack section above)
 - [ ] Are performance numbers preserved?
 - [ ] Did I follow existing patterns?
+- [ ] Am I in the correct repository? (docs vs code)
 
 ---
 
-**Last Updated**: 2025-12-31
+**Last Updated**: 2026-01-05
+**Migration**: Converted from monorepo to multi-repository structure

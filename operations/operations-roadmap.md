@@ -171,7 +171,7 @@ interface LaunchCampaign {
 - Response time monitoring (target: 2 seconds)
 - Discord community activation
 
-**Target**: MAU 2,000+, NPS 40+
+**Target**: MAU 800-1,200 (주간 retention 30%+), NPS 40+
 
 ---
 
@@ -217,7 +217,7 @@ interface ExpansionStrategy {
 - Monthly "Investment Challenge with Wallet Buffett"
 - Top performers rewarded with Pro plan (1 year free)
 
-**Target**: MAU 20,000+
+**Target**: MAU 3,000-5,000 (오가닉 성장 검증)
 
 ### 3.2 Q3: Monetization
 
@@ -258,7 +258,7 @@ interface MonetizationStrategy {
 - YouTube channel launch (investment education)
 - Podcast guest appearances (3-5 times)
 
-**Target**: MAU 40,000+, Paid subscribers 500+
+**Target**: MAU 8,000-12,000, Paid subscribers 80-120 (전환율 1-1.5%)
 
 ---
 
@@ -320,7 +320,7 @@ interface ScaleCampaigns {
 - Online conference hosting ("AI & Crypto Investment Summit")
 - Offline meetups (Seoul, Tokyo, Singapore)
 
-**Target**: MAU 30,000+, Discord DAU 1,000+
+**Target**: MAU 15,000-20,000, Discord DAU 300-500 (커뮤니티 형성 확인)
 
 ---
 
@@ -345,10 +345,10 @@ interface CommunityMetrics {
 
 | Metric | Q1 Target | Q2 Target | Q3 Target | Q4 Target |
 |--------|-----------|-----------|-----------|-----------|
-| **Discord Members** | 200 | 1,000 | 3,000 | 10,000 |
-| **Discord DAU** | 50 | 200 | 500 | 1,000 |
-| **Twitter Followers** | 500 | 2,000 | 5,000 | 10,000 |
-| **Newsletter Subscribers** | 100 | 500 | 1,500 | 5,000 |
+| **Discord Members** | 50-80 | 150-250 | 400-600 | 800-1,200 |
+| **Discord DAU** | 15-25 | 50-80 | 120-180 | 300-500 |
+| **Twitter Followers** | 100-200 | 400-700 | 1,000-1,500 | 2,000-3,000 |
+| **Newsletter Subscribers** | 30-50 | 100-200 | 300-500 | 800-1,200 |
 
 ### 5.2 Content Metrics
 

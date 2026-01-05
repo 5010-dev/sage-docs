@@ -3,7 +3,7 @@ name: Auto-Sync Repository to Wiki
 on:
   push:
     branches: [main]
-    paths: ['docs/**', 'WIKI_HOME.md', 'README.md']
+    paths: ['specs/**', 'architecture/**', 'business/**', 'product/**', 'operations/**', 'docs/**', 'WIKI_HOME.md', 'README.md']
   workflow_dispatch:  # 수동 트리거도 가능
 
 permissions:
@@ -77,8 +77,8 @@ jobs:
           fi
 
           # 각 디렉토리별로 파일 복사
-          echo "📁 Copying business documents..."
-          for file in docs/business/*.md; do
+          echo "📁 Copying specs (technical specifications)..."
+          for file in specs/*.md; do
             if [ -f "$file" ]; then
               filename=$(basename "$file" .md)
               # 파일명 변환 (snake_case to Title-Case)
@@ -88,8 +88,28 @@ jobs:
             fi
           done
 
-          echo "📁 Copying technical documents..."
-          for file in docs/technical/*.md; do
+          echo "📁 Copying architecture documents..."
+          for file in architecture/*.md; do
+            if [ -f "$file" ]; then
+              filename=$(basename "$file" .md)
+              newname=$(echo "$filename" | sed 's/_/-/g' | sed 's/\b\(.\)/\u\1/g')
+              echo "  - $filename → $newname"
+              cp "$file" "wiki-repo/$newname.md"
+            fi
+          done
+
+          echo "📁 Copying business documents..."
+          for file in business/*.md; do
+            if [ -f "$file" ]; then
+              filename=$(basename "$file" .md)
+              newname=$(echo "$filename" | sed 's/_/-/g' | sed 's/\b\(.\)/\u\1/g')
+              echo "  - $filename → $newname"
+              cp "$file" "wiki-repo/$newname.md"
+            fi
+          done
+
+          echo "📁 Copying product documents..."
+          for file in product/*.md; do
             if [ -f "$file" ]; then
               filename=$(basename "$file" .md)
               newname=$(echo "$filename" | sed 's/_/-/g' | sed 's/\b\(.\)/\u\1/g')
@@ -99,7 +119,7 @@ jobs:
           done
 
           echo "📁 Copying operations documents..."
-          for file in docs/operations/*.md; do
+          for file in operations/*.md; do
             if [ -f "$file" ]; then
               filename=$(basename "$file" .md)
               newname=$(echo "$filename" | sed 's/_/-/g' | sed 's/\b\(.\)/\u\1/g')
@@ -108,7 +128,7 @@ jobs:
             fi
           done
 
-          echo "📁 Copying AI guides..."
+          echo "📁 Copying AI guides (legacy)..."
           for file in docs/ai-guides/*.md; do
             if [ -f "$file" ]; then
               filename=$(basename "$file" .md)
@@ -124,6 +144,17 @@ jobs:
           cat > wiki-repo/_Sidebar.md << 'EOF'
           ## 🏠 [Home](Home)
 
+          ## 🏛️ Architecture
+          - [System Overview](System-Overview)
+
+          ## 📋 Technical Specs
+          - [Backend Spec](Backend-Spec)
+          - [Frontend Spec](Frontend-Spec)
+          - [Infrastructure Spec](Infrastructure-Spec)
+
+          ## 📦 Product
+          - [Product Spec](Product-Spec)
+
           ## 🏢 Business & Strategy
           - [Business Plan](Business-Plan)
           - [MVP Definition](Mvp-Definition)
@@ -132,12 +163,6 @@ jobs:
           - [AI Team Strategy](Ai-Team-Strategy)
           - [Development Roadmap](Development-Roadmap)
 
-          ## 🔧 Technical Specs
-          - [Backend Spec](Backend-Spec)
-          - [Frontend Spec](Frontend-Spec)
-          - [Infrastructure Spec](Infrastructure-Spec)
-          - [API Documentation Strategy](Api-Documentation-Strategy)
-
           ## 🚀 Operations
           - [Operations Roadmap](Operations-Roadmap)
           - [Live Ops Playbook](Live-Ops-Playbook)
@@ -145,15 +170,18 @@ jobs:
           - [Genesis Operations](Genesis-Operations)
           - [Mystery Campaign](Mystery-Campaign)
 
-          ## 🤖 AI Guides
+          ## 🤖 AI Guides (Legacy)
           - [Backend AI Guide](Backend-Ai-Guide)
           - [Frontend AI Guide](Frontend-Ai-Guide)
           - [Infrastructure AI Guide](Infrastructure-Ai-Guide)
 
           ---
 
-          ## 🔗 Quick Links
-          - 🏗️ [Main Repository](https://github.com/SAGE-AI-Protocol/sage-docs)
+          ## 🔗 Repositories
+          - 📚 [sage-docs](https://github.com/5010-dev/sage-docs) (Documentation)
+          - 🎨 [sage-frontend](https://github.com/5010-dev/sage-frontend) (React App)
+          - ⚙️ [sage-backend](https://github.com/5010-dev/sage-backend) (Nest.js API)
+          - 🏗️ [sage-infra](https://github.com/5010-dev/sage-infra) (Pulumi IaC)
           EOF
 
       - name: Commit and Push Changes

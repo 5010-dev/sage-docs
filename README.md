@@ -1,305 +1,309 @@
-# Sage.ai - AI 투자 멘토 플랫폼
+# Sage.ai Documentation
 
-## 월렛 버핏과 함께하는 암호화폐 투자
+> **Single Source of Truth** for all Sage.ai project documentation
 
-> **"모든 개인 투자자에게 월가 수준의 AI 멘토를"**
-
-[![MVP Development](https://img.shields.io/badge/status-3%EA%B0%9C%EC%9B%94%20MVP%20%EA%B0%9C%EB%B0%9C-orange)](https://github.com/sage-ai/sage-platform)
-[![Version](https://img.shields.io/badge/version-4.0-blue)]()
-[![License](https://img.shields.io/badge/license-Proprietary-red)](LICENSE)
+This repository contains all authoritative documentation, specifications, and architecture guidelines for the Sage.ai platform - an AI-powered investment mentor that helps users make smarter financial decisions.
 
 ---
 
-## 핵심 가치 제안
+## Repository Overview
 
-**Sage.ai**는 워렌 버핏의 투자 철학을 구현한 AI 멘토 '월렛 버핏'이 24시간 당신의 암호화폐 투자를 돕는 플랫폼입니다.
+Sage.ai is organized across **4 independent repositories**:
 
-### 3가지 핵심 기능
+### 1. **sage-docs** (THIS REPOSITORY)
+- **Purpose**: Documentation and specifications
+- **Repository**: [https://github.com/5010-dev/sage-docs](https://github.com/5010-dev/sage-docs)
+- **Role**: Single Source of Truth for all specs and architecture docs
 
-1. **월렛 버핏과의 대화**
-   - Claude Sonnet 4 기반 실시간 AI 멘토링
-   - 대화를 통해 자연스럽게 투자 성향 파악
-   - 시장 데이터 + 투자 철학 기반 통찰 제공
+### 2. **sage-frontend**
+- **Purpose**: React web application
+- **Repository**: [https://github.com/5010-dev/sage-frontend](https://github.com/5010-dev/sage-frontend) *(to be created)*
+- **Tech Stack**: React 18.3, Vite 5, TypeScript, Zustand, TanStack Query
+- **Deployment**: AWS Amplify (automatic on push to `main`)
 
-2. **섀도우 포트폴리오**
-   - "버핏 따라가기" - AI 추천을 가상으로 추적
-   - 투명한 성과 검증 (목표: 벤치마크 +3%p)
-   - 신뢰 구축의 핵심 기능
+### 3. **sage-backend**
+- **Purpose**: Nest.js API server
+- **Repository**: [https://github.com/5010-dev/sage-backend](https://github.com/5010-dev/sage-backend) *(to be created)*
+- **Tech Stack**: Nest.js 10.x, Prisma 5.x, PostgreSQL 18, Valkey 8.x
+- **Deployment**: AWS ECS Fargate via GitHub Actions
 
-3. **능동적 분석**
-   - 실시간 시장 모니터링 및 급변 시 즉시 분석
-   - 급변 시 PWA Push + Discord 알림
-   - 딥링크로 즉시 관련 채팅 시작
-
----
-
-## 📚 문서 네비게이션
-
-> **모든 프로젝트 문서는 이 저장소에서 관리됩니다** (단일 진실 공급원)
-
-### 빠른 시작
-
-| 문서 | 설명 | 대상 |
-|------|------|------|
-| **[Wiki Home](wiki/home.md)** | 전체 문서 인덱스 | 모든 팀원 |
-| **[CLAUDE.md](CLAUDE.md)** | AI 개발 가이드 (Claude Code) | 개발자 |
-| **[AI Team Strategy](docs/business/ai-team-strategy.md)** | AI-First 개발 전략 (Claude Code + GitHub Copilot) | 개발팀, 경영진 |
-| **[MVP_technical_paper.md](MVP_technical_paper.md)** | MVP 기술 스택 명세 | 개발팀 |
-| **[Business Plan](docs/business/business-plan.md)** | 비즈니스 플랜 | 경영진, 투자자 |
-| **[MVP Definition](docs/business/mvp-definition.md)** | MVP 정의 및 범위 | 전체 팀 |
-
-### 문서 디렉토리
-
-- **[docs/business/](docs/business/)** - 사업 계획, 시장 분석, GTM 전략, AI 팀 전략
-- **[docs/technical/](docs/technical/)** - 백엔드/프론트엔드/인프라 명세서, DB 스키마, API 문서
-- **[docs/operations/](docs/operations/)** - 운영 로드맵, 커뮤니티 관리, 라이브 운영
-- **[docs/ai-guides/](docs/ai-guides/)** - AI 기반 개발 가이드 (Backend/Frontend/Infrastructure)
-
-### 서비스 구성 (MVP)
-
-| 서비스 | 레포 | 배포 |
-|--------|------|------|
-| **WhyBitcoinFallen.com** | 별도 레포 | Vercel |
-| **Sage.ai 랜딩** | 별도 레포 | Vercel |
-| **Sage.ai 앱** | `sage/apps/frontend` | CloudFront |
-| **API** | `sage/apps/backend` | ECS Fargate |
+### 4. **sage-infra**
+- **Purpose**: Infrastructure as Code (Pulumi)
+- **Repository**: [https://github.com/5010-dev/sage-infra](https://github.com/5010-dev/sage-infra) *(to be created)*
+- **Tech Stack**: Pulumi 3.x (TypeScript)
+- **Resources**: ECS, RDS, ElastiCache, ALB, Amplify
 
 ---
 
-## 프로젝트 구조
-
-### 모노레포 구조
+## Documentation Structure
 
 ```
-sage/
-├── apps/
-│   ├── backend/           # Nest.js 10.x + Prisma 5.x
-│   └── frontend/          # React 18.3 + Vite 5
-├── packages/              # 공유 코드 (타입, 유틸)
-├── infra/                 # IaC (Terraform/CDK)
-├── docs/                  # 명세서 (단일 진실 공급원)
-│   ├── business/          # 사업 계획, GTM
-│   ├── technical/         # 백엔드/프론트엔드/인프라 스펙
-│   ├── product/           # 제품 요구사항
-│   ├── operations/        # 운영 가이드
-│   └── ai-guides/         # AI 개발 가이드
-└── wiki/                  # GitHub Wiki 동기화
+sage-docs/
+├── specs/                 # Technical specifications (AUTHORITATIVE)
+│   ├── backend-spec.md           # Backend API, Agent Pipeline, SSE streaming
+│   ├── frontend-spec.md          # React components, SSE client, state management
+│   └── infrastructure-spec.md    # Pulumi, ECS, RDS, ElastiCache, Amplify
+│
+├── architecture/          # System architecture
+│   └── system-overview.md        # Multi-repo structure, data flow, tech stack
+│
+├── business/              # Business context (informational, not prescriptive)
+│   ├── mvp-definition.md         # MVP scope, timeline, success criteria
+│   ├── business-plan.md          # Market analysis, revenue model
+│   ├── development-roadmap.md    # Phase 1-4 feature timeline
+│   ├── executive-brief.md        # Executive summary
+│   ├── ai-team-strategy.md       # AI team composition
+│   ├── branding-guide.md         # Brand identity
+│   └── sage-overview-kr.md       # Overview (Korean)
+│
+├── product/               # Product requirements
+│   └── product-spec.md           # Features, user journeys, Agent Pipeline
+│
+├── operations/            # GTM and operations
+│   ├── operations-roadmap.md     # Operations timeline
+│   ├── genesis-operations.md     # Launch operations
+│   ├── live-ops-playbook.md      # Live operations guide
+│   ├── mystery-campaign.md       # Mystery campaign strategy
+│   └── discord-management.md     # Discord community management
+│
+├── docs/                  # Legacy documentation (to be migrated)
+│   ├── technical/                # Old specs (use specs/ instead)
+│   └── ai-guides/                # Claude Code development guides
+│
+├── wiki/                  # GitHub Wiki sync (auto-generated, do not edit)
+│
+├── CLAUDE.md              # AI development constitution
+├── README.md              # This file
+└── README-kr.md           # Korean version
 ```
 
-### 비즈니스 & 전략
+---
 
-| 섹션 | 내용 |
-|------|------|
-| **비전** | "모든 개인 투자자에게 월가 수준의 AI 멘토를" |
-| **문제 정의** | 정보 과부하, 신뢰 간극, 24시간 대응 불가 |
-| **솔루션** | 멀티 에이전트 시스템 + 섀도우 포트폴리오 + 능동적 분석 |
-| **시장 기회** | 글로벌 암호화폐 투자자 5.6억 명 |
-| **수익 모델** | Freemium (Free / Pro $19.99 / Premium $49.99) |
-| **GTM 전략** | Dual Hook (WhyBitcoinFallen.com + Sage.ai 랜딩) |
+## Quick Start
 
-### 기술 아키텍처
+### For Developers
 
-| 컴포넌트 | 기술 스택 |
-|----------|-----------|
-| **백엔드** | Nest.js 10.x (TypeScript 네이티브, 모듈러 구조) |
-| **프론트엔드** | React 18.3 + Vite 5 + TypeScript (완전 분리 SPA) |
-| **아키텍처** | Layered + Domain 분리 (Clean Lite) |
-| **ORM** | Prisma 5.x (타입 안정성, 직관적 마이그레이션) |
-| **인증** | Auth.js (@auth/core) with Google OAuth |
-| **AI** | Claude Sonnet 4 + Haiku 4 (@anthropic-ai/sdk) |
-| **실시간** | Nest.js 내장 SSE (Server-Sent Events) |
-| **Database** | PostgreSQL 18 (RDS) + Valkey 8.x (ElastiCache) |
-| **상태 관리** | Zustand 4.x (클라이언트) + TanStack Query 5.x (서버) |
-| **Infrastructure** | ECS Fargate + S3/CloudFront |
-| **비동기 작업** | BullMQ 5.x + Valkey (Memory 추출, 알림 발송) |
-| **실시간 가격** | Binance/Gate.io WebSocket (Fallback 이중화) |
-| **모니터링** | Sentry + CloudWatch + OpenTelemetry |
+1. **Read the specs first**:
+   - Backend: [`specs/backend-spec.md`](specs/backend-spec.md)
+   - Frontend: [`specs/frontend-spec.md`](specs/frontend-spec.md)
+   - Infrastructure: [`specs/infrastructure-spec.md`](specs/infrastructure-spec.md)
 
-### AI 에이전트 시스템
+2. **Understand the architecture**:
+   - [`architecture/system-overview.md`](architecture/system-overview.md)
 
+3. **Check MVP scope**:
+   - [`business/mvp-definition.md`](business/mvp-definition.md)
+   - [`product/product-spec.md`](product/product-spec.md)
+
+### For AI Assistants (Claude Code)
+
+- Read [`CLAUDE.md`](CLAUDE.md) first - it's the constitution for AI development
+- Always reference `specs/` when implementing features
+- Follow terminology guidelines (Agent Pipeline, not "multi-agent system")
+- Preserve performance targets: <2s first token, <0.5s context load
+
+---
+
+## Tech Stack Summary
+
+### Frontend
+- **Framework**: React 18.3 + Vite 5
+- **State**: Zustand 4.x (client), TanStack Query 5.x (server)
+- **Styling**: Tailwind CSS 3.x + shadcn/ui
+- **Real-time**: SSE (Server-Sent Events) for AI streaming
+
+### Backend
+- **Framework**: Nest.js 10.x
+- **Database**: PostgreSQL 18 (via Prisma 5.x)
+- **Cache**: Valkey 8.x (Redis-compatible)
+- **AI**: Claude Sonnet 4 + Haiku 4 (@anthropic-ai/sdk)
+- **Auth**: Auth.js with Google OAuth
+
+### Infrastructure
+- **IaC**: Pulumi 3.x (TypeScript)
+- **Compute**: AWS ECS Fargate
+- **Database**: AWS RDS PostgreSQL 18
+- **Cache**: AWS ElastiCache Valkey 8.x
+- **CDN**: AWS Amplify (frontend), CloudFront
+- **LB**: AWS ALB
+
+---
+
+## Key Features (MVP)
+
+### 1. AI Chat with Warren Buffett Persona
+- **Agent Pipeline**: Manager → Analyst → Persona → Risk
+- **Streaming**: SSE for token-by-token response (<2s first token)
+- **Context**: 20-message window (no RAG in MVP)
+
+### 2. Shadow Portfolio
+- **Virtual Trading**: No real money, practice-only
+- **AI Signals**: Extracted from chat conversations
+- **Performance**: Historical performance tracking
+
+### 3. Proactive Analysis
+- **Market Alerts**: BTC -5%, ETH -7% triggers notification
+- **Deep Links**: Push notification → Auto-open chat with context
+- **Multi-channel**: PWA push + Discord webhook
+
+---
+
+## Documentation Synchronization
+
+Code repositories contain **local copies** of relevant specs:
+
+```bash
+# Frontend repo
+sage-frontend/docs/frontend-spec.md  # Copied from specs/frontend-spec.md
+
+# Backend repo
+sage-backend/docs/backend-spec.md    # Copied from specs/backend-spec.md
+
+# Infrastructure repo
+sage-infra/docs/infrastructure-spec.md  # Copied from specs/infrastructure-spec.md
 ```
-[사용자 질문]
-    ↓
-[Manager Agent] - 의도 파악 및 라우팅 (Haiku 4)
-    ↓
-[Analyst Agent] - 뉴스/가격 API로 Fact 수집 (Haiku 4)
-    ↓
-[Persona Agent] - 월렛 버핏이 철학 기반 해석 (Sonnet 4)
-    ↓
-[Risk Agent] - 오류/편향 검증 (Haiku 4)
-    ↓
-[최종 응답]
+
+**When updating specs**:
+1. Edit in `sage-docs/specs/` (Source of Truth)
+2. Copy to relevant code repository
+3. Commit with message: `Sync [spec] from sage-docs@[commit-hash]`
+
+**Example**:
+```bash
+# Update frontend spec in sage-docs
+cd sage-docs
+git commit specs/frontend-spec.md -m "Update SSE reconnection logic"
+git push
+
+# Sync to frontend repo
+cd ../sage-frontend
+cp ../sage-docs/specs/frontend-spec.md docs/
+git commit docs/frontend-spec.md -m "Sync frontend-spec from sage-docs@abc123"
+git push
 ```
 
-### 컨텍스트 관리 (단순화)
+---
 
-- **최근 20개 메시지만** 유지 (RAG는 Phase 2)
-- **대화에서 프로필 추론** (온보딩 설문 없음)
-- **추가 AI 호출 없음** - 비용 최적화
+## Performance Targets (MUST NOT CHANGE)
+
+These are **hard requirements**, not suggestions:
+
+| Metric | Target | Measurement |
+|--------|--------|-------------|
+| SSE First Token | < 2s | Time from POST to first SSE token |
+| Context Load | < 0.5s | Fetch 20 messages from PostgreSQL |
+| API Response | < 200ms (P95) | REST endpoint latency |
+| Cache Hit Rate | > 80% | Valkey hit/miss ratio |
+| Hallucination Rate | < 1% | Risk Agent rejection rate |
 
 ---
 
-## 3개월 MVP 로드맵
+## Terminology Guide
 
-### Month 1: 기반 구축
+Use these terms **correctly** in all documentation and code:
 
-- 프로젝트 셋업 + AWS 인프라
-- Auth.js 인증 (Google OAuth)
-- WhyBitcoinFallen.com 개발 (Vite + React)
-- Sage.ai 랜딩 페이지 개발
-
-### Month 2: 핵심 채팅 & 포트폴리오
-
-- Claude API 연동 + Nest.js SSE 스트리밍
-- 월렛 버핏 페르소나 구현
-- 시장 데이터 연동 (Binance/Gate.io WebSocket, Alternative.me)
-- 유저 프로필 자동 추론
-- 섀도우 포트폴리오 시스템
-
-### Month 3: 능동적 분석 & 마무리
-
-- BullMQ 기반 Memory 추출/압축
-- WebSocket 실시간 가격 모니터링 및 급변 감지
-- PWA Push + Discord 알림
-- 딥링크 시스템 (/chat/new?context=xxx)
-- QA + ECS Fargate 배포
-- 베타 런칭
+| Correct Term | Definition | Wrong Usage |
+|--------------|------------|-------------|
+| **Agent Pipeline** | Manager → Analyst → Persona → Risk sequence | ❌ "multi-agent system" |
+| **Agent** | Functional unit within ONE persona (Manager, Analyst, etc.) | ❌ Agent = Persona |
+| **Persona** | Character + LLM combination (Warren Buffett + Claude) | ❌ "agent" when referring to persona |
+| **SSE Streaming** | Server-Sent Events for AI response | ❌ "WebSocket" (not used in MVP) |
+| **Shadow Portfolio** | Virtual/practice portfolio | ❌ "paper trading", "simulated" |
 
 ---
 
-## 2026년 분기별 목표
+## Development Workflow
 
-| 분기 | 핵심 목표 | 주요 지표 |
-|------|-----------|-----------|
-| **Q1** | MVP 검증 | WhyBitcoinFallen 월 방문자 10K+<br>Sage.ai MAU 2K+ |
-| **Q2** | 글로벌 확장 | 멀티 채팅 + 4개 언어<br>MAU 5K+ |
-| **Q3** | 지표 개선 | 유료 구독 런칭<br>MAU 15K+ |
-| **Q4** | ICO 본격화 | 생태계 확장<br>MAU 30K+ |
+### Phase 1: Planning & Documentation (Current)
+- ✅ Tech stack finalized
+- ✅ Specs written (backend, frontend, infrastructure)
+- ✅ Repository split planned
+- 🔄 Amplify migration planned
+- 🔄 SSE vs WebSocket decision: **Keep SSE**
 
-### 2026년 말 예상 성과
+### Phase 2: Infrastructure Setup (Next)
+- Create sage-infra repository
+- Define Pulumi resources (ECS, RDS, ElastiCache)
+- Set up AWS Amplify app via Pulumi
 
-- WhyBitcoinFallen.com 월 방문자: 100,000+
-- Sage.ai MAU: 30,000+
-- 유료 구독자: 450+ (전환율 1.5%)
-- Discord DAU: 1,000+
-- Shadow Portfolio ROI: 벤치마크 +3%p
+### Phase 3: Backend Implementation
+- Create sage-backend repository
+- Implement Agent Pipeline
+- Set up SSE streaming endpoints
+- Connect to Claude API
 
----
-
-## 기술적 우수성
-
-### AI-Native 개발
-
-- Claude Code 활용으로 10배 빠른 개발
-- 멀티 에이전트 오케스트레이션으로 환각 제로화
-- Tool 강제 사용으로 수치 오류 원천 차단
-
-### 성능 목표
-
-- 채팅 응답 속도: 2초 이내 (스트리밍 시작)
-- 능동적 분석: 실시간 WebSocket 가격 모니터링
-- 컨텍스트 로드: 20개 메시지 (0.5초 이내)
-
-### 확장성 설계
-
-- ECS Fargate: 1만 유저까지 안정적
-- Valkey 캐싱: API 비용 절감 (시장 데이터 5분, AI 코멘트 5분)
-- S3 + CloudFront: Sites 정적 호스팅
+### Phase 4: Frontend Implementation
+- Create sage-frontend repository
+- Implement SSE client
+- Build chat interface
+- Deploy to Amplify
 
 ---
 
-## 핵심 경쟁력 (Moat)
+## Contributing
 
-| Moat 유형 | 설명 | 방어력 |
-|-----------|------|--------|
-| **Persona Moat** | 월렛 버핏 캐릭터 IP | 복제 불가능 |
-| **Trust Moat** | 환각 제로 + 쉐도우 포트폴리오 | 신뢰 확보 |
-| **Engagement Moat** | 능동적 분석 시스템 (실시간 급변 감지 및 즉시 알림) | 재방문율 증가 |
-| **Data Moat** | 쉐도우 포트폴리오 누적 데이터 | 시간에 따라 강화 |
+### For Documentation Updates
 
----
+1. **Specs** (`specs/`): Create PR with clear description
+2. **Architecture** (`architecture/`): Discuss with team first
+3. **Business/Product** (`business/`, `product/`): Requires product owner approval
+4. **Operations** (`operations/`): Requires operations lead approval
 
-## 시장 기회
+### For Code Changes
 
-### 글로벌 암호화폐 시장
-
-- 시장 규모: $2.5조 (2024) → $6.3조 (2030, CAGR 9.7%)
-- 사용자: 5.6억 명 (2024) → 8.6억 명 (2025 예상)
-
-### AI 투자자문 시장
-
-- 시장 규모: $84억 (2024) → $693억 (2032, CAGR 30.3%)
-- 밀레니얼/Z세대의 41%가 로보어드바이저 선호
-
-### 타겟 시장 규모
-
-- TAM: 글로벌 암호화폐 투자자 5.6억 명
-- SAM: AI 투자 도구 관심 투자자 약 1억 명
-- SOM: 초기 타겟 4개 권역 유료 전환 가능 약 500만 명
+Go to the relevant code repository:
+- Frontend changes → [sage-frontend](https://github.com/5010-dev/sage-frontend)
+- Backend changes → [sage-backend](https://github.com/5010-dev/sage-backend)
+- Infrastructure changes → [sage-infra](https://github.com/5010-dev/sage-infra)
 
 ---
 
-## 기여하기
+## FAQs
 
-### 개발팀을 위해
+### Why split into multiple repositories?
 
-1. **[MVP_technical_paper.md](MVP_technical_paper.md)** - 기술 스택 명세
-2. **[MVP Spec (KR)](docs/technical/mvp-spec-kr.md)** - MVP 개발 스펙
-3. 현재 월 계획 확인
-4. 기술 스택 및 폴더 구조 숙지
+1. **Independent deployment cycles**: Frontend, backend, infra deploy at different rates
+2. **Team autonomy**: Each team can work independently
+3. **Clearer boundaries**: Docs vs code separation
+4. **Simplified CI/CD**: Each repo has focused pipelines
 
-### AI-Native Development
+### Why not use Git submodules?
 
-- Claude Sonnet 4: 메인 대화, Persona Agent
-- Claude Haiku 4: 라우팅, 팩트체크, Memory 추출
-- @anthropic-ai/sdk: TypeScript 직접 통합
-- Nest.js: 멀티 에이전트 병렬 처리
+- **Complexity**: Submodules add overhead (init, update, nested commits)
+- **Independence**: Each repo should work standalone
+- **Simplicity**: Copy + README link is simpler for our team size
 
----
+### Why Amplify instead of S3+CloudFront?
 
-## 연락처
+- **Automatic deployment**: Git push → auto build (no GitHub Actions needed)
+- **PR previews**: Auto preview URL for every PR
+- **Simplicity**: Less manual configuration
+- **MVP speed**: Faster time to market
 
-- **Technical**: [dev@5010.tech](mailto:dev@5010.tech)
-- **Business**: [biz@5010.tech](mailto:biz@5010.tech)
-- **Discord**: (베타 테스터 모집 시 공개)
+### Will we use WebSocket later?
 
----
+Possibly in **Phase 2+** if we add:
+- Real-time collaborative features (group chat, shared portfolio)
+- Live market data streaming to UI (ticker)
+- User interrupt during AI response
 
-## 비전
-
-### Mission
-
-**"모든 개인 투자자에게 월가 수준의 AI 멘토를"**
-
-### 핵심 가치
-
-1. 신뢰 (Trust) - 환각 제로 + 투명한 성과 검증
-2. 지혜 (Wisdom) - 단순 정보가 아닌 통찰 제공
-3. 케어 (Care) - 24시간 대응 + 능동적 멘탈 케어
-
-### 확장 계획
-
-- Phase 1 (2026 Q1-Q4): 암호화폐 AI 멘토 확립
-- Phase 2 (2027): 주식 시장 확장
-- Phase 3 (2028+): 전체 자산군 (부동산, 채권 등)
+For MVP, **SSE is sufficient** and simpler.
 
 ---
 
-## MVP 성공 기준
+## Contact & Support
 
-| 지표 | 목표 (3개월 후) |
-|------|----------------|
-| **베타 테스터** | 10-20명 |
-| **WhyBitcoinFallen 방문자** | 일 1,000+ |
-| **Sage.ai MAU** | 500+ |
-| **환각률** | <1% |
-| **Shadow Portfolio 추적** | 10+ 트레이드 |
+- **GitHub Issues**: [sage-docs/issues](https://github.com/5010-dev/sage-docs/issues)
+- **Discord**: *(to be added)*
+- **Email**: *(to be added)*
 
 ---
 
-_"자네, 시장이 공포에 질렸을 때가 바로 기회일세."_ - 월렛 버핏
+## License
 
-**Built with**: Nest.js 10.x + Prisma 5.x, React 18.3 + Vite 5, Tailwind CSS 3.x, Claude Sonnet 4 & Haiku 4
-**Architecture**: Layered + Domain (Clean Lite), TypeScript Fullstack
-**Target**: 3개월 MVP 완성, 2026년 MAU 10K+
-**Version**: 4.1 (2025년 12월 31일) - Monorepo 전환
+*(To be determined)*
+
+---
+
+**Last Updated**: 2026-01-05
+**Migration Status**: Converted from monorepo to multi-repository structure
