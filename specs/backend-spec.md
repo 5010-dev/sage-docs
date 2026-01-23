@@ -1,7 +1,7 @@
 # Sage.ai Backend Specification
 
-> Document Version: 3.2
-> Last Modified: 2026-01-07
+> Document Version: 4.0
+> Last Modified: 2026-01-23
 > Author: Sam
 > Target Audience: Backend Developers
 
@@ -536,7 +536,576 @@ interface NotificationEndpoints {
 
 ---
 
-## 5. Agent Pipeline (페르소나 내부 구조)
+## 5. Modular Architecture (AI Quant Team)
+
+> **핵심 비전**: SAGE는 월스트리트 퀀트 팀처럼 여러 AI 애널리스트가 협업하는 구조입니다.
+> 각 모듈은 독립적이고 재사용 가능하며, 레고 블록처럼 다양한 파이프라인에 조합됩니다.
+
+### 5.1 Architecture Principles
+
+**데이터 주입 (Data Injection)**:
+- 모듈은 외부에서 데이터를 주입받음 (Factory Pattern)
+- 모듈 내부에서 직접 API 호출 X → 느슨한 결합
+- 테스트 용이성 및 재사용성 극대화
+
+**규칙 기반 분석 (Rule-Based Analysis)**:
+- Analyzer는 명시적 규칙으로 동작 (설명 가능)
+- LLM은 최종 응답 포맷팅에만 사용 (Persona)
+- 검증 가능하고 일관된 분석 결과
+
+**모듈 독립성**:
+- 각 모듈은 표준 인터페이스를 구현
+- 다른 모듈의 구현에 의존하지 않음
+- 개별 테스트 및 교체 가능
+
+### 5.2 Module Layers
+
+```
+┌─────────────────────────────────────────────────────┐
+│                  Output Layer                        │
+│   PersonaFormatter │ ReportGenerator │ SignalEmitter │
+├─────────────────────────────────────────────────────┤
+│                Analysis Layer                        │
+│  PriceAnalyzer │ SentimentAnalyzer │ TrendAnalyzer  │
+│        PortfolioAnalyzer │ OnchainAnalyzer          │
+├─────────────────────────────────────────────────────┤
+│                  Data Layer                          │
+│  PriceCollector │ SentimentCollector │ OnchainData  │
+└─────────────────────────────────────────────────────┘
+```
+
+### 5.3 Standard Module Interface
+
+```typescript
+// src/modules/analysis/interfaces/analysis-module.interface.ts
+
+/**
+ * 모든 분석 모듈이 구현하는 표준 인터페이스
+ * TInput: 주입받는 데이터 타입
+ * TOutput: 분석 결과 타입
+ */
+interface AnalysisModule<TInput, TOutput> {
+  readonly name: string;
+  readonly version: string;
+
+  /**
+   * 분석 실행 - 주입된 데이터로 규칙 기반 분석 수행
+   */
+  analyze(input: TInput): Promise<TOutput>;
+
+  /**
+   * 분석 결과에 대한 신뢰도 (0-1)
+   */
+  getConfidence(): number;
+}
+
+/**
+ * 분석 결과 표준 구조
+ */
+interface AnalysisResult {
+  module: string;           // 모듈 이름
+  timestamp: Date;          // 분석 시점
+  confidence: number;       // 신뢰도 (0-1)
+  signals: Signal[];        // 추출된 시그널
+  reasoning: string[];      // 분석 근거 (설명 가능성)
+}
+
+interface Signal {
+  type: 'bullish' | 'bearish' | 'neutral';
+  strength: number;         // 0-1
+  source: string;           // 시그널 출처
+  description: string;      // 설명
+}
+```
+
+### 5.4 Analysis Modules
+
+#### 5.4.1 Price Analyzer (가격 분석)
+
+```typescript
+// src/modules/analysis/price/price-analyzer.ts
+
+interface PriceInput {
+  symbol: string;
+  currentPrice: number;
+  priceHistory: { timestamp: Date; price: number }[];
+  change24h: number;
+}
+
+interface PriceAnalysis extends AnalysisResult {
+  trend: 'uptrend' | 'downtrend' | 'sideways';
+  volatility: 'low' | 'medium' | 'high';
+  support: number;
+  resistance: number;
+  movingAverages: {
+    ma7: number;
+    ma25: number;
+    ma99: number;
+  };
+}
+
+@Injectable()
+export class PriceAnalyzer implements AnalysisModule<PriceInput, PriceAnalysis> {
+  readonly name = 'PriceAnalyzer';
+  readonly version = '1.0.0';
+
+  private confidence = 0;
+
+  /**
+   * 가격 데이터를 기반으로 기술적 분석 수행
+   * 규칙 기반 (LLM 미사용)
+   */
+  async analyze(input: PriceInput): Promise<PriceAnalysis> {
+    const signals: Signal[] = [];
+    const reasoning: string[] = [];
+
+    // 이동평균 계산
+    const ma7 = this.calculateMA(input.priceHistory, 7);
+    const ma25 = this.calculateMA(input.priceHistory, 25);
+    const ma99 = this.calculateMA(input.priceHistory, 99);
+
+    // 트렌드 판단 (규칙 기반)
+    let trend: 'uptrend' | 'downtrend' | 'sideways' = 'sideways';
+
+    if (input.currentPrice > ma7 && ma7 > ma25 && ma25 > ma99) {
+      trend = 'uptrend';
+      signals.push({
+        type: 'bullish',
+        strength: 0.7,
+        source: 'MA_ALIGNMENT',
+        description: '이동평균선 정배열 (상승 추세)'
+      });
+      reasoning.push('MA7 > MA25 > MA99 정배열 형성');
+    } else if (input.currentPrice < ma7 && ma7 < ma25 && ma25 < ma99) {
+      trend = 'downtrend';
+      signals.push({
+        type: 'bearish',
+        strength: 0.7,
+        source: 'MA_ALIGNMENT',
+        description: '이동평균선 역배열 (하락 추세)'
+      });
+      reasoning.push('MA7 < MA25 < MA99 역배열 형성');
+    }
+
+    // 24시간 변동률 분석
+    if (input.change24h >= 5) {
+      signals.push({
+        type: 'bullish',
+        strength: Math.min(input.change24h / 10, 1),
+        source: 'MOMENTUM',
+        description: `24시간 ${input.change24h.toFixed(2)}% 상승`
+      });
+    } else if (input.change24h <= -5) {
+      signals.push({
+        type: 'bearish',
+        strength: Math.min(Math.abs(input.change24h) / 10, 1),
+        source: 'MOMENTUM',
+        description: `24시간 ${Math.abs(input.change24h).toFixed(2)}% 하락`
+      });
+    }
+
+    // 지지/저항 계산
+    const support = this.calculateSupport(input.priceHistory);
+    const resistance = this.calculateResistance(input.priceHistory);
+
+    // 변동성 계산
+    const volatility = this.calculateVolatility(input.priceHistory);
+
+    this.confidence = this.calculateConfidence(signals);
+
+    return {
+      module: this.name,
+      timestamp: new Date(),
+      confidence: this.confidence,
+      signals,
+      reasoning,
+      trend,
+      volatility,
+      support,
+      resistance,
+      movingAverages: { ma7, ma25, ma99 }
+    };
+  }
+
+  getConfidence(): number {
+    return this.confidence;
+  }
+
+  private calculateMA(history: { price: number }[], period: number): number {
+    const prices = history.slice(-period).map(h => h.price);
+    return prices.reduce((a, b) => a + b, 0) / prices.length;
+  }
+
+  private calculateSupport(history: { price: number }[]): number {
+    const prices = history.map(h => h.price);
+    return Math.min(...prices.slice(-24)); // 24시간 최저가
+  }
+
+  private calculateResistance(history: { price: number }[]): number {
+    const prices = history.map(h => h.price);
+    return Math.max(...prices.slice(-24)); // 24시간 최고가
+  }
+
+  private calculateVolatility(history: { price: number }[]): 'low' | 'medium' | 'high' {
+    const prices = history.map(h => h.price);
+    const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
+    const variance = prices.reduce((a, b) => a + Math.pow(b - avg, 2), 0) / prices.length;
+    const stdDev = Math.sqrt(variance);
+    const cv = (stdDev / avg) * 100; // Coefficient of Variation (%)
+
+    if (cv < 2) return 'low';
+    if (cv < 5) return 'medium';
+    return 'high';
+  }
+
+  private calculateConfidence(signals: Signal[]): number {
+    if (signals.length === 0) return 0.5;
+    return signals.reduce((a, s) => a + s.strength, 0) / signals.length;
+  }
+}
+```
+
+#### 5.4.2 Sentiment Analyzer (심리 분석)
+
+```typescript
+// src/modules/analysis/sentiment/sentiment-analyzer.ts
+
+interface SentimentInput {
+  fearGreedIndex: number;           // 0-100
+  fearGreedClassification: string;  // "Extreme Fear" | "Fear" | "Neutral" | "Greed" | "Extreme Greed"
+  socialMentions?: number;          // 소셜 미디어 언급량 (Phase 2)
+}
+
+interface SentimentAnalysis extends AnalysisResult {
+  marketSentiment: 'extreme_fear' | 'fear' | 'neutral' | 'greed' | 'extreme_greed';
+  contrarian: boolean;              // 역발상 투자 시그널
+}
+
+@Injectable()
+export class SentimentAnalyzer implements AnalysisModule<SentimentInput, SentimentAnalysis> {
+  readonly name = 'SentimentAnalyzer';
+  readonly version = '1.0.0';
+
+  private confidence = 0;
+
+  /**
+   * 시장 심리 지표 기반 분석
+   * Warren Buffett 역발상 투자 원칙 적용
+   */
+  async analyze(input: SentimentInput): Promise<SentimentAnalysis> {
+    const signals: Signal[] = [];
+    const reasoning: string[] = [];
+
+    // Fear & Greed Index 기반 분석
+    let marketSentiment: SentimentAnalysis['marketSentiment'];
+    let contrarian = false;
+
+    if (input.fearGreedIndex <= 20) {
+      marketSentiment = 'extreme_fear';
+      contrarian = true;
+      signals.push({
+        type: 'bullish',
+        strength: 0.8,
+        source: 'FEAR_GREED',
+        description: '극단적 공포 구간 - 역발상 매수 기회'
+      });
+      reasoning.push(`F&G Index ${input.fearGreedIndex}: "다른 사람들이 두려워할 때 탐욕스러워라"`);
+    } else if (input.fearGreedIndex <= 40) {
+      marketSentiment = 'fear';
+      signals.push({
+        type: 'bullish',
+        strength: 0.5,
+        source: 'FEAR_GREED',
+        description: '공포 구간 - 신중한 매수 고려'
+      });
+      reasoning.push(`F&G Index ${input.fearGreedIndex}: 공포 구간, 가치 투자 관점 검토`);
+    } else if (input.fearGreedIndex <= 60) {
+      marketSentiment = 'neutral';
+      signals.push({
+        type: 'neutral',
+        strength: 0.5,
+        source: 'FEAR_GREED',
+        description: '중립 구간 - 시장 관망'
+      });
+      reasoning.push(`F&G Index ${input.fearGreedIndex}: 중립 구간`);
+    } else if (input.fearGreedIndex <= 80) {
+      marketSentiment = 'greed';
+      signals.push({
+        type: 'bearish',
+        strength: 0.5,
+        source: 'FEAR_GREED',
+        description: '탐욕 구간 - 신중한 접근 필요'
+      });
+      reasoning.push(`F&G Index ${input.fearGreedIndex}: 탐욕 구간, 리스크 관리 강화`);
+    } else {
+      marketSentiment = 'extreme_greed';
+      contrarian = true;
+      signals.push({
+        type: 'bearish',
+        strength: 0.8,
+        source: 'FEAR_GREED',
+        description: '극단적 탐욕 구간 - 역발상 매도 고려'
+      });
+      reasoning.push(`F&G Index ${input.fearGreedIndex}: "다른 사람들이 탐욕스러울 때 두려워하라"`);
+    }
+
+    this.confidence = contrarian ? 0.8 : 0.6;
+
+    return {
+      module: this.name,
+      timestamp: new Date(),
+      confidence: this.confidence,
+      signals,
+      reasoning,
+      marketSentiment,
+      contrarian
+    };
+  }
+
+  getConfidence(): number {
+    return this.confidence;
+  }
+}
+```
+
+#### 5.4.3 Portfolio Analyzer (포트폴리오 분석)
+
+```typescript
+// src/modules/analysis/portfolio/portfolio-analyzer.ts
+
+interface PortfolioInput {
+  holdings: { symbol: string; quantity: number; avgPrice: number }[];
+  currentPrices: { symbol: string; price: number }[];
+  totalValue: number;
+}
+
+interface PortfolioAnalysis extends AnalysisResult {
+  totalPnL: number;
+  totalPnLPercent: number;
+  holdings: {
+    symbol: string;
+    quantity: number;
+    avgPrice: number;
+    currentPrice: number;
+    pnl: number;
+    pnlPercent: number;
+    weight: number;        // 포트폴리오 내 비중
+  }[];
+  diversification: 'poor' | 'moderate' | 'good';
+  riskLevel: 'low' | 'medium' | 'high';
+}
+
+@Injectable()
+export class PortfolioAnalyzer implements AnalysisModule<PortfolioInput, PortfolioAnalysis> {
+  readonly name = 'PortfolioAnalyzer';
+  readonly version = '1.0.0';
+
+  private confidence = 0;
+
+  async analyze(input: PortfolioInput): Promise<PortfolioAnalysis> {
+    const signals: Signal[] = [];
+    const reasoning: string[] = [];
+
+    // 홀딩별 P&L 계산
+    const holdingsWithPnL = input.holdings.map(h => {
+      const currentPrice = input.currentPrices.find(p => p.symbol === h.symbol)?.price || 0;
+      const currentValue = h.quantity * currentPrice;
+      const costBasis = h.quantity * h.avgPrice;
+      const pnl = currentValue - costBasis;
+      const pnlPercent = costBasis > 0 ? (pnl / costBasis) * 100 : 0;
+      const weight = input.totalValue > 0 ? (currentValue / input.totalValue) * 100 : 0;
+
+      return {
+        ...h,
+        currentPrice,
+        pnl,
+        pnlPercent,
+        weight
+      };
+    });
+
+    // 전체 P&L
+    const totalPnL = holdingsWithPnL.reduce((a, h) => a + h.pnl, 0);
+    const totalCost = input.holdings.reduce((a, h) => a + h.quantity * h.avgPrice, 0);
+    const totalPnLPercent = totalCost > 0 ? (totalPnL / totalCost) * 100 : 0;
+
+    // 분산투자 분석
+    const maxWeight = Math.max(...holdingsWithPnL.map(h => h.weight));
+    let diversification: 'poor' | 'moderate' | 'good';
+
+    if (input.holdings.length <= 2 || maxWeight > 70) {
+      diversification = 'poor';
+      signals.push({
+        type: 'bearish',
+        strength: 0.6,
+        source: 'DIVERSIFICATION',
+        description: '포트폴리오 집중도가 높음 - 분산 투자 권장'
+      });
+      reasoning.push(`최대 비중 ${maxWeight.toFixed(1)}%: 분산 투자 부족`);
+    } else if (input.holdings.length <= 4 || maxWeight > 50) {
+      diversification = 'moderate';
+      reasoning.push(`${input.holdings.length}개 종목, 최대 비중 ${maxWeight.toFixed(1)}%: 적정 분산`);
+    } else {
+      diversification = 'good';
+      signals.push({
+        type: 'bullish',
+        strength: 0.5,
+        source: 'DIVERSIFICATION',
+        description: '포트폴리오가 잘 분산되어 있음'
+      });
+      reasoning.push(`${input.holdings.length}개 종목에 고르게 분산됨`);
+    }
+
+    // 리스크 레벨 계산
+    const volatileAssets = ['DOGE', 'SOL'];
+    const volatileWeight = holdingsWithPnL
+      .filter(h => volatileAssets.includes(h.symbol))
+      .reduce((a, h) => a + h.weight, 0);
+
+    let riskLevel: 'low' | 'medium' | 'high';
+    if (volatileWeight > 50) {
+      riskLevel = 'high';
+      signals.push({
+        type: 'bearish',
+        strength: 0.5,
+        source: 'RISK',
+        description: '고변동성 자산 비중이 높음'
+      });
+    } else if (volatileWeight > 25) {
+      riskLevel = 'medium';
+    } else {
+      riskLevel = 'low';
+    }
+
+    this.confidence = 0.9; // 데이터 기반 계산이므로 높은 신뢰도
+
+    return {
+      module: this.name,
+      timestamp: new Date(),
+      confidence: this.confidence,
+      signals,
+      reasoning,
+      totalPnL,
+      totalPnLPercent,
+      holdings: holdingsWithPnL,
+      diversification,
+      riskLevel
+    };
+  }
+
+  getConfidence(): number {
+    return this.confidence;
+  }
+}
+```
+
+### 5.5 Pipeline Composition (파이프라인 조합)
+
+```typescript
+// src/modules/pipeline/pipeline.service.ts
+
+/**
+ * 분석 모듈들을 조합하여 파이프라인 구성
+ * 같은 모듈을 다양한 출력 형태로 재사용
+ */
+@Injectable()
+export class PipelineService {
+  constructor(
+    private readonly priceAnalyzer: PriceAnalyzer,
+    private readonly sentimentAnalyzer: SentimentAnalyzer,
+    private readonly portfolioAnalyzer: PortfolioAnalyzer,
+    private readonly personaFormatter: PersonaFormatter,
+    private readonly reportGenerator: ReportGenerator,
+  ) {}
+
+  /**
+   * 챗봇 파이프라인
+   * 분석 → Persona 포맷팅 → SSE 스트리밍
+   */
+  async executeChatPipeline(input: ChatPipelineInput): Promise<string> {
+    // 1. 데이터 수집 (외부에서 주입됨)
+    const { priceData, sentimentData, userMessage, chatHistory } = input;
+
+    // 2. 병렬 분석 실행
+    const [priceAnalysis, sentimentAnalysis] = await Promise.all([
+      this.priceAnalyzer.analyze(priceData),
+      this.sentimentAnalyzer.analyze(sentimentData),
+    ]);
+
+    // 3. Persona 포맷팅 (LLM 사용)
+    return this.personaFormatter.format({
+      userMessage,
+      chatHistory,
+      analyses: [priceAnalysis, sentimentAnalysis],
+    });
+  }
+
+  /**
+   * 리포트 파이프라인 (B2B)
+   * 분석 → 구조화된 JSON/PDF
+   */
+  async executeReportPipeline(input: ReportPipelineInput): Promise<Report> {
+    const { priceData, sentimentData, portfolioData } = input;
+
+    // 병렬 분석 실행
+    const [priceAnalysis, sentimentAnalysis, portfolioAnalysis] = await Promise.all([
+      this.priceAnalyzer.analyze(priceData),
+      this.sentimentAnalyzer.analyze(sentimentData),
+      this.portfolioAnalyzer.analyze(portfolioData),
+    ]);
+
+    // 리포트 생성 (LLM 미사용, 템플릿 기반)
+    return this.reportGenerator.generate({
+      analyses: [priceAnalysis, sentimentAnalysis, portfolioAnalysis],
+      format: 'json', // or 'pdf'
+    });
+  }
+
+  /**
+   * 시그널 파이프라인 (알림용)
+   * 분석 → 시그널 추출 → 알림 트리거
+   */
+  async executeSignalPipeline(input: SignalPipelineInput): Promise<Signal[]> {
+    const { priceData, sentimentData } = input;
+
+    const [priceAnalysis, sentimentAnalysis] = await Promise.all([
+      this.priceAnalyzer.analyze(priceData),
+      this.sentimentAnalyzer.analyze(sentimentData),
+    ]);
+
+    // 모든 분석에서 시그널 수집
+    const allSignals = [
+      ...priceAnalysis.signals,
+      ...sentimentAnalysis.signals,
+    ];
+
+    // 강한 시그널만 필터링 (strength > 0.7)
+    return allSignals.filter(s => s.strength > 0.7);
+  }
+}
+```
+
+### 5.6 Module Roadmap
+
+| Phase | Module | Description |
+|-------|--------|-------------|
+| Phase 1 (MVP) | PriceAnalyzer | 가격 기술적 분석 |
+| Phase 1 (MVP) | SentimentAnalyzer | Fear & Greed 기반 심리 분석 |
+| Phase 1 (MVP) | PortfolioAnalyzer | 포트폴리오 P&L, 분산도 |
+| Phase 2 | TrendAnalyzer | 장기 트렌드 패턴 인식 |
+| Phase 2 | OnchainAnalyzer | 온체인 데이터 분석 |
+| Phase 3 | SocialAnalyzer | 소셜 미디어 감성 분석 |
+| Phase 3 | WhaleAnalyzer | 고래 지갑 추적 |
+| Phase 4 | CorrelationAnalyzer | 자산 간 상관관계 |
+| Phase 4 | MacroAnalyzer | 거시경제 지표 분석 |
+
+---
+
+## 6. Agent Pipeline (Legacy 호환)
+
+> **Note**: 기존 Agent Pipeline은 Modular Architecture 위에서 동작합니다.
+> Manager → Analyst → Persona → Risk 흐름은 유지하되,
+> 내부적으로 Analysis Modules를 활용합니다.
 
 > **용어 정의**
 > - **페르소나 (Persona)**: 대화 주체. 캐릭터 + LLM 조합 (예: 월렛 버핏 = Claude, 사토시 현자 = GPT)
@@ -546,7 +1115,7 @@ interface NotificationEndpoints {
 > MVP에서는 **월렛 버핏 (Claude)** 페르소나 1개만 사용합니다.
 > Phase 2+에서 다른 LLM 기반 페르소나 (ChatGPT, Gemini 등)가 추가됩니다.
 
-### 5.1 Agent Pipeline Flow
+### 6.1 Agent Pipeline Flow
 
 ```mermaid
 graph TD
@@ -560,7 +1129,7 @@ graph TD
     F --> G[Final Response]
 ```
 
-### 5.2 Manager Agent (Intent Classification)
+### 6.2 Manager Agent (Intent Classification)
 
 **Purpose**: 사용자 메시지의 의도 분석 및 엔티티 추출
 
@@ -665,7 +1234,7 @@ const exampleOutput: ManagerOutput = {
 - LLM 불가 시 키워드 기반 분석으로 자동 전환
 - 6개 코인 심볼 및 4가지 타임프레임 인식 가능
 
-### 5.3 Analyst Agent (Data Collection)
+### 6.3 Analyst Agent (Data Collection)
 
 **Purpose**: 실시간 시장 데이터 수집 (LLM 불필요, 순수 데이터 조회)
 
@@ -735,7 +1304,7 @@ export class AnalystAgent {
 - **Prices**: MarketService (Binance/Gate.io WebSocket → Valkey cache)
 - **Fear & Greed**: Alternative.me REST API (5-min TTL cache)
 
-### 5.4 Persona Agent (Response Generation)
+### 6.4 Persona Agent (Response Generation)
 
 **Purpose**: Wallet Buffett 캐릭터로 한국어 응답 생성
 
@@ -840,7 +1409,7 @@ Remember: You are an educational mentor, not a financial advisor. Always emphasi
 `;
 ```
 
-### 5.5 Risk Agent (Response Validation)
+### 6.5 Risk Agent (Response Validation)
 
 **Purpose**: AI 응답 품질 검증 (환각, 직접 신호, 편향 감지)
 
@@ -929,9 +1498,9 @@ export class RiskAgent {
 
 ---
 
-## 6. Caching Strategy
+## 7. Caching Strategy
 
-### 6.1 Valkey Cache Keys
+### 7.1 Valkey Cache Keys
 
 **Note**: Valkey is 100% Redis-compatible, so all Redis clients and commands work identically.
 
@@ -951,7 +1520,7 @@ interface CacheKeys {
 }
 ```
 
-### 6.2 Cache Invalidation Strategy
+### 7.2 Cache Invalidation Strategy
 
 ```typescript
 interface CacheInvalidation {
@@ -963,9 +1532,9 @@ interface CacheInvalidation {
 
 ---
 
-## 7. Background Jobs (BullMQ)
+## 8. Background Jobs (BullMQ)
 
-### 7.1 Job Queue Configuration
+### 8.1 Job Queue Configuration
 
 ```typescript
 interface JobQueues {
@@ -990,7 +1559,7 @@ interface JobQueues {
 }
 ```
 
-### 7.2 Memory Extraction Job
+### 8.2 Memory Extraction Job
 
 ```typescript
 interface MemoryExtractionJob {
@@ -1016,7 +1585,7 @@ async function processMemoryExtraction(job: Job<MemoryExtractionJob>) {
 }
 ```
 
-### 7.3 Notification Job
+### 8.3 Notification Job
 
 ```typescript
 interface NotificationJob {
@@ -1050,9 +1619,9 @@ async function processNotification(job: Job<NotificationJob>) {
 
 ---
 
-## 8. Real-Time Price WebSocket Service
+## 9. Real-Time Price WebSocket Service
 
-### 8.1 WebSocket Architecture Overview
+### 9.1 WebSocket Architecture Overview
 
 **선택 근거**:
 - **실시간성**: 가격 변동 즉시 감지 및 알림 (기존 15분 폴링 → <1초 실시간)
@@ -1083,7 +1652,7 @@ interface WebSocketConfig {
 }
 ```
 
-### 8.2 Dual WebSocket Implementation
+### 9.2 Dual WebSocket Implementation
 
 ```typescript
 // market/websocket-price.service.ts
@@ -1335,7 +1904,7 @@ export class WebSocketPriceService extends EventEmitter implements OnModuleInit,
 }
 ```
 
-### 8.3 Health Check & Monitoring
+### 9.3 Health Check & Monitoring
 
 ```typescript
 // market/market.controller.ts
@@ -1350,9 +1919,9 @@ async getWebSocketHealth() {
 
 ---
 
-## 9. Error Handling
+## 10. Error Handling
 
-### 9.1 Custom Exceptions
+### 10.1 Custom Exceptions
 
 ```typescript
 class HallucinationDetectedException extends BadRequestException {
@@ -1374,7 +1943,7 @@ class TierLimitException extends ForbiddenException {
 }
 ```
 
-### 9.2 Global Exception Filter
+### 10.2 Global Exception Filter
 
 ```typescript
 @Catch()
@@ -1403,9 +1972,9 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
 ---
 
-## 10. Performance Targets
+## 11. Performance Targets
 
-### 10.1 Performance Metrics
+### 11.1 Performance Metrics
 
 ```typescript
 interface PerformanceTargets {
@@ -1434,9 +2003,9 @@ interface PerformanceTargets {
 
 ---
 
-## 11. Security
+## 12. Security
 
-### 11.1 Authentication & Authorization
+### 12.1 Authentication & Authorization
 
 ```typescript
 interface SecurityConfig {
@@ -1453,7 +2022,7 @@ interface SecurityConfig {
 }
 ```
 
-### 11.2 Input Validation
+### 12.2 Input Validation
 
 ```typescript
 class CreateTradeDto {
@@ -1469,7 +2038,7 @@ class CreateTradeDto {
 }
 ```
 
-### 11.3 Rate Limiting
+### 12.3 Rate Limiting
 
 ```typescript
 @UseGuards(ThrottlerGuard)
@@ -1481,9 +2050,9 @@ async sendMessage() {
 
 ---
 
-## 12. Monitoring
+## 13. Monitoring
 
-### 12.1 Custom Metrics
+### 13.1 Custom Metrics
 
 ```typescript
 interface CustomMetrics {
@@ -1495,7 +2064,7 @@ interface CustomMetrics {
 }
 ```
 
-### 12.2 Alerting Rules
+### 13.2 Alerting Rules
 
 ```typescript
 interface AlertingRules {
@@ -1707,13 +2276,29 @@ pnpm run format                 # Format with Prettier
 
 ---
 
-**Document Version**: 3.2
-**Last Updated**: 2026-01-07
-**Architecture**: Layered + Domain (Clean Lite), TypeScript Fullstack
+**Document Version**: 4.0
+**Last Updated**: 2026-01-23
+**Architecture**: Modular Architecture (AI Quant Team) + Layered (Clean Lite)
 **Tech Stack**: Nest.js 10.x + Prisma 5.19.1 + PostgreSQL 18 + Valkey 8.1.5
 **Maintainer**: Sam (dev@5010.tech)
 
 ### Changelog
+
+**4.0** (2026-01-23)
+- **Modular Architecture 도입** (AI Quant Team 비전)
+  - 독립적이고 재사용 가능한 Analysis Module 구조
+  - 데이터 주입 패턴 (Factory Pattern) 적용
+  - 규칙 기반 분석 + LLM 포맷팅 분리
+- **새로운 Analysis Modules**:
+  - PriceAnalyzer: 가격 기술적 분석 (MA, 지지/저항, 변동성)
+  - SentimentAnalyzer: Fear & Greed 기반 심리 분석
+  - PortfolioAnalyzer: 포트폴리오 P&L, 분산도, 리스크 분석
+- **Pipeline Composition** 개념 추가:
+  - ChatPipeline: 분석 → Persona 포맷팅 → SSE 스트리밍
+  - ReportPipeline: 분석 → 구조화된 JSON/PDF (B2B)
+  - SignalPipeline: 분석 → 시그널 추출 → 알림 트리거
+- **Module Roadmap** 추가 (Phase 1-4)
+- 기존 Agent Pipeline은 Legacy 호환으로 유지
 
 **3.2** (2026-01-07)
 - LLM Provider 추상화 추가 (Ollama + Anthropic 지원)
